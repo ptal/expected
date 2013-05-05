@@ -35,6 +35,7 @@ project expected
       <library>$(boost-root)/boost/test//boost_unit_test_framework
       
       <link>static
+      <toolset>gcc:<cxxflags>-std=c++11
       <toolset>msvc:<asynch-exceptions>on # Needed for Boost.Test
       <toolset>msvc:<warnings>all
       <toolset>msvc:<define>_SCL_SECURE_NO_WARNINGS
@@ -57,5 +58,5 @@ project expected
     ;
 
 test-suite "Expected"
-    : #[ run test_expected.cpp  boost_unit_test ]
+    : [ run test_expected.cpp  boost_unit_test ]
     ;

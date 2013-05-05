@@ -2,19 +2,85 @@
 // accompanying file LICENSE_1_0.txt or copy at
 // http://www.boost.org/LICENSE_1_0.txt)
 // (C) Copyright 2013 Vicente J. Botet Escriba
+// (C) Copyright 2013 Pierre Talbot
 
-#ifndef BOOST_THREAD_EXPECTED_HPP
-#define BOOST_THREAD_EXPECTED_HPP
+#ifndef BOOST_EXPECTED_HPP
+#define BOOST_EXPECTED_HPP
 
-#include <boost/thread/detail/config.hpp>
-#include <boost/thread/detail/delete.hpp>
-#include <boost/thread/detail/move.hpp>
+#include <stdexcept>
 
-#include <boost/config/abi_prefix.hpp>
-
+#include <boost/config.hpp>
+#include <boost/exception_ptr.hpp>
+#include <boost/throw_exception.hpp>
+#include <boost/move/move.hpp>
 
 namespace boost
 {
+  // bad_expected_access exception class.
+  template <class Error>
+  class bad_expected_access : public std::logic_error
+  {
+    public:
+      typedef Error exceptional_type;
+    private:
+      exceptional_type error_value;
+    public:
+      bad_expected_access(const Error& e)
+      : std::logic_error("Found an error instead of the expected value.")
+      , error_value(e)
+      {}
+
+      exceptional_type& error() { return error_value; }
+      const exceptional_type& error() const { return error_value; }
+
+      // Add implicit/explicit conversion to exceptional_type ?
+  };
+
+  // Traits classes
+  template <typename ExceptionalType>
+  struct exceptional_traits
+  {
+    typedef ExceptionalType exceptional_type;
+
+    template <class E>
+    static exceptional_type make_exceptional(E const& e)
+    {
+      return exceptional_type(e);
+    }
+    
+    static exceptional_type catch_exception()
+    {
+      boost::rethrow_exception(boost::current_exception());
+    }
+    
+    static void bad_access(const exceptional_type &e)
+    {
+      boost::throw_exception(bad_expected_access<exceptional_type>(e)); 
+    }
+  };
+
+  // Specialization for exception_ptr
+  template <>
+  struct exceptional_traits<boost::exception_ptr>
+  {
+    typedef boost::exception_ptr exceptional_type;
+
+    template <class E>
+    static exceptional_type make_exceptional(E const& e)
+    {
+      return boost::copy_exception(e);
+    }
+    
+    static exceptional_type catch_exception()
+    {
+      return boost::current_exception();
+    }
+    
+    static void bad_access(const exceptional_type &e)
+    {
+      boost::rethrow_exception(e);
+    }
+  };
 
   struct exceptional_tag {};
   BOOST_CONSTEXPR_OR_CONST exceptional_tag exceptional = {};
@@ -22,163 +88,166 @@ namespace boost
   struct emplace_tag {};
   BOOST_CONSTEXPR_OR_CONST emplace_tag emplace = {};
 
-  template <typename ValueType>
+  template <typename ValueType, typename ExceptionalType=boost::exception_ptr>
   class expected
   {
-
-    BOOST_STATIC_ASSERT_MSG( !boost::is_same<T, exceptional_tag>::value, "bad T" );
-    BOOST_STATIC_ASSERT_MSG( !boost::is_same<T, emplace_tag>::value, "bad T" );
   public:
     typedef ValueType value_type;
+    typedef ExceptionalType exceptional_type;
+    typedef exceptional_traits<exceptional_type> traits_type;
+    typedef expected<value_type, exceptional_type> this_type;
+
+  private:
+
+    // Static asserts.
+    typedef boost::is_same<value_type, exceptional_tag> is_same_value_exceptional_tag;
+    typedef boost::is_same<value_type, emplace_tag> is_same_value_emplace_tag;
+    typedef boost::is_same<exceptional_type, exceptional_tag> is_same_exceptional_exceptional_tag;
+    typedef boost::is_same<exceptional_type, emplace_tag> is_same_exceptional_emplace_tag;
+    BOOST_STATIC_ASSERT_MSG( !is_same_value_exceptional_tag::value, "bad ValueType" );
+    BOOST_STATIC_ASSERT_MSG( !is_same_value_emplace_tag::value, "bad ValueType" );
+    BOOST_STATIC_ASSERT_MSG( !is_same_exceptional_exceptional_tag::value, "bad ExceptionalType" );
+    BOOST_STATIC_ASSERT_MSG( !is_same_exceptional_emplace_tag::value, "bad ExceptionalType" );
+
+    // C++03 movable support
+    BOOST_COPYABLE_AND_MOVABLE(this_type)
 
   private:
     union {
-      boost::exception_ptr excpt_;
-      value_type& value_; 
+      exceptional_type error;
+      value_type value; 
     };
-    bool has_value_;
+    bool has_value;
 
   public:
+
     // Constructors/Destructors/Assignments
 
-    explicit expected(const value_type& rhs) // BOOST_NOEXCEPT_IF(BOOST_NOEXCEPT_EXPR(value_(rhs)))
-    : value_(rhs)
-    , has_value_(true)
+    BOOST_CONSTEXPR expected(const value_type& rhs) // BOOST_NOEXCEPT_IF(BOOST_NOEXCEPT_EXPR(value(rhs)))
+    : value(rhs)
+    , has_value(true)
+    {}
+    
+    // Move constructor from a value
+    BOOST_CONSTEXPR expected(BOOST_RV_REF(value_type) rhs)
+    : value(boost::move(rhs))
+    , has_value(true)
     {}
 
-    explicit expected(BOOST_RV_REF(value_type) rhs)
-    : value_(boost::move(rhs))
-    , has_value_(true)
+    expected(const expected& rhs) // BOOST_NOEXCEPT_IF(BOOST_NOEXCEPT_EXPR(value(rhs.value)))
+    : has_value(rhs.has_value)
+    {
+      if (has_value)
+      {
+        ::new (&value) value_type(rhs.value);
+      }
+      else
+      {
+        ::new (&error) exceptional_type(rhs.error);
+      }
+    }
+
+    expected(BOOST_RV_REF(expected) rhs) // BOOST_NOEXCEPT_IF(BOOST_NOEXCEPT_EXPR(boost::move(rhs.value)))
+    : has_value(rhs.has_value)
+    {
+      if (has_value)
+      {
+        ::new (&value) value_type(boost::move(rhs.value));
+      }
+      else
+      {
+        ::new (&error) exceptional_type(boost::move(rhs.error));
+      }
+    }
+
+    expected(exceptional_tag, exceptional_type const& e) // BOOST_NOEXCEPT_IF(BOOST_NOEXCEPT_EXPR(error(e)))
+    : error(e)
+    , has_value(false)
+    {}
+
+    // Requires  typeid(e) == typeid(E)
+    template <class E>
+    BOOST_CONSTEXPR expected(exceptional_tag, E const& e)
+    : error(traits_type::make_exceptional(e))
+    , has_value(false)
     {}
 
 #if ! defined BOOST_NO_CXX11_VARIADIC_TEMPLATES
     template <class... Args>
-    explicit expected(emplace_tag, Args&&... args)
-    : value_(boost::forward<Args>(args)...)
+    BOOST_CONSTEXPR explicit expected(emplace_tag, Args&&... args)
+    : value(boost::forward<Args>(args)...)
     , has_value(true)
     {}
 #endif
 
-    expected(const expected& rhs)
-    : has_value_(rhs.has_value_) // BOOST_NOEXCEPT_IF(BOOST_NOEXCEPT_EXPR(value_(rhs.value_)))
-    {
-      if (has_value_)
-      {
-        ::new (&value_) value_type(rhs.value_);
-      }
-      else
-      {
-        ::new (&except_) boost::exception_ptr(rhs.except_);
-      }
-    }
-
-    expected(BOOST_RV_REF(expected) rhs)
-    : has_value_(rhs.has_value_) // BOOST_NOEXCEPT_IF(BOOST_NOEXCEPT_EXPR(boost::move(rhs.value_)))
-    {
-      if (has_value_)
-      {
-        ::new (&value_) value_type(boost::move(rhs.value_));
-      }
-      else
-      {
-        ::new (&except_) boost::exception_ptr(boost::move(rhs.except_));
-      }
-    }
-
-    expected(exceptional_tag, boost::exception_ptr const& p) BOOST_NOEXCEPT
-    : except_(p)
-    , has_value_(false)
+    expected() // BOOST_NOEXCEPT
+    : error(traits_type::catch_exception())
+    , has_value(false)
     {}
 
-    /// Requires  typeid(e) == typeid(E)
-    template <typename E>
-    expected(exceptional_tag, E const& e)
-    : except_(boost::make_exception_ptr(e))
-    , has_value_(false)
-    {}
-
-    expected() BOOST_NOEXCEPT
-    : except_(boost::current_exception())
-    , has_value_(false)
-    {}
-
-    ~expected() // BOOST_NOEXCEPT_IF(BOOST_NOEXCEPT_EXPR(value_.~value_type()))
+    ~expected() // BOOST_NOEXCEPT_IF(BOOST_NOEXCEPT_EXPR(value.~value_type()))
     {
-      if (valid()) value_.~value_type();
-      else except_.boost::exception_ptr::~exception_ptr();
+      if (valid()) value.~value_type();
+      else error.~exceptional_type();
     }
 
     /// Modifiers
     void swap(expected& rhs) // BOOST_NOEXCEPT_IF( ... )
     {
-      if (has_value_)
+      if (has_value)
       {
-        if (rhs.has_value_)
+        if (rhs.has_value)
         {
-          boost::swap(value_, rhs.value_);
+          boost::swap(value, rhs.value);
         }
         else
         {
-          boost::exception_ptr t = boost::move(rhs.except_);
-          new (&rhs.value_) T(boost::move(value_));
-          new (&except_) boost::exception_ptr(t);
-          boost::swap(has_value_, rhs.has_value_);
+          exceptional_type t = boost::move(rhs.error);
+          new (&rhs.value) value_type(boost::move(value));
+          new (&error) exceptional_type(t);
+          boost::swap(has_value, rhs.has_value);
         }
       }
       else
       {
-        if (rhs.has_value_)
+        if (rhs.has_value)
         {
           rhs.swap(*this);
         }
         else
         {
-          except_.swap(rhs.except_);
+          boost::swap(error, rhs.error);
         }
       }
     }
 
-    /// Observers
+    // Observers
     bool valid() const BOOST_NOEXCEPT
     {
-      return has_value_;
+      return has_value;
     }
 
 #if ! defined(BOOST_NO_CXX11_EXPLICIT_CONVERSION_OPERATORS)
-    explicit operator bool() const noexcept { return initialized(); }
+    explicit operator bool() const noexcept
+    {
+      return valid();
+    }
 #endif
 
-    const T& get() const
+    const value_type& get() const
     {
-      if (!valid()) boost::rethrow_exception(except_);
-      return value_;
+      if (!valid()) traits_type::bad_access(error);
+      return value;
     }
-    // Only const access is allowed
-//    T& get()
-//    {
-//      if (!valid()) boost::rethrow_exception(except_);
-//      return value_;
-//    }
 
-    template <class E>
-    bool has_exception() const BOOST_NOEXCEPT
+    value_type& get()
     {
-      try
-      {
-        if (!valid()) boost::rethrow_exception(except_ );
-      }
-      catch (const E& et)
-      {
-        return true;
-      }
-      catch (...)
-      {
-      }
-      return false;
+      if (!valid()) traits_type::bad_access(error);
+      return value;
     }
 
     /// factories
-    template <typename F>
+    /*template <typename F>
     expected<typename boost::result_of<F(const expected&)>::type>
     then(F&& fuct) BOOST_NOEXCEPT
     {
@@ -191,9 +260,9 @@ namespace boost
       {
         return make_exceptional_expected<result_value_type>(except_);
       }
-    }
+    }*/
   };
-
+/*
   /// Specialized algorithms
   template <class T>
   void swap(expected<T>& x, expected<T>& y) BOOST_NOEXCEPT_IF(BOOST_NOEXCEPT_EXPR(x.swap(y)))
@@ -241,51 +310,7 @@ namespace boost
       return make_exceptional_expected();
     }
   }
-
-#if 0
-  // Example
-  expected<int> parseInt(const std::string& s)
-  {
-    int result;
-    //...
-    if (nonDigit)
-    {
-      return make_exceptional_expected<int>(
-          std::invalid_argument("not a number"));
-    }
-    //...
-    if (tooManyDigits)
-    {
-      return make_exceptional_expected<int>(
-          std::out_of_range("overflow"));
-    }
-    //...
-    return make_expected(result);
-  }
-
-  // Caller
-  std::string s = readline();
-  auto x = parseInt(s).get(); // throw on error
-  auto y = parseInt(s); // won�t throw
-  if (!y.valid())
-  {
-    // handle locally
-    if (y.has_exception<std::invalid_argument>())
-    {
-      // no digits
-      //...
-    }
-    y.get(); // just "re"throw
-  }
-
-
-  /// Chaining
-  make_noexcept_expected(doSomething).then(doSomethingElse).then(doSomethingMore)
-
-#endif
-
+  */
 }
 
-#include <boost/config/abi_suffix.hpp>
-
-#endif
+#endif // BOOST_EXPECTED_HPP

@@ -19,13 +19,15 @@
 #include <boost/test/unit_test.hpp> // Enhanced for unit_test framework autolink
 #include <boost/test/included/unit_test.hpp>
 
+#include "../../../boost/expected/expected.hpp"
 
 using namespace boost;
 
 BOOST_AUTO_TEST_SUITE(expected_base)
 
-BOOST_AUTO_TEST_CASE(get_tests)
+BOOST_AUTO_TEST_CASE(expected_constructor)
 {
+  expected<int> e = 5;
 }
 
 BOOST_AUTO_TEST_SUITE_END()
