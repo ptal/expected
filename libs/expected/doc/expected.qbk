@@ -1,0 +1,199 @@
+[article Expected
+    [quickbook 1.5]
+    [copyright 2013 Pierre Talbot]
+    [license
+        Distributed under the Boost Software License, Version 1.0.
+        (See accompanying file LICENSE_1_0.txt or copy at
+        [@http://www.boost.org/LICENSE_1_0.txt])
+    ]
+    [authors [Talbot, Pierre]]
+]
+[/include ../../../../../../../boost-sandbox/tools/auto_index/include/auto_index_helpers.qbk]
+
+[/ Some links to external sources.]
+[def __boost [@http://www.boost.org/ Boost]]
+[/Note the custom url schema for linking to files within the Boost distribution.]
+[/def __boostroot [@boost: Boost root] does NOT work withe PDF, so avoid.]
+[/Note too that it can't be used for images.]
+[def __boostlicense [@http://www.boost.org/LICENSE_1_0.txt Boost License]]
+
+[def __spaces '''&#x2000;&#x2000;'''] [/ two spaces - useful for an indent.]
+
+[def __ALEXANDRESCU_EXPECTED_TALK__ [@http://channel9.msdn.com/Shows/Going+Deep/C-and-Beyond-2012-Andrei-Alexandrescu-Systematic-Error-Handling-in-C talk]]
+
+[/import]
+[import ../example/expected_example.cpp]
+[import ../example/expected_or_error_example.cpp]
+
+[section:expected Expected]
+
+[section:error_handling Error handling]
+
+Basically, the two main error mechanisms are exceptions and return codes. Before further explanation, we should ask us what are the
+characteristics of a good error mechanism.
+
+* [*Error visibility] Failure cases should appears throughout the code review. Because the debug can be painful if the errors are hidden.
+* [*Information on errors] The errors should carry out as most as possible information from their origin, causes and eventually the ways to resolve it.
+* [*Clean code] The treatment of errors should be in a separate layer of code and as much invisible as possible. So the code reader could notice the presence of exceptional cases without stop his reading.
+* [*Intrusive error] The errors should not monopolize a communication channel. They must be as discrete as possible. For example, the return of a function is a channel that should not be exclusively reserved for errors.
+
+The first and the third characteristic are quite contradictory. The former points out that error not handle should be clear enough. The second tells us the error handling mustn't interfere with the code reading, meaning that it clearly shows the normal code flow.
+
+[table:error_cmp
+[[][Exception][Return code]]
+
+[[Visibility]
+[Not visible without further reading of called function. But ['if] the exception is thrown, we can follow the stack trace.]
+[Visible at the first sight by watching the header of the called function. However ignoring return code can lead to undefined results and it can be hard to figure out the problem.]]
+
+[[Informations]
+[Classes can be infinitely rich.]
+[Historically a simple integer. However, ['std::error_condition] is an example of a rich error code class.]]
+
+[[Clean code]
+[Provides clean code such that they can be completely invisible in upper layer.]
+[Force you to add, at least, a if statement after each function call.]]
+
+[[Intrusive]
+[Own communication channel.]
+[Monopolization of the return channel.]]
+
+]
+
+[h3 Expected class]
+
+We can do the same analysis for the Expected class from Alexandrescu \[__ALEXANDRESCU_EXPECTED_TALK__\]:
+
+* [*Visibility:] It takes the best of the exception and error code. It's visible because the return type is ['Expected<T>] and if the user ignore the error case, it throws the contained exception.
+* [*Information:] As rich as exception.
+* [*Clean code:] It's up to the programmer to choose handling errors as error code or to throw the contained exception.
+* [*Intrusive:] Use the return channel without monopolizing it.
+
+However this class also has drawbacks:
+
+* The error code [*must] be an exception.
+* It doesn't provide a better solution to resolve errors. You can throw or use the ['hasException] method to test errors which is similar to the old switch case statement.
+* The method ['hasException] test the type and so cannot distinguish two different errors from the same exception. Exception can contains multiple error case scenarios (think about std::invalid_argument).
+
+[h3 Use case scenario]
+
+We should wonder what every programmers do when a function call returns an error:
+
+# Nothing.
+# Delegate the responsibility of error handling to higher layer.
+# Trying to resolve the error.
+
+Because the first behavior leads to buggy application, we won't consider it in a first time.
+
+Consider the following "pseudo coded" mock function:
+
+``
+EXPECTED int mock_connect(const string& hostname, const string& passwd, bool timed_out)
+{
+  if(passwd != "passwd")
+      return connection refused ERROR
+  else if(hostname != "localhost")
+      return host unreachable ERROR
+  else if(timed_out)
+      return timed out ERROR
+  return HANDLE 0
+}
+``
+We imagine a scenario where:
+
+* The connection refused error is resolved by asking the user another password.
+* The host unreachable error is delegated to the upper layer.
+* The time out error is resolved at the next try.
+
+[h3 With the "exception based" expected]
+
+The code of the mock connect function is below. You can see that the errors are encapsulated into exceptions.
+
+[expected_mock_connect]
+
+From the caller, the code looks like:
+
+[expected_connect_to_host]
+
+Moreover, we use an error resolver function to keep the code as clean as possible.
+
+[expected_error_resolver]
+
+The next section shows how to do the same things with the standard error code (std::error_condition).
+
+[h3 With std::error_condition]
+
+We use the class expected_or_error which looks like the class expected without the exception.
+
+[expected_or_error_mock_connect]
+
+From the caller, the code looks like:
+
+[expected_or_error_connect_to_host]
+
+And finally the error resolver:
+
+[expected_or_error_resolver]
+
+We can see that the code is quite similar between both classes. It's mainly because we didn't use the exception facility of the expected class.
+
+[h3 Result]
+
+The result of the both codes is the same:
+
+[expected_result]
+
+[endsect][/section:error_handling Error handling]
+
+[section:acks Acknowledgements]
+
+The author thanks
+
+* Andrei Alexandrescu for the design of ['expected] and the good implementation proposed during this __ALEXANDRESCU_EXPECTED_TALK__.
+
+[endsect] [/section:acks Acknowledgements]
+
+[section:version_id Version Info]
+
+Last edit to Quickbook file __FILENAME__ was at __TIME__ on __DATE__.
+
+[warning Home page "Last revised" is GMT, not local time.  Last edit date is local time.]
+
+[endsect] [/section:version_id Version Info]
+
+[endsect] [/section:expected Boost.Expected]
+
+[/xinclude autodoc.xml] [/ Using Doxygen reference documentation.]
+
+[/This (if enabled) creates an Index section that include the class, function ... indexes, and also a full index with <index/>]
+[? enable_index
+'''
+  <index type="class_name">
+   <title>Class Index</title>
+  </index>
+  
+  <index type="typedef_name">
+  <title>Typedef Index</title>
+  </index>
+  
+  <index type="function_name">
+   <title>Function Index</title>
+  </index>
+
+    
+  <index type="macro_name">
+  <title>Macro Index</title>
+  </index>
+
+  <index/>
+
+'''
+] 
+[/if enable_index]
+
+[/ expected.qbk
+  Copyright 2013 Pierre Talbot.
+  Distributed under the Boost Software License, Version 1.0.
+  (See accompanying file LICENSE_1_0.txt or copy at
+  http://www.boost.org/LICENSE_1_0.txt).
+]

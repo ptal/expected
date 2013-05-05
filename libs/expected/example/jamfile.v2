@@ -1,0 +1,33 @@
+# Runs expected examples and tutorial.
+
+# Copyright 2013 Paul A. Bristow - Pierre Talbot.
+
+# Distributed under the Boost Software License, Version 1.0.
+# (See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+
+# bring in the rules for testing
+import testing ;
+
+project
+    : requirements
+      <toolset>gcc:<cxxflags>-std=c++11
+      <toolset>darwin:<cxxflags>-Wno-missing-braces
+      <toolset>acc:<cxxflags>+W2068,2461,2236,4070
+      <toolset>intel:<cxxflags>-Qwd264,239
+      <toolset>msvc:<warnings>all
+      <toolset>msvc:<asynch-exceptions>on
+      <toolset>msvc:<cxxflags>/wd4800 # forcing value to bool 'true' or 'false'
+      <toolset>msvc:<cxxflags>/wd4996 # Deprecated.
+      <toolset>msvc:<cxxflags>/wd4512 # assignment operator could not be generated.
+      <toolset>msvc:<cxxflags>/wd4127 # expression is constant.
+      <toolset>msvc:<cxxflags>/wd4503 # decorated name length exceeded, name was truncated.
+      <toolset>msvc:<cxxflags>/wd4180 # qualifier applied to function type has no meaning; ignored.
+      <include>../../.. # expected
+      <include>$(BOOST_ROOT)
+    ;
+
+path-constant expected-input-file : expected_input.txt ;
+
+# Example of some function in Boost.Expected.
+run expected_or_error_example.cpp ;
+run expected_example.cpp ;
