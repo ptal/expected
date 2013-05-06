@@ -167,7 +167,7 @@ namespace boost
 
     // Requires  typeid(e) == typeid(E)
     template <class E>
-    BOOST_CONSTEXPR expected(exceptional_tag, E const& e)
+    expected(exceptional_tag, E const& e)
     : error(traits_type::make_exceptional(e))
     , has_value(false)
     {}
