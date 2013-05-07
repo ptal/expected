@@ -21,6 +21,7 @@
 
 #include <stdexcept>
 #include <exception>
+#include <system_error>
 
 #include "../../../boost/expected/expected.hpp"
 
@@ -30,7 +31,7 @@ class test_exception : public std::exception
 {
 };
 
-BOOST_AUTO_TEST_SUITE(expected_constructor)
+BOOST_AUTO_TEST_SUITE(except_expected_constructors)
 
 BOOST_AUTO_TEST_CASE(expected_from_value)
 {
@@ -70,6 +71,17 @@ BOOST_AUTO_TEST_CASE(expected_from_exception_ptr)
   BOOST_CHECK_EQUAL(static_cast<bool>(e), false);
 }
 
+BOOST_AUTO_TEST_CASE(expected_from_move_value)
+{
+  // From move value constructor.
+  std::string value = "my value";
+  expected<std::string> e = std::move(value);
+  BOOST_REQUIRE_NO_THROW(e.get());
+  BOOST_CHECK_EQUAL(e.get(), "my value");
+  BOOST_CHECK(e.valid());
+  BOOST_CHECK(static_cast<bool>(e));
+}
+
 BOOST_AUTO_TEST_CASE(expected_from_catch_block)
 {
   // From catch block
@@ -80,10 +92,61 @@ BOOST_AUTO_TEST_CASE(expected_from_catch_block)
   catch(...)
   {
     expected<int> e;
-    //BOOST_REQUIRE_THROW(e.get(), test_exception);
+
+    BOOST_REQUIRE_THROW(e.get(), std::exception);
     BOOST_CHECK_EQUAL(e.valid(), false);
     BOOST_CHECK_EQUAL(static_cast<bool>(e), false);
   }
 }
 
 BOOST_AUTO_TEST_SUITE_END()
+
+BOOST_AUTO_TEST_SUITE(error_expected_constructors)
+
+BOOST_AUTO_TEST_CASE(expected_from_value)
+{
+  // From value constructor.
+  expected<int, std::error_condition> e(5);
+  BOOST_REQUIRE_NO_THROW(e.get());
+  BOOST_CHECK_EQUAL(e.get(), 5);
+  BOOST_CHECK(e.valid());
+  BOOST_CHECK(static_cast<bool>(e));
+}
+
+BOOST_AUTO_TEST_CASE(expected_from_error)
+{
+  // From exceptional constructor.
+  expected<int, std::error_condition> e(exceptional, std::make_error_condition(std::errc::invalid_argument));
+  auto error_from_except_check = [](const bad_expected_access<std::error_condition>& except)
+  { 
+    return std::errc(except.error().value()) == std::errc::invalid_argument ;
+  };
+  BOOST_REQUIRE_EXCEPTION(e.get(), bad_expected_access<std::error_condition>, error_from_except_check);
+  BOOST_CHECK_EQUAL(e.valid(), false);
+  BOOST_CHECK_EQUAL(static_cast<bool>(e), false);
+}
+
+BOOST_AUTO_TEST_SUITE_END()
+
+BOOST_AUTO_TEST_SUITE(error_expected_modifier)
+
+BOOST_AUTO_TEST_CASE(expected_swap_value)
+{
+  // From value constructor.
+  expected<int, std::error_condition> e(5);
+  expected<int, std::error_condition> e2(8);
+
+  e.swap(e2);
+
+  BOOST_CHECK_EQUAL(e.get(), 8);
+  BOOST_CHECK_EQUAL(e2.get(), 5);
+
+  e2.swap(e);
+
+  BOOST_CHECK_EQUAL(e.get(), 5);
+  BOOST_CHECK_EQUAL(e2.get(), 8);
+}
+
+BOOST_AUTO_TEST_SUITE_END()
+
+
