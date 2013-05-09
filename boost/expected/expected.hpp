@@ -13,6 +13,8 @@
 #include <boost/exception_ptr.hpp>
 #include <boost/throw_exception.hpp>
 #include <boost/move/move.hpp>
+#include <boost/type_traits.hpp>
+#include <boost/utility/enable_if.hpp>
 
 namespace boost
 {
@@ -246,7 +248,7 @@ namespace boost
       return value;
     }
 
-    /// factories
+    // Utilities
     /*template <typename F>
     expected<typename boost::result_of<F(const expected&)>::type>
     then(F&& fuct) BOOST_NOEXCEPT
@@ -269,29 +271,18 @@ namespace boost
   {
     x.swap(y);
   }
-
+*/
   /// Factories
-  template <typename T>
-  expected<T> make_expected(const T& v) //BOOST_NOEXCEPT
+  template<typename T, typename E, typename... Args>
+  expected<T,E> make_expected(Args&&... args)
   {
-    return expected<T>(v);
-  }
-  template <typename T>
-  expected<T> make_expected(BOOST_RV_REF(T) v) //BOOST_NOEXCEPT
-  {
-    return expected<T>(boost::forward<T>(v));
-  }
-  template <typename T>
-  expected<T> make_exceptional_expected(exceptional, boost::exception_ptr const& p) BOOST_NOEXCEPT
-  {
-    return expected<T>(p);
+    return expected<T,E>(emplace, boost::forward<Args>(args)...);
   }
 
-  /// Requires  typeid(e) == typeid(E)
-  template <typename T, typename E>
-  expected<T> make_exceptional_expected(E const& e) BOOST_NOEXCEPT
+  template<typename T, typename... Args>
+  expected<T> make_expected(Args&&... args)
   {
-    return expected<T>(exceptional, e);
+    return expected<T>(emplace, boost::forward<Args>(args)...);
   }
 
   template <typename T>
@@ -300,6 +291,41 @@ namespace boost
     return expected<T>();
   }
 
+  template <typename T, typename E>
+  expected<T, E> make_exceptional_expected() BOOST_NOEXCEPT
+  {
+    return expected<T, E>();
+  }
+
+  /// Requires  typeid(e) == typeid(E)
+  template <typename T, typename U, typename E>
+  typename boost::disable_if<
+    boost::is_same<U, E>,
+    expected<T,E>
+  >::type make_exceptional_expected(E const& e) BOOST_NOEXCEPT
+  {
+    return expected<T, U>(exceptional, e);
+  }
+
+  template <typename T, typename E>
+  typename boost::enable_if_c<
+    boost::is_base_of<std::exception, E>::value || boost::is_base_of<boost::exception, E>::value,
+    expected<T>
+  >::type make_exceptional_expected(E const& e) BOOST_NOEXCEPT
+  {
+    return expected<T>(exceptional, e);
+  }
+
+  template <typename T, typename E>
+  typename boost::disable_if_c<
+    boost::is_base_of<std::exception, E>::value || boost::is_base_of<boost::exception, E>::value,
+    expected<T,E>
+  >::type make_exceptional_expected(E const& e) BOOST_NOEXCEPT
+  {
+    return expected<T, E>(exceptional, e);
+  }
+
+/*
   template <typename F>
   expected<typename boost::result_of<F()>::type>
   make_noexcept_expected(F&& fuct) BOOST_NOEXCEPT

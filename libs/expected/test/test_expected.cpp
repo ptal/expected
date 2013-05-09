@@ -128,6 +128,92 @@ BOOST_AUTO_TEST_CASE(expected_from_error)
 
 BOOST_AUTO_TEST_SUITE_END()
 
+BOOST_AUTO_TEST_SUITE(expected_factories)
+
+BOOST_AUTO_TEST_CASE(expected_from_emplace)
+{
+  // From emplace factory.
+  auto e = make_expected<std::string>("emplace");
+  BOOST_REQUIRE_NO_THROW(e.get());
+  BOOST_CHECK_EQUAL(e.get(), "emplace");
+  BOOST_CHECK(e.valid());
+  BOOST_CHECK(static_cast<bool>(e));
+}
+
+BOOST_AUTO_TEST_CASE(expected_from_emplace_error)
+{
+  // From emplace factory.
+  auto e = make_expected<std::string, std::error_condition>("emplace");
+  BOOST_REQUIRE_NO_THROW(e.get());
+  BOOST_CHECK_EQUAL(e.get(), "emplace");
+  BOOST_CHECK(e.valid());
+  BOOST_CHECK(static_cast<bool>(e));
+}
+
+BOOST_AUTO_TEST_CASE(expected_from_exception_catch)
+{
+  // From catch block
+  try
+  {
+    throw test_exception();
+  }
+  catch(...)
+  {
+    expected<int> e = make_exceptional_expected<int>();
+
+    BOOST_REQUIRE_THROW(e.get(), std::exception);
+    BOOST_CHECK_EQUAL(e.valid(), false);
+    BOOST_CHECK_EQUAL(static_cast<bool>(e), false);
+  }
+}
+
+BOOST_AUTO_TEST_CASE(expected_from_error_catch_exception)
+{ 
+  // From catch block
+  try
+  {
+    throw test_exception();
+  }
+  catch(...)
+  {
+    //auto throw_lambda = [](){make_exceptional_expected<int,std::error_condition>();};
+    //BOOST_REQUIRE_THROW(throw_lambda(), boost::exception);
+  }
+}
+
+BOOST_AUTO_TEST_CASE(expected_from_error)
+{
+  // From exceptional constructor.
+  auto e = make_exceptional_expected<int>(std::make_error_condition(std::errc::invalid_argument));
+  auto error_from_except_check = [](const bad_expected_access<std::error_condition>& except)
+  { 
+    return std::errc(except.error().value()) == std::errc::invalid_argument ;
+  };
+  BOOST_REQUIRE_EXCEPTION(e.get(), bad_expected_access<std::error_condition>, error_from_except_check);
+  BOOST_CHECK_EQUAL(e.valid(), false);
+  BOOST_CHECK_EQUAL(static_cast<bool>(e), false);
+}
+
+BOOST_AUTO_TEST_CASE(expected_from_exception)
+{
+  // From exceptional constructor.
+  auto e = make_exceptional_expected<int>(test_exception());
+  BOOST_REQUIRE_THROW(e.get(), test_exception);
+  BOOST_CHECK_EQUAL(e.valid(), false);
+  BOOST_CHECK_EQUAL(static_cast<bool>(e), false);
+}
+
+BOOST_AUTO_TEST_CASE(expected_from_exception_ptr)
+{
+  // From exception_ptr constructor.
+  auto e = make_exceptional_expected<int>(boost::copy_exception(test_exception()));
+  BOOST_REQUIRE_THROW(e.get(), test_exception);
+  BOOST_CHECK_EQUAL(e.valid(), false);
+  BOOST_CHECK_EQUAL(static_cast<bool>(e), false);
+}
+
+BOOST_AUTO_TEST_SUITE_END()
+
 BOOST_AUTO_TEST_SUITE(error_expected_modifier)
 
 BOOST_AUTO_TEST_CASE(expected_swap_value)
