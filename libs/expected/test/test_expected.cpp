@@ -119,7 +119,7 @@ BOOST_AUTO_TEST_CASE(expected_from_error)
   expected<int, std::error_condition> e(exceptional, std::make_error_condition(std::errc::invalid_argument));
   auto error_from_except_check = [](const bad_expected_access<std::error_condition>& except)
   { 
-    return std::errc(except.error().value()) == std::errc::invalid_argument ;
+    return std::errc(except.error().value()) == std::errc::invalid_argument;
   };
   BOOST_REQUIRE_EXCEPTION(e.get(), bad_expected_access<std::error_condition>, error_from_except_check);
   BOOST_CHECK_EQUAL(e.valid(), false);
@@ -176,8 +176,10 @@ BOOST_AUTO_TEST_CASE(expected_from_error_catch_exception)
   }
   catch(...)
   {
-    //auto throw_lambda = [](){make_exceptional_expected<int,std::error_condition>();};
-    //BOOST_REQUIRE_THROW(throw_lambda(), boost::exception);
+    //auto throw_lambda = [](){ make_exceptional_expected<int,std::error_condition>();};
+
+    // Problem: call to abort due to the throw of test_exception. I don't know why yet.
+    // BOOST_CHECK_THROW(throw_lambda(), test_exception);
   }
 }
 
@@ -187,9 +189,9 @@ BOOST_AUTO_TEST_CASE(expected_from_error)
   auto e = make_exceptional_expected<int>(std::make_error_condition(std::errc::invalid_argument));
   auto error_from_except_check = [](const bad_expected_access<std::error_condition>& except)
   { 
-    return std::errc(except.error().value()) == std::errc::invalid_argument ;
+    return std::errc(except.error().value()) == std::errc::invalid_argument;
   };
-  BOOST_REQUIRE_EXCEPTION(e.get(), bad_expected_access<std::error_condition>, error_from_except_check);
+  BOOST_CHECK_EXCEPTION(e.get(), bad_expected_access<std::error_condition>, error_from_except_check);
   BOOST_CHECK_EQUAL(e.valid(), false);
   BOOST_CHECK_EQUAL(static_cast<bool>(e), false);
 }
@@ -198,7 +200,7 @@ BOOST_AUTO_TEST_CASE(expected_from_exception)
 {
   // From exceptional constructor.
   auto e = make_exceptional_expected<int>(test_exception());
-  BOOST_REQUIRE_THROW(e.get(), test_exception);
+  BOOST_CHECK_THROW(e.get(), test_exception);
   BOOST_CHECK_EQUAL(e.valid(), false);
   BOOST_CHECK_EQUAL(static_cast<bool>(e), false);
 }
@@ -207,7 +209,7 @@ BOOST_AUTO_TEST_CASE(expected_from_exception_ptr)
 {
   // From exception_ptr constructor.
   auto e = make_exceptional_expected<int>(boost::copy_exception(test_exception()));
-  BOOST_REQUIRE_THROW(e.get(), test_exception);
+  BOOST_CHECK_THROW(e.get(), test_exception);
   BOOST_CHECK_EQUAL(e.valid(), false);
   BOOST_CHECK_EQUAL(static_cast<bool>(e), false);
 }
@@ -219,8 +221,8 @@ BOOST_AUTO_TEST_SUITE(error_expected_modifier)
 BOOST_AUTO_TEST_CASE(expected_swap_value)
 {
   // From value constructor.
-  expected<int, std::error_condition> e(5);
-  expected<int, std::error_condition> e2(8);
+  expected<int> e(5);
+  expected<int> e2(8);
 
   e.swap(e2);
 
@@ -228,6 +230,43 @@ BOOST_AUTO_TEST_CASE(expected_swap_value)
   BOOST_CHECK_EQUAL(e2.get(), 5);
 
   e2.swap(e);
+
+  BOOST_CHECK_EQUAL(e.get(), 5);
+  BOOST_CHECK_EQUAL(e2.get(), 8);
+}
+
+BOOST_AUTO_TEST_CASE(expected_swap_exception)
+{
+  // From value constructor.
+  expected<int> e = make_exceptional_expected<int>(std::invalid_argument("e"));
+  expected<int> e2 = make_exceptional_expected<int>(std::invalid_argument("e2"));
+
+  e.swap(e2);
+
+  auto equal_to_e = [](const std::invalid_argument& except) { return std::string(except.what()) == "e"; };
+  auto equal_to_e2 = [](const std::invalid_argument& except) { return std::string(except.what()) == "e2"; };
+
+  BOOST_CHECK_EXCEPTION(e.get(), std::invalid_argument, equal_to_e2);
+  BOOST_CHECK_EXCEPTION(e2.get(), std::invalid_argument, equal_to_e);
+
+  e2.swap(e);
+
+  BOOST_CHECK_EXCEPTION(e.get(), std::invalid_argument, equal_to_e);
+  BOOST_CHECK_EXCEPTION(e2.get(), std::invalid_argument, equal_to_e2);
+}
+
+BOOST_AUTO_TEST_CASE(expected_swap_function_value)
+{
+  // From value constructor.
+  expected<int> e(5);
+  expected<int> e2(8);
+
+  swap(e, e2);
+
+  BOOST_CHECK_EQUAL(e.get(), 8);
+  BOOST_CHECK_EQUAL(e2.get(), 5);
+
+  swap(e, e2);
 
   BOOST_CHECK_EQUAL(e.get(), 5);
   BOOST_CHECK_EQUAL(e2.get(), 8);

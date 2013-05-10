@@ -52,7 +52,7 @@ namespace boost
     
     static exceptional_type catch_exception()
     {
-      boost::rethrow_exception(boost::current_exception());
+      throw;
     }
     
     static void bad_access(const exceptional_type &e)
@@ -82,6 +82,13 @@ namespace boost
     {
       boost::rethrow_exception(e);
     }
+  };
+  
+  template <>
+  struct exceptional_traits<std::exception_ptr> 
+  : public exceptional_traits<boost::exception_ptr>
+  {
+    typedef std::exception_ptr exceptional_type;
   };
 
   struct exceptional_tag {};
@@ -264,15 +271,15 @@ namespace boost
       }
     }*/
   };
-/*
-  /// Specialized algorithms
+
+  // Specialized algorithms
   template <class T>
   void swap(expected<T>& x, expected<T>& y) BOOST_NOEXCEPT_IF(BOOST_NOEXCEPT_EXPR(x.swap(y)))
   {
     x.swap(y);
   }
-*/
-  /// Factories
+
+  // Factories
   template<typename T, typename E, typename... Args>
   expected<T,E> make_expected(Args&&... args)
   {
