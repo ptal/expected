@@ -52,6 +52,27 @@ BOOST_AUTO_TEST_CASE(expected_from_exception)
   BOOST_CHECK_EQUAL(static_cast<bool>(e), false);
 }
 
+BOOST_AUTO_TEST_CASE(expected_from_copy_value)
+{
+  // From copy constructor.
+  expected<int> ef(5);
+  expected<int> e(ef);
+  BOOST_REQUIRE_NO_THROW(e.get());
+  BOOST_CHECK_EQUAL(e.get(), 5);
+  BOOST_CHECK(e.valid());
+  BOOST_CHECK(static_cast<bool>(e));
+}
+
+BOOST_AUTO_TEST_CASE(expected_from_copy_exception)
+{
+  // From exceptional constructor.
+  expected<int> ef(exceptional, test_exception());
+  expected<int> e(ef);
+  BOOST_REQUIRE_THROW(e.get(), test_exception);
+  BOOST_CHECK_EQUAL(e.valid(), false);
+  BOOST_CHECK_EQUAL(static_cast<bool>(e), false);
+}
+
 BOOST_AUTO_TEST_CASE(expected_from_emplace)
 {
   // From emplace constructor.
@@ -71,7 +92,7 @@ BOOST_AUTO_TEST_CASE(expected_from_exception_ptr)
   BOOST_CHECK_EQUAL(static_cast<bool>(e), false);
 }
 
-BOOST_AUTO_TEST_CASE(expected_from_move_value)
+BOOST_AUTO_TEST_CASE(expected_from_moved_value)
 {
   // From move value constructor.
   std::string value = "my value";
@@ -124,6 +145,81 @@ BOOST_AUTO_TEST_CASE(expected_from_error)
   BOOST_REQUIRE_EXCEPTION(e.get(), bad_expected_access<std::error_condition>, error_from_except_check);
   BOOST_CHECK_EQUAL(e.valid(), false);
   BOOST_CHECK_EQUAL(static_cast<bool>(e), false);
+}
+
+BOOST_AUTO_TEST_SUITE_END()
+
+BOOST_AUTO_TEST_SUITE(except_expected_assignment)
+
+BOOST_AUTO_TEST_CASE(expected_from_value)
+{
+  expected<int> e(5);
+  BOOST_CHECK_EQUAL(e.get(), 5);
+
+  // From value assignment.
+  e = 8;
+  BOOST_REQUIRE_NO_THROW(e.get());
+  BOOST_CHECK_EQUAL(e.get(), 8);
+  BOOST_CHECK(e.valid());
+  BOOST_CHECK(static_cast<bool>(e));
+}
+
+BOOST_AUTO_TEST_CASE(expected_from_copy_expected)
+{
+  expected<int> e(5);
+  expected<int> e2(8);
+
+  // From value assignment.
+  e = e2;
+  BOOST_REQUIRE_NO_THROW(e.get());
+  BOOST_CHECK_EQUAL(e.get(), 8);
+  BOOST_CHECK(e.valid());
+  BOOST_CHECK(static_cast<bool>(e));
+}
+
+BOOST_AUTO_TEST_CASE(expected_from_moved_expected)
+{
+  expected<std::string> e("e");
+  expected<std::string> e2("e2");
+
+  // From value assignment.
+  e = std::move(e2);
+  BOOST_REQUIRE_NO_THROW(e.get());
+  BOOST_CHECK_EQUAL(e.get(), "e2");
+  BOOST_CHECK(e.valid());
+  BOOST_CHECK(static_cast<bool>(e));
+
+  BOOST_REQUIRE_NO_THROW(e2.get());
+  BOOST_CHECK_EQUAL(e2.get(), "");
+  BOOST_CHECK(e2.valid());
+  BOOST_CHECK(static_cast<bool>(e2));
+}
+
+BOOST_AUTO_TEST_CASE(expected_from_emplace)
+{
+  // From emplace constructor.
+  expected<std::string> e(emplace, "emplace");
+  BOOST_CHECK_EQUAL(e.get(), "emplace");
+
+  // From emplace method.
+  e.emplace("emplace method");
+  BOOST_REQUIRE_NO_THROW(e.get());
+  BOOST_CHECK_EQUAL(e.get(), "emplace method");
+  BOOST_CHECK(e.valid());
+  BOOST_CHECK(static_cast<bool>(e));
+}
+
+BOOST_AUTO_TEST_CASE(expected_from_move_value)
+{
+  expected<std::string> e("v");
+
+  std::string value = "my value";
+  // From assignment operator.
+  e = std::move(value);
+  BOOST_REQUIRE_NO_THROW(e.get());
+  BOOST_CHECK_EQUAL(e.get(), "my value");
+  BOOST_CHECK(e.valid());
+  BOOST_CHECK(static_cast<bool>(e));
 }
 
 BOOST_AUTO_TEST_SUITE_END()

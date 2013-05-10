@@ -104,9 +104,9 @@ namespace boost
     typedef ValueType value_type;
     typedef ExceptionalType exceptional_type;
     typedef exceptional_traits<exceptional_type> traits_type;
-    typedef expected<value_type, exceptional_type> this_type;
 
   private:
+    typedef expected<value_type, exceptional_type> this_type;
 
     // Static asserts.
     typedef boost::is_same<value_type, exceptional_tag> is_same_value_exceptional_tag;
@@ -127,6 +127,12 @@ namespace boost
       value_type value; 
     };
     bool has_value;
+
+    void destroy()
+    {
+      if (valid()) value.~value_type();
+      else error.~exceptional_type();
+    }
 
   public:
 
@@ -196,11 +202,45 @@ namespace boost
 
     ~expected() // BOOST_NOEXCEPT_IF(BOOST_NOEXCEPT_EXPR(value.~value_type()))
     {
-      if (valid()) value.~value_type();
-      else error.~exceptional_type();
+      destroy();
     }
 
-    /// Modifiers
+    // Assignments
+    expected& operator=(BOOST_COPY_ASSIGN_REF(expected) e)
+    {
+      this_type(e).swap(*this);
+      return *this;
+    }
+
+    expected& operator=(BOOST_RV_REF(expected) e)
+    {
+      this_type(boost::move(e)).swap(*this);
+      return *this;
+    }
+
+    expected& operator=(BOOST_COPY_ASSIGN_REF(value_type) value) BOOST_NOEXCEPT
+    {
+      this_type(value).swap(*this);
+      return *this;
+    }
+
+    expected& operator=(BOOST_RV_REF(value_type) value) BOOST_NOEXCEPT
+    {
+      this_type(boost::move(value)).swap(*this);
+      return *this;
+    }
+
+#if ! defined BOOST_NO_CXX11_VARIADIC_TEMPLATES
+    template <class... Args>
+    expected& emplace(Args&&... args)
+    {
+      // Why emplace doesn't work (instead of emplace_tag()) ?
+      this_type(emplace_tag(), boost::forward<Args>(args)...).swap(*this);
+      return *this;
+    }
+#endif
+
+    // Modifiers
     void swap(expected& rhs) // BOOST_NOEXCEPT_IF( ... )
     {
       if (has_value)
