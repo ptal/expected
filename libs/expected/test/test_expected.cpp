@@ -272,10 +272,9 @@ BOOST_AUTO_TEST_CASE(expected_from_error_catch_exception)
   }
   catch(...)
   {
-    //auto throw_lambda = [](){ make_exceptional_expected<int,std::error_condition>();};
+    auto throw_lambda = [](){ make_exceptional_expected<int,std::error_condition>();};
 
-    // Problem: call to abort due to the throw of test_exception. I don't know why yet.
-    // BOOST_CHECK_THROW(throw_lambda(), test_exception);
+    BOOST_CHECK_THROW(throw_lambda(), test_exception);
   }
 }
 

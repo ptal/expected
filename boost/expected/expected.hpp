@@ -339,7 +339,7 @@ namespace boost
   }
 
   template <typename T, typename E>
-  expected<T, E> make_exceptional_expected() BOOST_NOEXCEPT
+  expected<T, E> make_exceptional_expected() // BOOST_NOEXCEPT(   )
   {
     return expected<T, E>();
   }
