@@ -295,6 +295,16 @@ namespace boost
       return value;
     }
 
+    BOOST_CONSTEXPR value_type const& operator*() const BOOST_NOEXCEPT
+    {
+      return value;
+    }
+
+    value_type& operator*()
+    {
+      return value;
+    }
+
     // Utilities
     /*template <typename F>
     expected<typename boost::result_of<F(const expected&)>::type>
