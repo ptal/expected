@@ -128,28 +128,31 @@ namespace boost
     };
     bool has_value;
 
-    void destroy()
-    {
-      if (valid()) value.~value_type();
-      else error.~exceptional_type();
-    }
-
   public:
+
+    // About noexcept specification:
+    //  has_nothrow_move_constructor is not yet into Boost.TypeTraits.
 
     // Constructors/Destructors/Assignments
 
-    BOOST_CONSTEXPR expected(const value_type& rhs) // BOOST_NOEXCEPT_IF(BOOST_NOEXCEPT_EXPR(value(rhs)))
+    BOOST_CONSTEXPR expected(const value_type& rhs) BOOST_NOEXCEPT_IF(BOOST_NOEXCEPT_EXPR(value(rhs)))
     : value(rhs)
     , has_value(true)
     {}
     
-    // Move constructor from a value
     BOOST_CONSTEXPR expected(BOOST_RV_REF(value_type) rhs)
+    //BOOST_NOEXCEPT_IF(
+    //  has_nothrow_move_constructor<value_type>::value
+    //)
     : value(boost::move(rhs))
     , has_value(true)
     {}
 
-    expected(const expected& rhs) // BOOST_NOEXCEPT_IF(BOOST_NOEXCEPT_EXPR(value(rhs.value)))
+    expected(const expected& rhs) 
+    BOOST_NOEXCEPT_IF(
+      has_nothrow_copy_constructor<value_type>::value && 
+      has_nothrow_copy_constructor<exceptional_type>::value
+    )
     : has_value(rhs.has_value)
     {
       if (has_value)
@@ -162,7 +165,11 @@ namespace boost
       }
     }
 
-    expected(BOOST_RV_REF(expected) rhs) // BOOST_NOEXCEPT_IF(BOOST_NOEXCEPT_EXPR(boost::move(rhs.value)))
+    expected(BOOST_RV_REF(expected) rhs)
+    //BOOST_NOEXCEPT_IF(
+    //  has_nothrow_move_constructor<value_type>::value && 
+    //  has_nothrow_move_constructor<exceptional_type>::value
+    //)
     : has_value(rhs.has_value)
     {
       if (has_value)
@@ -175,7 +182,10 @@ namespace boost
       }
     }
 
-    expected(exceptional_tag, exceptional_type const& e) // BOOST_NOEXCEPT_IF(BOOST_NOEXCEPT_EXPR(error(e)))
+    expected(exceptional_tag, exceptional_type const& e) 
+    BOOST_NOEXCEPT_IF(
+      has_nothrow_copy_constructor<exceptional_type>::value
+    )
     : error(e)
     , has_value(false)
     {}
@@ -195,14 +205,19 @@ namespace boost
     {}
 #endif
 
-    expected() // BOOST_NOEXCEPT
+    expected()
     : error(traits_type::catch_exception())
     , has_value(false)
     {}
 
-    ~expected() // BOOST_NOEXCEPT_IF(BOOST_NOEXCEPT_EXPR(value.~value_type()))
+    ~expected()
+    //BOOST_NOEXCEPT_IF(
+    //  is_nothrow_destructible<value_type>::value &&
+    //  is_nothrow_destructible<exceptional_type>::value_type
+    //)
     {
-      destroy();
+      if (valid()) value.~value_type();
+      else error.~exceptional_type();
     }
 
     // Assignments
@@ -218,13 +233,13 @@ namespace boost
       return *this;
     }
 
-    expected& operator=(BOOST_COPY_ASSIGN_REF(value_type) value) BOOST_NOEXCEPT
+    expected& operator=(BOOST_COPY_ASSIGN_REF(value_type) value)
     {
       this_type(value).swap(*this);
       return *this;
     }
 
-    expected& operator=(BOOST_RV_REF(value_type) value) BOOST_NOEXCEPT
+    expected& operator=(BOOST_RV_REF(value_type) value)
     {
       this_type(boost::move(value)).swap(*this);
       return *this;
@@ -241,7 +256,7 @@ namespace boost
 #endif
 
     // Modifiers
-    void swap(expected& rhs) // BOOST_NOEXCEPT_IF( ... )
+    void swap(expected& rhs)
     {
       if (has_value)
       {
@@ -277,7 +292,7 @@ namespace boost
     }
 
 #if ! defined(BOOST_NO_CXX11_EXPLICIT_CONVERSION_OPERATORS)
-    explicit operator bool() const noexcept
+    explicit operator bool() const BOOST_NOEXCEPT
     {
       return valid();
     }
@@ -300,7 +315,7 @@ namespace boost
       return value;
     }
 
-    value_type& operator*()
+    value_type& operator*() BOOST_NOEXCEPT
     {
       return value;
     }
@@ -349,21 +364,21 @@ namespace boost
   }
 
   template <typename T, typename E>
-  expected<T, E> make_exceptional_expected() // BOOST_NOEXCEPT(   )
+  expected<T, E> make_exceptional_expected()
   {
     return expected<T, E>();
   }
 
-  /// Requires  typeid(e) == typeid(E)
   template <typename T, typename U, typename E>
   typename boost::disable_if<
     boost::is_same<U, E>,
     expected<T,E>
-  >::type make_exceptional_expected(E const& e) BOOST_NOEXCEPT
+  >::type make_exceptional_expected(E const& e)
   {
     return expected<T, U>(exceptional, e);
   }
 
+  // Requires  typeid(e) == typeid(E)
   template <typename T, typename E>
   typename boost::enable_if_c<
     boost::is_base_of<std::exception, E>::value || boost::is_base_of<boost::exception, E>::value,
@@ -377,7 +392,7 @@ namespace boost
   typename boost::disable_if_c<
     boost::is_base_of<std::exception, E>::value || boost::is_base_of<boost::exception, E>::value,
     expected<T,E>
-  >::type make_exceptional_expected(E const& e) BOOST_NOEXCEPT
+  >::type make_exceptional_expected(E const& e)
   {
     return expected<T, E>(exceptional, e);
   }
