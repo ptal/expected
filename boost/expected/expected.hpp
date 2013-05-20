@@ -15,6 +15,8 @@
 #include <boost/move/move.hpp>
 #include <boost/type_traits.hpp>
 #include <boost/utility/enable_if.hpp>
+#include <boost/utility/result_of.hpp>
+#include <boost/utility/swap.hpp>
 
 namespace boost
 {
@@ -397,18 +399,29 @@ namespace boost
     return expected<T, E>(exceptional, e);
   }
 
-/*
   template <typename F>
   expected<typename boost::result_of<F()>::type>
-  make_noexcept_expected(F&& fuct) BOOST_NOEXCEPT
+  make_noexcept_expected(F&& function) BOOST_NOEXCEPT
   {
+    typedef typename boost::result_of<F()>::type T;
     try {
-      return make_expected(fun());
+      return function();
     } catch (...) {
-      return make_exceptional_expected();
+      return make_exceptional_expected<T>();
     }
   }
-  */
+
+  template <typename E, typename F>
+  expected<typename boost::result_of<F()>::type, E>
+  make_noexcept_expected(F&& function)
+  {
+    typedef typename boost::result_of<F()>::type T;
+    try {
+      return function();
+    } catch (...) {
+      return make_exceptional_expected<T, E>();
+    }
+  }
 }
 
 #endif // BOOST_EXPECTED_HPP

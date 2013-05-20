@@ -31,6 +31,9 @@ class test_exception : public std::exception
 {
 };
 
+int throwing_fun(){ throw test_exception();  }
+int nothrowing_fun(){ return 4; }
+
 BOOST_AUTO_TEST_SUITE(except_expected_constructors)
 
 BOOST_AUTO_TEST_CASE(expected_from_value)
@@ -320,6 +323,32 @@ BOOST_AUTO_TEST_CASE(expected_from_exception_ptr)
   BOOST_CHECK_THROW(e.get(), test_exception);
   BOOST_CHECK_EQUAL(e.valid(), false);
   BOOST_CHECK_EQUAL(static_cast<bool>(e), false);
+}
+
+BOOST_AUTO_TEST_CASE(expected_from_noexcept_fun)
+{
+  BOOST_CHECK_NO_THROW(make_noexcept_expected(throwing_fun));
+  expected<int> e = make_noexcept_expected(throwing_fun);
+  BOOST_CHECK_THROW(e.get(), std::exception);
+  BOOST_CHECK_EQUAL(e.valid(), false);
+  BOOST_CHECK_EQUAL(static_cast<bool>(e), false);
+
+  e = make_noexcept_expected(nothrowing_fun);
+  BOOST_CHECK_NO_THROW(e.get());
+  BOOST_CHECK_EQUAL(e.get(), 4);
+  BOOST_CHECK_EQUAL(*e, 4);
+  BOOST_CHECK_EQUAL(e.valid(), true);
+  BOOST_CHECK_EQUAL(static_cast<bool>(e), true);
+
+  BOOST_CHECK_THROW(make_noexcept_expected<std::error_condition>(throwing_fun), test_exception);
+
+  BOOST_CHECK_NO_THROW(make_noexcept_expected<std::error_condition>(nothrowing_fun));
+  expected<int,std::error_condition> e2 = make_noexcept_expected<std::error_condition>(nothrowing_fun);
+  BOOST_CHECK_NO_THROW(e2.get());
+  BOOST_CHECK_EQUAL(e2.get(), 4);
+  BOOST_CHECK_EQUAL(*e2, 4);
+  BOOST_CHECK_EQUAL(e2.valid(), true);
+  BOOST_CHECK_EQUAL(static_cast<bool>(e2), true);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
