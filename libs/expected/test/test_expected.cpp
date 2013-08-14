@@ -19,6 +19,8 @@
 #include <boost/test/unit_test.hpp> // Enhanced for unit_test framework autolink
 #include <boost/test/included/unit_test.hpp>
 
+#include <boost/bind.hpp>
+
 #include <stdexcept>
 #include <exception>
 #include <system_error>
@@ -353,7 +355,7 @@ BOOST_AUTO_TEST_CASE(expected_from_noexcept_fun)
 
 BOOST_AUTO_TEST_SUITE_END()
 
-BOOST_AUTO_TEST_SUITE(error_expected_modifier)
+BOOST_AUTO_TEST_SUITE(expected_swap)
 
 BOOST_AUTO_TEST_CASE(expected_swap_value)
 {
@@ -411,4 +413,65 @@ BOOST_AUTO_TEST_CASE(expected_swap_function_value)
 
 BOOST_AUTO_TEST_SUITE_END()
 
+void void_fun(int& res, const int& v){ res += v; }
+void void_throwing_fun(const int& v){ throw test_exception(); }
 
+void void_fun2(int& res){ res += 5; }
+
+BOOST_AUTO_TEST_SUITE(expected_then)
+
+BOOST_AUTO_TEST_CASE(expected_success_then)
+{
+  expected<int> e(5);
+
+  expected<int> e1 = e.then(void_fun2);
+  BOOST_CHECK_EQUAL(e1.get(), 10);
+  BOOST_CHECK_EQUAL(e.get(), 10);
+
+  e = 5;
+  e1 = e.then(void_fun2)
+        .then(void_fun2);
+  BOOST_CHECK_EQUAL(e1.get(), 15);
+  BOOST_CHECK_EQUAL(e.get(), 10); // A copy is made between the 2 then.
+
+  e = 5;
+  int a = 0;
+  expected<int> e2 = e.then(boost::bind(&void_fun, boost::ref(a), _1));
+  BOOST_CHECK_EQUAL(5, a);
+  BOOST_CHECK_EQUAL(*e, *e2);
+
+  a = 0;
+  expected<int> e3 = 
+    e.then(boost::bind(&void_fun, boost::ref(a), _1))
+     .then(boost::bind(&void_fun, boost::ref(a), _1));
+
+  BOOST_CHECK_EQUAL(10, a);
+  BOOST_CHECK_EQUAL(*e, *e3); // void_fun doesn't modify the value.
+}
+
+BOOST_AUTO_TEST_CASE(expected_failure_then)
+{
+  expected<int> e(5);
+  expected<int> e2 = e.then(void_throwing_fun);
+
+  BOOST_CHECK_EQUAL(e.valid(), true);
+  BOOST_CHECK_EQUAL(*e, 5);
+  BOOST_CHECK_THROW(e2.get(), std::exception);
+
+  // The function is not called if the expected is already in an error state.
+  expected<int> e3 = e2.then(void_fun2);
+  BOOST_CHECK_EQUAL(e2.valid(), false);
+  BOOST_CHECK_EQUAL(e3.valid(), false);
+  BOOST_CHECK_THROW(e2.get(), std::exception);
+  BOOST_CHECK_THROW(e3.get(), std::exception);
+
+  int a = 0;
+  e3 = e2.then(boost::bind(&void_fun, boost::ref(a), _1));
+  BOOST_CHECK_EQUAL(a, 0);
+  BOOST_CHECK_EQUAL(e2.valid(), false);
+  BOOST_CHECK_EQUAL(e3.valid(), false);
+  BOOST_CHECK_THROW(e2.get(), std::exception);
+  BOOST_CHECK_THROW(e3.get(), std::exception);
+}
+
+BOOST_AUTO_TEST_SUITE_END()

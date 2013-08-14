@@ -323,20 +323,25 @@ namespace boost
     }
 
     // Utilities
-    /*template <typename F>
-    expected<typename boost::result_of<F(const expected&)>::type>
-    then(F&& fuct) BOOST_NOEXCEPT
+    // if F has a void return type.
+    template<typename F>
+    typename enable_if_c<
+      is_void<typename result_of<F(value_type)>::type>::value,
+      this_type
+    >::type then(F f)
     {
-      typedef typename boost::result_of<F(const expected&)>::type result_value_type;
-      if (valid())
+      if(valid())
       {
-        return make_expected(funct(value_));
+        try{
+          f(value);
+        }
+        catch(...)
+        {
+          return this_type();
+        }
       }
-      else
-      {
-        return make_exceptional_expected<result_value_type>(except_);
-      }
-    }*/
+      return *this;
+    }
   };
 
   // Specialized algorithms
