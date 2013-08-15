@@ -99,6 +99,25 @@ namespace boost
   struct emplace_tag {};
   BOOST_CONSTEXPR_OR_CONST emplace_tag emplace = {};
 
+  template <class V, class E>
+  class expected;
+
+  namespace detail{
+    template <class T, class E>
+    struct make_expected_type
+    {
+      typedef expected<T, E> type;
+    };
+
+    template <class V, class E, class E2>
+    struct make_expected_type<expected<V, E>, E2>
+    {
+      BOOST_STATIC_ASSERT_MSG( (boost::is_convertible<E2, E>::value), 
+        "The current exceptional_type in expected is not convertible to the exceptional_type of the return type." );
+      typedef expected<V, E> type;
+    };
+  }
+
   template <typename ValueType, typename ExceptionalType=boost::exception_ptr>
   class expected
   {
@@ -342,6 +361,31 @@ namespace boost
       }
       return *this;
     }
+
+    // if F has a non-void return type.
+    template<typename F>
+    typename disable_if_c<
+      is_void<typename result_of<F(value_type)>::type>::value,
+      typename detail::make_expected_type<typename result_of<F(value_type)>::type, exceptional_type>::type
+    >::type then(F f)
+    {
+      typedef typename detail::make_expected_type<
+                typename result_of<F(value_type)>::type, 
+                exceptional_type
+              >::type 
+              result_type;
+      if(valid())
+      {
+        try{
+          return f(value);
+        }
+        catch(...)
+        {
+          return result_type();
+        }
+      }
+      return result_type(exceptional, error);
+    }
   };
 
   // Specialized algorithms
@@ -406,11 +450,11 @@ namespace boost
 
   template <typename F>
   expected<typename boost::result_of<F()>::type>
-  make_noexcept_expected(F&& function) BOOST_NOEXCEPT
+  make_noexcept_expected(F f) BOOST_NOEXCEPT
   {
     typedef typename boost::result_of<F()>::type T;
     try {
-      return function();
+      return f();
     } catch (...) {
       return make_exceptional_expected<T>();
     }
@@ -418,11 +462,11 @@ namespace boost
 
   template <typename E, typename F>
   expected<typename boost::result_of<F()>::type, E>
-  make_noexcept_expected(F&& function)
+  make_noexcept_expected(F f)
   {
     typedef typename boost::result_of<F()>::type T;
     try {
-      return function();
+      return f();
     } catch (...) {
       return make_exceptional_expected<T, E>();
     }

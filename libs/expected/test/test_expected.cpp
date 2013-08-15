@@ -418,7 +418,7 @@ void void_throwing_fun(const int& v){ throw test_exception(); }
 
 void void_fun2(int& res){ res += 5; }
 
-BOOST_AUTO_TEST_SUITE(expected_then)
+BOOST_AUTO_TEST_SUITE(expected_then_void)
 
 BOOST_AUTO_TEST_CASE(expected_success_then)
 {
@@ -472,6 +472,80 @@ BOOST_AUTO_TEST_CASE(expected_failure_then)
   BOOST_CHECK_EQUAL(e3.valid(), false);
   BOOST_CHECK_THROW(e2.get(), std::exception);
   BOOST_CHECK_THROW(e3.get(), std::exception);
+
+  // Success then fail.
+  a = 0;
+  e = 5;
+  expected<int> e4 = 
+    e.then(boost::bind(&void_fun, boost::ref(a), _1))
+     .then(void_throwing_fun);
+  BOOST_CHECK_EQUAL(a, 5);
+  BOOST_CHECK_EQUAL(e.get(), 5);
+  BOOST_CHECK_THROW(e4.get(), std::exception);
+
+  // Fails then success (but the success function is never called).
+  a = 0;
+  e = 5;
+  expected<int> e5 = 
+    e.then(void_throwing_fun)
+     .then(boost::bind(&void_fun, boost::ref(a), _1));
+  BOOST_CHECK_EQUAL(a, 0);
+  BOOST_CHECK_EQUAL(e.get(), 5);
+  BOOST_CHECK_THROW(e5.get(), std::exception);
+}
+
+BOOST_AUTO_TEST_SUITE_END()
+
+int int_fun(const int& v){ return v + 5; }
+int int_throwing_fun(const int& v){ throw test_exception(); }
+
+BOOST_AUTO_TEST_SUITE(expected_then_non_void)
+
+BOOST_AUTO_TEST_CASE(expected_success_then)
+{
+  expected<int> e(5);
+
+  expected<int> e1 = e.then(int_fun);
+  BOOST_CHECK_EQUAL(e1.get(), 10);
+  BOOST_CHECK_EQUAL(e.get(), 5);
+
+  e = 5;
+  e1 = e.then(int_fun)
+        .then(int_fun);
+  BOOST_CHECK_EQUAL(e1.get(), 15);
+  BOOST_CHECK_EQUAL(e.get(), 5);
+}
+
+BOOST_AUTO_TEST_CASE(expected_failure_then)
+{
+  expected<int> e(5);
+  expected<int> e2 = e.then(int_throwing_fun);
+
+  BOOST_CHECK_EQUAL(e.valid(), true);
+  BOOST_CHECK_EQUAL(*e, 5);
+  BOOST_CHECK_THROW(e2.get(), std::exception);
+
+  // The function is not called if the expected is already in an error state.
+  expected<int> e3 = e2.then(int_fun);
+  BOOST_CHECK_EQUAL(e2.valid(), false);
+  BOOST_CHECK_EQUAL(e3.valid(), false);
+  BOOST_CHECK_THROW(e2.get(), std::exception);
+  BOOST_CHECK_THROW(e3.get(), std::exception);
+
+  // Success then fail.
+  e = 5;
+  expected<int> e4 = 
+    e.then(int_fun)
+     .then(int_throwing_fun);
+  BOOST_CHECK_EQUAL(e.get(), 5);
+  BOOST_CHECK_THROW(e4.get(), std::exception);
+
+  // Fails then success (but the success function is never called).
+  e = 5;
+  e4 = e.then(int_throwing_fun)
+        .then(int_fun);
+  BOOST_CHECK_EQUAL(e.get(), 5);
+  BOOST_CHECK_THROW(e4.get(), std::exception);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
