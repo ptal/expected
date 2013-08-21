@@ -36,8 +36,6 @@ namespace boost
 
       exceptional_type& error() { return error_value; }
       const exceptional_type& error() const { return error_value; }
-
-      // Add implicit/explicit conversion to exceptional_type ?
   };
 
   // Traits classes
@@ -85,7 +83,7 @@ namespace boost
       boost::rethrow_exception(e);
     }
   };
-  
+
   template <>
   struct exceptional_traits<std::exception_ptr> 
   : public exceptional_traits<boost::exception_ptr>
@@ -226,7 +224,7 @@ namespace boost
     {}
 #endif
 
-    expected()
+    expected(exceptional_tag)
     : error(traits_type::catch_exception())
     , has_value(false)
     {}
@@ -345,7 +343,7 @@ namespace boost
     // if F has a void return type.
     template<typename F>
     typename enable_if_c<
-      is_void<typename result_of<F(value_type)>::type>::value,
+      is_void<typename result_of<F()>::type>::value,
       this_type
     >::type then(F f)
     {
@@ -356,7 +354,7 @@ namespace boost
         }
         catch(...)
         {
-          return this_type();
+          return this_type(exceptional);
         }
       }
       return *this;
@@ -365,12 +363,12 @@ namespace boost
     // if F has a non-void return type.
     template<typename F>
     typename disable_if_c<
-      is_void<typename result_of<F(value_type)>::type>::value,
-      typename detail::make_expected_type<typename result_of<F(value_type)>::type, exceptional_type>::type
+      is_void<typename result_of<F()>::type>::value,
+      typename detail::make_expected_type<typename result_of<F()>::type, exceptional_type>::type
     >::type then(F f)
     {
       typedef typename detail::make_expected_type<
-                typename result_of<F(value_type)>::type, 
+                typename result_of<F()>::type, 
                 exceptional_type
               >::type 
               result_type;
@@ -381,7 +379,7 @@ namespace boost
         }
         catch(...)
         {
-          return result_type();
+          return result_type(exceptional);
         }
       }
       return result_type(exceptional, error);
@@ -395,6 +393,7 @@ namespace boost
     x.swap(y);
   }
 
+#if ! defined BOOST_NO_CXX11_VARIADIC_TEMPLATES
   // Factories
   template<typename T, typename E, typename... Args>
   expected<T,E> make_expected(Args&&... args)
@@ -407,17 +406,18 @@ namespace boost
   {
     return expected<T>(emplace, boost::forward<Args>(args)...);
   }
+#endif
 
   template <typename T>
   expected<T> make_exceptional_expected() BOOST_NOEXCEPT
   {
-    return expected<T>();
+    return expected<T>(exceptional);
   }
 
   template <typename T, typename E>
   expected<T, E> make_exceptional_expected()
   {
-    return expected<T, E>();
+    return expected<T, E>(exceptional);
   }
 
   template <typename T, typename U, typename E>
@@ -471,6 +471,6 @@ namespace boost
       return make_exceptional_expected<T, E>();
     }
   }
-}
+} // namespace boost
 
 #endif // BOOST_EXPECTED_HPP

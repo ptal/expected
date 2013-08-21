@@ -121,7 +121,7 @@ BOOST_AUTO_TEST_CASE(expected_from_catch_block)
   }
   catch(...)
   {
-    expected<int> e;
+    expected<int> e(exceptional);
 
     BOOST_REQUIRE_THROW(e.get(), std::exception);
     BOOST_CHECK_EQUAL(e.valid(), false);
