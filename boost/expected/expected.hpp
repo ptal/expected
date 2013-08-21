@@ -386,6 +386,181 @@ namespace boost
     }
   };
 
+  template <typename ExceptionalType>
+  class expected<void, ExceptionalType>
+  {
+  public:
+    typedef void value_type;
+    typedef ExceptionalType exceptional_type;
+    typedef exceptional_traits<exceptional_type> traits_type;
+
+  private:
+    typedef expected<value_type, exceptional_type> this_type;
+
+    // C++03 movable support
+    BOOST_COPYABLE_AND_MOVABLE(this_type)
+
+  private:
+    exceptional_type error;
+    bool has_value;
+
+  public:
+    // About noexcept specification:
+    //  has_nothrow_move_constructor is not yet into Boost.TypeTraits.
+
+    // Constructors/Destructors/Assignments
+
+    expected(const expected& rhs) 
+    BOOST_NOEXCEPT_IF(
+      has_nothrow_copy_constructor<exceptional_type>::value
+    )
+    : has_value(rhs.has_value)
+    {
+      if (!has_value)
+      {
+        ::new (&error) exceptional_type(rhs.error);
+      }
+    }
+
+    expected(BOOST_RV_REF(expected) rhs)
+    //BOOST_NOEXCEPT_IF(
+    //  has_nothrow_move_constructor<value_type>::value && 
+    //  has_nothrow_move_constructor<exceptional_type>::value
+    //)
+    : has_value(rhs.has_value)
+    {
+      if (!has_value)
+      {
+        ::new (&error) exceptional_type(boost::move(rhs.error));
+      }
+    }
+
+    expected(exceptional_tag, exceptional_type const& e) 
+    BOOST_NOEXCEPT_IF(
+      has_nothrow_copy_constructor<exceptional_type>::value
+    )
+    : error(e)
+    , has_value(false)
+    {}
+
+    // Requires  typeid(e) == typeid(E)
+    template <class E>
+    expected(exceptional_tag, E const& e)
+    : error(traits_type::make_exceptional(e))
+    , has_value(false)
+    {}
+
+    expected()
+    : has_value(true)
+    {}
+
+    expected(exceptional_tag)
+    : error(traits_type::catch_exception())
+    , has_value(false)
+    {}
+
+    // Assignments
+    expected& operator=(BOOST_COPY_ASSIGN_REF(expected) e)
+    {
+      this_type(e).swap(*this);
+      return *this;
+    }
+
+    expected& operator=(BOOST_RV_REF(expected) e)
+    {
+      this_type(boost::move(e)).swap(*this);
+      return *this;
+    }
+
+    // Modifiers
+    void swap(expected& rhs)
+    {
+      if (has_value)
+      {
+        if (!rhs.has_value)
+        {
+          new (&error) exceptional_type(boost::move(rhs.error));
+          boost::swap(has_value, rhs.has_value);
+        }
+      }
+      else
+      {
+        if (rhs.has_value)
+        {
+          rhs.swap(*this);
+        }
+        else
+        {
+          boost::swap(error, rhs.error);
+        }
+      }
+    }
+
+    // Observers
+    bool valid() const BOOST_NOEXCEPT
+    {
+      return has_value;
+    }
+
+#if ! defined(BOOST_NO_CXX11_EXPLICIT_CONVERSION_OPERATORS)
+    explicit operator bool() const BOOST_NOEXCEPT
+    {
+      return valid();
+    }
+#endif
+
+    void get() const
+    {
+      if (!valid()) traits_type::bad_access(error);
+    }
+
+    // Utilities
+    // if F has a void return type.
+    template<typename F>
+    typename enable_if_c<
+      is_void<typename result_of<F()>::type>::value,
+      this_type
+    >::type then(F f)
+    {
+      if(valid())
+      {
+        try{
+          f();
+        }
+        catch(...)
+        {
+          return this_type();
+        }
+      }
+      return *this;
+    }
+
+    // if F has a non-void return type.
+    template<typename F>
+    typename disable_if_c<
+      is_void<typename result_of<F()>::type>::value,
+      typename detail::make_expected_type<typename result_of<F()>::type, exceptional_type>::type
+    >::type then(F f)
+    {
+      typedef typename detail::make_expected_type<
+                typename result_of<F()>::type, 
+                exceptional_type
+              >::type 
+              result_type;
+      if(valid())
+      {
+        try{
+          return f();
+        }
+        catch(...)
+        {
+          return result_type();
+        }
+      }
+      return result_type(exceptional, error);
+    }
+  };
+
   // Specialized algorithms
   template <class T>
   void swap(expected<T>& x, expected<T>& y) BOOST_NOEXCEPT_IF(BOOST_NOEXCEPT_EXPR(x.swap(y)))
