@@ -592,16 +592,12 @@ namespace boost
     return expected<T, E>(exceptional);
   }
 
+  template <typename T>
 #ifdef BOOST_USE_STD_EXCEPTION_PTR
-  template <typename T>
   expected<T> make_exceptional_expected(std::exception_ptr const& e) BOOST_NOEXCEPT
-  {
-    return expected<T>(exceptional, e);
-  }
-#endif
-
-  template <typename T>
+#else
   expected<T> make_exceptional_expected(boost::exception_ptr const& e) BOOST_NOEXCEPT
+#endif
   {
     return expected<T>(exceptional, e);
   }
