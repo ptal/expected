@@ -18,6 +18,8 @@
 #include <boost/utility/result_of.hpp>
 #include <boost/utility/swap.hpp>
 
+// define BOOST_USE_STD_EXCEPTION_PTR to enable the use of the standard exception library.
+
 namespace boost
 {
   // bad_expected_access exception class.
@@ -84,6 +86,7 @@ namespace boost
     }
   };
 
+#ifdef BOOST_USE_STD_EXCEPTION_PTR
   template <>
   struct exceptional_traits<std::exception_ptr>
   {
@@ -105,6 +108,7 @@ namespace boost
       std::rethrow_exception(e);
     }
   };
+#endif
 
   struct exceptional_tag {};
   BOOST_CONSTEXPR_OR_CONST exceptional_tag exceptional = {};
@@ -115,7 +119,11 @@ namespace boost
   template <class V, class E>
   class expected;
 
+#ifdef BOOST_USE_STD_EXCEPTION_PTR
+  template <typename ValueType, typename ExceptionalType=std::exception_ptr>
+#else
   template <typename ValueType, typename ExceptionalType=boost::exception_ptr>
+#endif
   class expected
   {
   public:
@@ -583,6 +591,14 @@ namespace boost
   {
     return expected<T, E>(exceptional);
   }
+
+#ifdef BOOST_USE_STD_EXCEPTION_PTR
+  template <typename T>
+  expected<T> make_exceptional_expected(std::exception_ptr const& e) BOOST_NOEXCEPT
+  {
+    return expected<T>(exceptional, e);
+  }
+#endif
 
   template <typename T>
   expected<T> make_exceptional_expected(boost::exception_ptr const& e) BOOST_NOEXCEPT
