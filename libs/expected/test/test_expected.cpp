@@ -432,9 +432,43 @@ BOOST_AUTO_TEST_CASE(expected_then)
   };
 
   expected<int> e = fun(true).then(add_five);
-
   BOOST_CHECK_NO_THROW(e.get());
   BOOST_CHECK_EQUAL(*e, 10);
+
+  e = fun(true).then(add_five).then(add_five);
+  BOOST_CHECK_NO_THROW(e.get());
+  BOOST_CHECK_EQUAL(*e, 15);
+
+  e = fun(false).then(add_five).then(add_five);
+  BOOST_CHECK_THROW(e.get(), test_exception);
 }
+
+BOOST_AUTO_TEST_CASE(expected_void_then)
+{
+  auto fun = [](bool b)
+  { 
+    if(b) 
+      return expected<void>();
+    else
+      return make_exceptional_expected<void>(test_exception());
+  };
+
+  auto launch_except = []()
+  {
+    throw test_exception();
+  };
+
+  auto do_nothing = [](){};
+
+  expected<void> e = fun(true).then(do_nothing);
+  BOOST_CHECK_NO_THROW(e.get());
+
+  e = fun(false).then(do_nothing);
+  BOOST_CHECK_THROW(e.get(), test_exception);
+
+  e = fun(true).then(launch_except);
+  BOOST_CHECK_THROW(e.get(), std::exception);
+}
+
 
 BOOST_AUTO_TEST_SUITE_END()
