@@ -573,32 +573,10 @@ namespace boost
     return expected<T, E>(exceptional);
   }
 
-  template <typename T, typename U, typename E>
-  typename boost::disable_if<
-    boost::is_same<U, E>,
-    expected<T,E>
-  >::type make_exceptional_expected(E const& e)
-  {
-    return expected<T, U>(exceptional, e);
-  }
-
-  // Requires  typeid(e) == typeid(E)
-  template <typename T, typename E>
-  typename boost::enable_if_c<
-    boost::is_base_of<std::exception, E>::value || boost::is_base_of<boost::exception, E>::value,
-    expected<T>
-  >::type make_exceptional_expected(E const& e) BOOST_NOEXCEPT
+  template <typename T>
+  expected<T> make_exceptional_expected(boost::exception_ptr const& e) BOOST_NOEXCEPT
   {
     return expected<T>(exceptional, e);
-  }
-
-  template <typename T, typename E>
-  typename boost::disable_if_c<
-    boost::is_base_of<std::exception, E>::value || boost::is_base_of<boost::exception, E>::value,
-    expected<T,E>
-  >::type make_exceptional_expected(E const& e)
-  {
-    return expected<T, E>(exceptional, e);
   }
 
   template <typename F>
