@@ -85,10 +85,25 @@ namespace boost
   };
 
   template <>
-  struct exceptional_traits<std::exception_ptr> 
-  : public exceptional_traits<boost::exception_ptr>
+  struct exceptional_traits<std::exception_ptr>
   {
     typedef std::exception_ptr exceptional_type;
+
+    template <class E>
+    static exceptional_type make_exceptional(E const& e)
+    {
+      return std::make_exception_ptr(e);
+    }
+    
+    static exceptional_type catch_exception()
+    {
+      return std::current_exception();
+    }
+    
+    static void bad_access(const exceptional_type &e)
+    {
+      std::rethrow_exception(e);
+    }
   };
 
   struct exceptional_tag {};
@@ -214,10 +229,6 @@ namespace boost
     {}
 
     ~expected()
-    //BOOST_NOEXCEPT_IF(
-    //  is_nothrow_destructible<value_type>::value &&
-    //  is_nothrow_destructible<exceptional_type>::value_type
-    //)
     {
       if (valid()) value.~value_type();
       else error.~exceptional_type();
