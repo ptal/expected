@@ -185,6 +185,7 @@ BOOST_AUTO_TEST_CASE(expected_from_value)
 #endif
 }
 
+#ifdef EXPECTED_CPP11_TESTS
 BOOST_AUTO_TEST_CASE(expected_from_error)
 {
   // From exceptional constructor.
@@ -199,6 +200,7 @@ BOOST_AUTO_TEST_CASE(expected_from_error)
   BOOST_CHECK_EQUAL(static_cast<bool>(e), false);
 #endif
 }
+#endif
 
 BOOST_AUTO_TEST_SUITE_END()
 
@@ -258,7 +260,6 @@ BOOST_AUTO_TEST_CASE(expected_from_moved_expected)
 }
 #endif
 
-#ifdef EXPECTED_CPP11_TESTS
 BOOST_AUTO_TEST_CASE(expected_from_emplace)
 {
   // From emplace constructor.
@@ -275,7 +276,6 @@ BOOST_AUTO_TEST_CASE(expected_from_emplace)
   BOOST_CHECK(static_cast<bool>(e));
 #endif
 }
-#endif
 
 #ifdef EXPECTED_CPP11_TESTS
 BOOST_AUTO_TEST_CASE(expected_from_move_value)
@@ -299,11 +299,10 @@ BOOST_AUTO_TEST_SUITE_END()
 
 BOOST_AUTO_TEST_SUITE(expected_factories)
 
-#ifdef EXPECTED_CPP11_TESTS
 BOOST_AUTO_TEST_CASE(expected_from_emplace)
 {
   // From emplace factory.
-  auto e = make_expected<std::string>("emplace");
+  boost::expected<std::string> e = make_expected<std::string>("emplace");
   BOOST_REQUIRE_NO_THROW(e.get());
   BOOST_CHECK_EQUAL(e.get(), "emplace");
   BOOST_CHECK_EQUAL(*e, "emplace");
@@ -312,13 +311,12 @@ BOOST_AUTO_TEST_CASE(expected_from_emplace)
   BOOST_CHECK(static_cast<bool>(e));
 #endif
 }
-#endif
 
-#ifdef EXPECTED_CPP11_TESTS
 BOOST_AUTO_TEST_CASE(expected_from_emplace_error)
 {
   // From emplace factory.
-  auto e = make_expected<std::string, ERROR_CONDITION_NS::error_condition>("emplace");
+  boost::expected<std::string, ERROR_CONDITION_NS::error_condition> e = 
+    make_expected<std::string, ERROR_CONDITION_NS::error_condition>("emplace");
   BOOST_REQUIRE_NO_THROW(e.get());
   BOOST_CHECK_EQUAL(e.get(), "emplace");
   BOOST_CHECK_EQUAL(*e, "emplace");
@@ -327,7 +325,6 @@ BOOST_AUTO_TEST_CASE(expected_from_emplace_error)
   BOOST_CHECK(static_cast<bool>(e));
 #endif
 }
-#endif
 
 BOOST_AUTO_TEST_CASE(expected_from_exception_catch)
 {
@@ -369,7 +366,7 @@ BOOST_AUTO_TEST_CASE(expected_from_error_catch_exception)
 BOOST_AUTO_TEST_CASE(expected_from_exception_ptr)
 {
   // From exception_ptr constructor.
-  auto e = make_exceptional_expected<int>(MAKE_EXCEPTION_PTR(test_exception()));
+  boost::expected<int> e = make_exceptional_expected<int>(MAKE_EXCEPTION_PTR(test_exception()));
   BOOST_CHECK_THROW(e.get(), test_exception);
   BOOST_CHECK_EQUAL(e.valid(), false);
 #ifdef EXPECTED_CPP11_TESTS
