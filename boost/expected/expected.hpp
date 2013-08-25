@@ -100,22 +100,6 @@ namespace boost
   template <class V, class E>
   class expected;
 
-  namespace detail{
-    template <class T, class E>
-    struct make_expected_type
-    {
-      typedef expected<T, E> type;
-    };
-
-    template <class V, class E, class E2>
-    struct make_expected_type<expected<V, E>, E2>
-    {
-      BOOST_STATIC_ASSERT_MSG( (boost::is_convertible<E2, E>::value), 
-        "The current exceptional_type in expected is not convertible to the exceptional_type of the return type." );
-      typedef expected<V, E> type;
-    };
-  }
-
   template <typename ValueType, typename ExceptionalType=boost::exception_ptr>
   class expected
   {
@@ -339,43 +323,42 @@ namespace boost
       return value;
     }
 
-    // Utilities
-    // if F has a void return type.
-    template<typename F>
-    typename enable_if_c<
-      is_void<typename result_of<F()>::type>::value,
-      this_type
-    >::type then(F f)
+    template <typename F>
+    typename boost::enable_if<
+      boost::is_same<typename result_of<F(value_type)>::type, void>,
+      expected<typename result_of<F(value_type)>::type, exceptional_type>
+    >::type
+    then(const F& f) const
     {
+      typedef expected<typename result_of<F(value_type)>::type, exceptional_type> result_type;
       if(valid())
       {
-        try{
+        try
+        {
           f(value);
+          return result_type();
         }
         catch(...)
         {
-          return this_type(exceptional);
+          return result_type(exceptional);
         }
       }
-      return *this;
+      return result_type(exceptional, error);
     }
 
-    // if F has a non-void return type.
-    template<typename F>
-    typename disable_if_c<
-      is_void<typename result_of<F()>::type>::value,
-      typename detail::make_expected_type<typename result_of<F()>::type, exceptional_type>::type
-    >::type then(F f)
+    template <typename F>
+    typename boost::disable_if<
+      boost::is_same<typename result_of<F(value_type)>::type, void>,
+      expected<typename result_of<F(value_type)>::type, exceptional_type>
+    >::type
+    then(const F& f) const
     {
-      typedef typename detail::make_expected_type<
-                typename result_of<F()>::type, 
-                exceptional_type
-              >::type 
-              result_type;
+      typedef expected<typename result_of<F(value_type)>::type, exceptional_type> result_type;
       if(valid())
       {
-        try{
-          return f(value);
+        try
+        {
+          return result_type(f(value));
         }
         catch(...)
         {
@@ -423,10 +406,6 @@ namespace boost
     }
 
     expected(BOOST_RV_REF(expected) rhs)
-    //BOOST_NOEXCEPT_IF(
-    //  has_nothrow_move_constructor<value_type>::value && 
-    //  has_nothrow_move_constructor<exceptional_type>::value
-    //)
     : has_value(rhs.has_value)
     {
       if (!has_value)
@@ -514,47 +493,46 @@ namespace boost
       if (!valid()) traits_type::bad_access(error);
     }
 
-    // Utilities
-    // if F has a void return type.
-    template<typename F>
-    typename enable_if_c<
-      is_void<typename result_of<F()>::type>::value,
-      this_type
-    >::type then(F f)
+    template <typename F>
+    typename boost::enable_if<
+      boost::is_same<typename result_of<F()>::type, void>,
+      expected<typename result_of<F()>::type, exceptional_type>
+    >::type
+    then(const F& f) const
     {
+      typedef expected<typename result_of<F()>::type, exceptional_type> result_type;
       if(valid())
       {
-        try{
+        try
+        {
           f();
+          return result_type();
         }
         catch(...)
         {
-          return this_type();
+          return result_type(exceptional);
         }
       }
-      return *this;
+      return result_type(exceptional, error);
     }
 
-    // if F has a non-void return type.
-    template<typename F>
-    typename disable_if_c<
-      is_void<typename result_of<F()>::type>::value,
-      typename detail::make_expected_type<typename result_of<F()>::type, exceptional_type>::type
-    >::type then(F f)
+    template <typename F>
+    typename boost::disable_if<
+      boost::is_same<typename result_of<F()>::type, void>,
+      expected<typename result_of<F()>::type, exceptional_type>
+    >::type
+    then(const F& f) const
     {
-      typedef typename detail::make_expected_type<
-                typename result_of<F()>::type, 
-                exceptional_type
-              >::type 
-              result_type;
+      typedef expected<typename result_of<F()>::type, exceptional_type> result_type;
       if(valid())
       {
-        try{
-          return f();
+        try
+        {
+          return result_type(f());
         }
         catch(...)
         {
-          return result_type();
+          return result_type(exceptional);
         }
       }
       return result_type(exceptional, error);
