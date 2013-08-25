@@ -580,25 +580,75 @@ namespace boost
   }
 
   template <typename F>
-  expected<typename boost::result_of<F()>::type>
+  typename boost::enable_if<
+    boost::is_same<typename result_of<F()>::type, void>,
+    expected<typename result_of<F()>::type>
+  >::type
   make_noexcept_expected(F f) BOOST_NOEXCEPT
   {
     typedef typename boost::result_of<F()>::type T;
-    try {
-      return f();
-    } catch (...) {
+    try
+    {
+      f();
+      return expected<T>();
+    }
+    catch (...)
+    {
+      return make_exceptional_expected<T>();
+    }
+  }
+
+  template <typename F>
+  typename boost::disable_if<
+    boost::is_same<typename result_of<F()>::type, void>,
+    expected<typename result_of<F()>::type>
+  >::type
+  make_noexcept_expected(F f) BOOST_NOEXCEPT
+  {
+    typedef typename boost::result_of<F()>::type T;
+    try
+    {
+      return expected<T>(f());
+    }
+    catch (...)
+    {
       return make_exceptional_expected<T>();
     }
   }
 
   template <typename E, typename F>
-  expected<typename boost::result_of<F()>::type, E>
+  typename boost::enable_if<
+    boost::is_same<typename result_of<F()>::type, void>,
+    expected<typename result_of<F()>::type, E>
+  >::type
   make_noexcept_expected(F f)
   {
     typedef typename boost::result_of<F()>::type T;
-    try {
-      return f();
-    } catch (...) {
+    try
+    {
+      f();
+      return expected<T, E>();
+    }
+    catch (...)
+    {
+      return make_exceptional_expected<T, E>();
+    }
+  }
+
+  template <typename E, typename F>
+  typename boost::disable_if<
+    boost::is_same<typename result_of<F()>::type, void>,
+    expected<typename result_of<F()>::type, E>
+  >::type
+  make_noexcept_expected(F f)
+  {
+    typedef typename boost::result_of<F()>::type T;
+    try
+    {
+      return expected<T, E>(f());
+    }
+    catch (...)
+    {
       return make_exceptional_expected<T, E>();
     }
   }
