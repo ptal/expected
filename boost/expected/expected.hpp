@@ -22,20 +22,15 @@
   #include <boost/preprocessor/facilities/intercept.hpp>
   #include <boost/preprocessor/repetition/enum_params.hpp>
   #include <boost/preprocessor/repetition/repeat_from_to.hpp>
-  #include "detail/enum_binary_macro_params.hpp"
-  #include "detail/enum_macro_params.hpp"
   #ifndef BOOST_EXPECTED_EMPLACE_MAX_ARGS
     #define BOOST_EXPECTED_EMPLACE_MAX_ARGS 10
   #endif
 
-  #define MAKE_BOOST_RV_REF(arg) BOOST_RV_REF(arg)
-  #define MAKE_ARG(arg) arg
-  #define MAKE_BOOST_MOVE(arg) boost::move(arg)
+  #define MAKE_BOOST_RV_REF_ARG(z, count, unused) BOOST_RV_REF(Arg##count) arg##count
+  #define MAKE_BOOST_MOVE_PARAM(z, count, unused) boost::move(arg##count)
 #endif 
 
 // define BOOST_USE_STD_EXCEPTION_PTR to enable the use of the standard exception library.
-
-
 
 namespace boost
 {
@@ -247,11 +242,11 @@ namespace boost
     , has_value(true)
     {}
 #else
-#define EXPECTED_EMPLACE_CONSTRUCTOR(z, n, unused)                                        \
+#define EXPECTED_EMPLACE_CONSTRUCTOR(z, n, unused)                            \
     template <BOOST_PP_ENUM_PARAMS(n, class Arg)>                             \
     explicit expected(emplace_tag,                                            \
-      BOOST_PP_ENUM_BINARY_MACRO_PARAMS(n, MAKE_BOOST_RV_REF, Arg, MAKE_ARG, arg)) \
-    : value(BOOST_PP_ENUM_MACRO_PARAMS(n, MAKE_BOOST_MOVE, arg)) \
+      BOOST_PP_REPEAT(n, MAKE_BOOST_RV_REF_ARG, ~))                           \
+    : value(BOOST_PP_REPEAT(n, MAKE_BOOST_MOVE_PARAM, ~))                     \
     , has_value(true)                                                         \
     {}
 
@@ -307,11 +302,11 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_EXPECTED_EMPLACE_MAX_ARGS, EXPECTED_EMPLACE_CON
 #else
 #define EXPECTED_EMPLACE(z, n, unused)                                        \
     template <BOOST_PP_ENUM_PARAMS(n, class Arg)>                             \
-    expected& emplace(                                                        \
-      BOOST_PP_ENUM_BINARY_MACRO_PARAMS(n, MAKE_BOOST_RV_REF, Arg, MAKE_ARG, arg)) \
+    expected& emplace(BOOST_PP_REPEAT(n, MAKE_BOOST_RV_REF_ARG, ~))           \
     {                                                                         \
-      this_type(emplace_tag(), BOOST_PP_ENUM_MACRO_PARAMS(n, MAKE_BOOST_MOVE, arg)).swap(*this); \
-      return *this;                                                            \
+      this_type(emplace_tag(), BOOST_PP_REPEAT(n, MAKE_BOOST_MOVE_PARAM, ~))  \
+      .swap(*this);                                                           \
+      return *this;                                                           \
     }
 
 BOOST_PP_REPEAT_FROM_TO(1, BOOST_EXPECTED_EMPLACE_MAX_ARGS, EXPECTED_EMPLACE, ~)
@@ -623,10 +618,10 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_EXPECTED_EMPLACE_MAX_ARGS, EXPECTED_EMPLACE, ~)
 #else
 #define MAKE_EXPECTED_EMPLACE(z, n, unused)                                   \
     template<typename T, typename E, BOOST_PP_ENUM_PARAMS(n, class Arg)>      \
-    expected<T,E> make_expected(                                              \
-      BOOST_PP_ENUM_BINARY_MACRO_PARAMS(n, MAKE_BOOST_RV_REF, Arg, MAKE_ARG, arg)) \
+    expected<T,E> make_expected(BOOST_PP_REPEAT(n, MAKE_BOOST_RV_REF_ARG, ~)) \
     {                                                                         \
-      return expected<T,E>(emplace, BOOST_PP_ENUM_MACRO_PARAMS(n, MAKE_BOOST_MOVE, arg)); \
+      return expected<T,E>(emplace,                                           \
+        BOOST_PP_REPEAT(n, MAKE_BOOST_MOVE_PARAM, ~));                        \
     }
 
 BOOST_PP_REPEAT_FROM_TO(1, BOOST_EXPECTED_EMPLACE_MAX_ARGS, MAKE_EXPECTED_EMPLACE, ~)
@@ -634,10 +629,10 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_EXPECTED_EMPLACE_MAX_ARGS, MAKE_EXPECTED_EMPLAC
 
 #define MAKE_EXPECTED_EMPLACE(z, n, unused)                                 \
     template<typename T, BOOST_PP_ENUM_PARAMS(n, class Arg)>                \
-    expected<T> make_expected(                                              \
-      BOOST_PP_ENUM_BINARY_MACRO_PARAMS(n, MAKE_BOOST_RV_REF, Arg, MAKE_ARG, arg)) \
+    expected<T> make_expected(BOOST_PP_REPEAT(n, MAKE_BOOST_RV_REF_ARG, ~)) \
     {                                                                       \
-      return expected<T>(emplace, BOOST_PP_ENUM_MACRO_PARAMS(n, MAKE_BOOST_MOVE, arg)); \
+      return expected<T>(emplace,                                           \
+        BOOST_PP_REPEAT(n, MAKE_BOOST_MOVE_PARAM, ~));                      \
     }
 
 BOOST_PP_REPEAT_FROM_TO(1, BOOST_EXPECTED_EMPLACE_MAX_ARGS, MAKE_EXPECTED_EMPLACE, ~)
@@ -742,9 +737,8 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_EXPECTED_EMPLACE_MAX_ARGS, MAKE_EXPECTED_EMPLAC
 } // namespace boost
 
 #if defined BOOST_NO_CXX11_VARIADIC_TEMPLATES
-  #undef MAKE_BOOST_RV_REF
-  #undef MAKE_ARG
-  #undef MAKE_BOOST_MOVE
+  #undef MAKE_BOOST_RV_REF_ARG
+  #undef MAKE_BOOST_MOVE_PARAM
 #endif
 
 #endif // BOOST_EXPECTED_HPP
