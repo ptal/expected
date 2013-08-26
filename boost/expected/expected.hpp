@@ -26,8 +26,8 @@
     #define BOOST_EXPECTED_EMPLACE_MAX_ARGS 10
   #endif
 
-  #define MAKE_BOOST_RV_REF_ARG(z, count, unused) BOOST_RV_REF(Arg##count) arg##count
-  #define MAKE_BOOST_MOVE_PARAM(z, count, unused) boost::move(arg##count)
+  #define MAKE_BOOST_RV_REF_ARG(z, count, unused) BOOST_PP_COMMA_IF(count) BOOST_RV_REF(Arg##count) arg##count
+  #define MAKE_BOOST_MOVE_PARAM(z, count, unused) BOOST_PP_COMMA_IF(count) boost::move(arg##count)
 #endif 
 
 // define BOOST_USE_STD_EXCEPTION_PTR to enable the use of the standard exception library.
