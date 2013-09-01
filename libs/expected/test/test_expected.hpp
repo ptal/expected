@@ -21,7 +21,7 @@
 
 #ifdef EXPECTED_CPP11_TESTS
 #define BOOST_RESULT_OF_USE_DECLTYPE
-#define BOOST_USE_STD_EXCEPTION_PTR
+#define BOOST_EXPECTED_USE_STD_EXCEPTION_PTR
 #endif
 #include "../../../boost/expected/expected.hpp"
 

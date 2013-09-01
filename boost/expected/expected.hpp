@@ -30,7 +30,7 @@
   #define MAKE_BOOST_FWD_PARAM(z, count, unused) BOOST_PP_COMMA_IF(count) boost::forward<Arg##count>(arg##count)
 #endif 
 
-// define BOOST_USE_STD_EXCEPTION_PTR to enable the use of the standard exception library.
+// define BOOST_EXPECTED_USE_STD_EXCEPTION_PTR to enable the use of the standard exception library.
 
 namespace boost
 {
@@ -98,7 +98,7 @@ namespace boost
     }
   };
 
-#ifdef BOOST_USE_STD_EXCEPTION_PTR
+#ifdef BOOST_EXPECTED_USE_STD_EXCEPTION_PTR
   template <>
   struct exceptional_traits<std::exception_ptr>
   {
@@ -131,7 +131,7 @@ namespace boost
   template <class V, class E>
   class expected;
 
-#ifdef BOOST_USE_STD_EXCEPTION_PTR
+#ifdef BOOST_EXPECTED_USE_STD_EXCEPTION_PTR
   template <typename ValueType, typename ExceptionalType=std::exception_ptr>
 #else
   template <typename ValueType, typename ExceptionalType=boost::exception_ptr>
@@ -652,7 +652,7 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_EXPECTED_EMPLACE_MAX_ARGS, MAKE_EXPECTED_EMPLAC
   }
 
   template <typename T>
-#ifdef BOOST_USE_STD_EXCEPTION_PTR
+#ifdef BOOST_EXPECTED_USE_STD_EXCEPTION_PTR
   expected<T> make_exceptional_expected(std::exception_ptr const& e) BOOST_NOEXCEPT
 #else
   expected<T> make_exceptional_expected(boost::exception_ptr const& e) BOOST_NOEXCEPT
