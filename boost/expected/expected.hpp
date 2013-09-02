@@ -384,7 +384,7 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_EXPECTED_EMPLACE_MAX_ARGS, EXPECTED_EMPLACE, ~)
       boost::is_same<typename result_of<F(value_type)>::type, void>,
       expected<typename result_of<F(value_type)>::type, exceptional_type>
     >::type
-    then(const F& f) const
+    then(BOOST_RV_REF(F) f) const
     {
       typedef expected<typename result_of<F(value_type)>::type, exceptional_type> result_type;
       if(valid())
@@ -407,7 +407,7 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_EXPECTED_EMPLACE_MAX_ARGS, EXPECTED_EMPLACE, ~)
       boost::is_same<typename result_of<F(value_type)>::type, void>,
       expected<typename result_of<F(value_type)>::type, exceptional_type>
     >::type
-    then(const F& f) const
+    then(BOOST_RV_REF(F) f) const
     {
       typedef expected<typename result_of<F(value_type)>::type, exceptional_type> result_type;
       if(valid())
@@ -554,7 +554,7 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_EXPECTED_EMPLACE_MAX_ARGS, EXPECTED_EMPLACE, ~)
       boost::is_same<typename result_of<F()>::type, void>,
       expected<typename result_of<F()>::type, exceptional_type>
     >::type
-    then(const F& f) const
+    then(BOOST_RV_REF(F) f) const
     {
       typedef expected<typename result_of<F()>::type, exceptional_type> result_type;
       if(valid())
@@ -577,7 +577,7 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_EXPECTED_EMPLACE_MAX_ARGS, EXPECTED_EMPLACE, ~)
       boost::is_same<typename result_of<F()>::type, void>,
       expected<typename result_of<F()>::type, exceptional_type>
     >::type
-    then(const F& f) const
+    then(BOOST_RV_REF(F) f) const
     {
       typedef expected<typename result_of<F()>::type, exceptional_type> result_type;
       if(valid())
@@ -666,7 +666,7 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_EXPECTED_EMPLACE_MAX_ARGS, MAKE_EXPECTED_EMPLAC
     boost::is_same<typename result_of<F()>::type, void>,
     expected<typename result_of<F()>::type>
   >::type
-  make_noexcept_expected(F f) BOOST_NOEXCEPT
+  make_noexcept_expected(BOOST_RV_REF(F) f) BOOST_NOEXCEPT
   {
     typedef typename boost::result_of<F()>::type T;
     try
@@ -685,7 +685,7 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_EXPECTED_EMPLACE_MAX_ARGS, MAKE_EXPECTED_EMPLAC
     boost::is_same<typename result_of<F()>::type, void>,
     expected<typename result_of<F()>::type>
   >::type
-  make_noexcept_expected(F f) BOOST_NOEXCEPT
+  make_noexcept_expected(BOOST_RV_REF(F) f) BOOST_NOEXCEPT
   {
     typedef typename boost::result_of<F()>::type T;
     try
@@ -703,7 +703,7 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_EXPECTED_EMPLACE_MAX_ARGS, MAKE_EXPECTED_EMPLAC
     boost::is_same<typename result_of<F()>::type, void>,
     expected<typename result_of<F()>::type, E>
   >::type
-  make_noexcept_expected(F f)
+  make_noexcept_expected(BOOST_RV_REF(F) f)
   {
     typedef typename boost::result_of<F()>::type T;
     try
@@ -722,7 +722,7 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_EXPECTED_EMPLACE_MAX_ARGS, MAKE_EXPECTED_EMPLAC
     boost::is_same<typename result_of<F()>::type, void>,
     expected<typename result_of<F()>::type, E>
   >::type
-  make_noexcept_expected(F f)
+  make_noexcept_expected(BOOST_RV_REF(F) f)
   {
     typedef typename boost::result_of<F()>::type T;
     try

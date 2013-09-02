@@ -20,15 +20,16 @@
 #include <boost/test/included/unit_test.hpp>
 
 #ifdef EXPECTED_CPP11_TESTS
-#define BOOST_RESULT_OF_USE_DECLTYPE
-#define BOOST_EXPECTED_USE_STD_EXCEPTION_PTR
+  #define BOOST_RESULT_OF_USE_DECLTYPE
+  #define BOOST_EXPECTED_USE_STD_EXCEPTION_PTR
 #endif
+
 #include "../../../boost/expected/expected.hpp"
 
 #ifdef EXPECTED_CPP11_TESTS
-#define MAKE_EXCEPTION_PTR(exception) std::make_exception_ptr(exception)
+  #define MAKE_EXCEPTION_PTR(exception) std::make_exception_ptr(exception)
 #else
-#define MAKE_EXCEPTION_PTR(exception) boost::copy_exception(exception)
+  #define MAKE_EXCEPTION_PTR(exception) boost::copy_exception(exception)
 #endif
 
 #include <boost/bind.hpp>
