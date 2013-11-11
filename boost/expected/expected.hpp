@@ -173,7 +173,7 @@ namespace boost
 
     // Constructors/Destructors/Assignments
 
-    BOOST_CONSTEXPR expected(const value_type& rhs) BOOST_NOEXCEPT_IF(BOOST_NOEXCEPT_EXPR(value(rhs)))
+    BOOST_CONSTEXPR expected(const value_type& rhs)
     : value(rhs)
     , has_value(true)
     {}
@@ -382,7 +382,7 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_EXPECTED_EMPLACE_MAX_ARGS, EXPECTED_EMPLACE, ~)
     template <typename F>
     typename boost::enable_if<
       boost::is_same<typename result_of<F(value_type)>::type, void>,
-      expected<typename result_of<F(value_type)>::type, exceptional_type>
+      expected<void, exceptional_type>
     >::type
     then(BOOST_RV_REF(F) f) const
     {
@@ -426,47 +426,44 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_EXPECTED_EMPLACE_MAX_ARGS, EXPECTED_EMPLACE, ~)
 
     template <typename F>
     typename boost::enable_if<
-      boost::is_same<typename result_of<F(value_type)>::type, void>,
-      expected<typename result_of<F(value_type)>::type, exceptional_type>
+      boost::is_same<typename result_of<F(exceptional_type)>::type, value_type>,
+      this_type
     >::type
     recover(BOOST_RV_REF(F) f) const
     {
-      typedef expected<void, exceptional_type> result_type;
       if(!valid())
       {
         try
         {
-          f(error);
-          return result_type();
+          return this_type(f(error));
         }
         catch(...)
         {
-          return result_type(exceptional);
+          return this_type(exceptional);
         }
       }
-      return result_type(value);
+      return this_type(value);
     }
 
     template <typename F>
-    typename boost::disable_if<
-      boost::is_same<typename result_of<F(value_type)>::type, void>,
-      expected<typename result_of<F(value_type)>::type, exceptional_type>
+    typename boost::enable_if<
+      boost::is_same<typename result_of<F(exceptional_type)>::type, this_type>,
+      this_type
     >::type
     recover(BOOST_RV_REF(F) f) const
     {
-      typedef expected<typename result_of<F(value_type)>::type, exceptional_type> result_type;
       if(!valid())
       {
         try
         {
-          return result_type(f(error));
+          return f(error);
         }
         catch(...)
         {
-          return result_type(exceptional);
+          return this_type(exceptional);
         }
       }
-      return result_type(value);
+      return this_type(value);
     }
   };
 
@@ -597,24 +594,23 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_EXPECTED_EMPLACE_MAX_ARGS, EXPECTED_EMPLACE, ~)
     template <typename F>
     typename boost::enable_if<
       boost::is_same<typename result_of<F()>::type, void>,
-      expected<typename result_of<F()>::type, exceptional_type>
+      this_type
     >::type
     then(BOOST_RV_REF(F) f) const
     {
-      typedef expected<void, exceptional_type> result_type;
       if(valid())
       {
         try
         {
           f();
-          return result_type();
+          return this_type();
         }
         catch(...)
         {
-          return result_type(exceptional);
+          return this_type(exceptional);
         }
       }
-      return result_type(exceptional, error);
+      return this_type(exceptional, error);
     }
 
     template <typename F>
@@ -641,47 +637,44 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_EXPECTED_EMPLACE_MAX_ARGS, EXPECTED_EMPLACE, ~)
 
     template <typename F>
     typename boost::enable_if<
-      boost::is_same<typename result_of<F()>::type, void>,
-      expected<typename result_of<F()>::type, exceptional_type>
+      boost::is_same<typename result_of<F(exceptional_type)>::type, value_type>,
+      this_type
     >::type
     recover(BOOST_RV_REF(F) f) const
     {
-      typedef expected<void, exceptional_type> result_type;
       if(!valid())
       {
         try
         {
           f(error);
-          return result_type();
         }
         catch(...)
         {
-          return result_type(exceptional);
+          return this_type(exceptional);
         }
       }
-      return result_type();
+      return this_type();
     }
 
     template <typename F>
-    typename boost::disable_if<
-      boost::is_same<typename result_of<F()>::type, void>,
-      expected<typename result_of<F()>::type, exceptional_type>
+    typename boost::enable_if<
+      boost::is_same<typename result_of<F(exceptional_type)>::type, this_type>,
+      this_type
     >::type
     recover(BOOST_RV_REF(F) f) const
     {
-      typedef expected<typename result_of<F()>::type, exceptional_type> result_type;
       if(!valid())
       {
         try
         {
-          return result_type(f(error));
+          return f(error);
         }
         catch(...)
         {
-          return result_type(exceptional);
+          return this_type(exceptional);
         }
       }
-      return result_type();
+      return this_type();
     }
   };
 

@@ -28,8 +28,10 @@
 
 #ifdef EXPECTED_CPP11_TESTS
   #define MAKE_EXCEPTION_PTR(exception) std::make_exception_ptr(exception)
+  typedef std::exception_ptr exception_ptr_type;
 #else
   #define MAKE_EXCEPTION_PTR(exception) boost::copy_exception(exception)
+  typedef boost::exception_ptr exception_ptr_type;
 #endif
 
 #include <boost/bind.hpp>
@@ -500,7 +502,6 @@ BOOST_AUTO_TEST_SUITE_END()
 
 BOOST_AUTO_TEST_SUITE(expected_then)
 
-
 #ifdef EXPECTED_CPP11_TESTS
 BOOST_AUTO_TEST_CASE(expected_then)
 {
@@ -554,6 +555,113 @@ BOOST_AUTO_TEST_CASE(expected_void_then)
 
   e = fun(true).then(launch_except);
   BOOST_CHECK_THROW(e.get(), std::exception);
+}
+#endif
+
+BOOST_AUTO_TEST_SUITE_END()
+
+BOOST_AUTO_TEST_SUITE(expected_recover)
+
+#ifdef EXPECTED_CPP11_TESTS
+BOOST_AUTO_TEST_CASE(expected_recover)
+{
+  auto fun = [](bool b)
+  { 
+    if(b) 
+      return expected<int>(5);
+    else
+      return make_exceptional_expected<int>(MAKE_EXCEPTION_PTR(test_exception()));
+  };
+  
+  auto then_launch = [](int) -> int
+  {
+    throw test_exception();
+  };
+
+  auto add_five = [](int sum)
+  {
+    return sum + 5;
+  };
+
+  auto recover_error = [](exception_ptr_type p)
+  {
+    return 0;
+  };
+
+  auto recover_error_silent_failure = [](exception_ptr_type p)
+  {
+    return make_exceptional_expected<int>(p);
+  };
+
+  auto recover_error_failure = [](exception_ptr_type p) -> expected<int>
+  {
+    throw test_exception();
+  };
+
+  BOOST_CHECK_EQUAL(fun(false).recover(recover_error).get(), 0);
+  BOOST_CHECK_EQUAL(fun(true).recover(recover_error).get(), 5);
+  BOOST_CHECK_EQUAL(fun(false).recover(recover_error_silent_failure).valid(), false);
+  BOOST_CHECK_EQUAL(fun(false).recover(recover_error_failure).valid(), false);
+
+  BOOST_CHECK_EQUAL(fun(true).then(add_five).recover(recover_error).get(), 10);
+  BOOST_CHECK_EQUAL(fun(true).then(add_five).recover(recover_error_silent_failure).get(), 10);
+  BOOST_CHECK_EQUAL(fun(true).then(add_five).recover(recover_error_failure).get(), 10);
+
+  BOOST_CHECK_EQUAL(fun(false).recover(recover_error).then(add_five).get(), 5);
+  BOOST_CHECK_EQUAL(fun(false).recover(recover_error).then(add_five).then(add_five).get(), 10);
+  BOOST_CHECK_EQUAL(fun(false).recover(recover_error_failure).then(add_five).valid(), false);
+  BOOST_CHECK_EQUAL(fun(false).then(add_five).recover(recover_error_failure).then(add_five).valid(), false);
+  BOOST_CHECK_EQUAL(fun(false).then(add_five).recover(recover_error_silent_failure).then(add_five).valid(), false);
+
+  BOOST_CHECK_EQUAL(fun(true).then(then_launch).recover(recover_error).get(), 0);
+  BOOST_CHECK_EQUAL(fun(true).then(then_launch).recover(recover_error).then(add_five).get(), 5);
+  BOOST_CHECK_EQUAL(fun(true).then(then_launch).recover(recover_error_failure).valid(), false);
+}
+
+BOOST_AUTO_TEST_CASE(expected_void_recover)
+{
+  auto fun = [](bool b)
+  { 
+    if(b) 
+      return expected<void>();
+    else
+      return make_exceptional_expected<void>(MAKE_EXCEPTION_PTR(test_exception()));
+  };
+
+  auto then_launch = []() -> void
+  {
+    throw test_exception();
+  };
+
+  auto do_nothing = [](){};
+
+  auto recover_error = [](exception_ptr_type p)
+  {
+    return expected<void>();
+  };
+
+  auto recover_error_silent_failure = [](exception_ptr_type p)
+  {
+    return make_exceptional_expected<void>(p);
+  };
+
+  auto recover_error_failure = [](exception_ptr_type p) -> expected<void>
+  {
+    throw test_exception();
+  };
+
+  // The recover doesn't alter the expected if it's valid.
+  BOOST_CHECK_EQUAL(fun(true).recover(recover_error_failure).valid(), true);
+
+  // Simple recover tests.
+  BOOST_CHECK_EQUAL(fun(false).recover(recover_error).valid(), true);
+  BOOST_CHECK_EQUAL(fun(false).recover(recover_error_failure).valid(), false);
+  BOOST_CHECK_EQUAL(fun(false).recover(recover_error_silent_failure).valid(), false);
+
+  // With a then between.
+  BOOST_CHECK_EQUAL(fun(false).then(do_nothing).recover(recover_error_failure).valid(), false);
+
+  BOOST_CHECK_NO_THROW(fun(false).then(then_launch).recover(recover_error).get());
 }
 #endif
 
