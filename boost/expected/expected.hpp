@@ -386,7 +386,7 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_EXPECTED_EMPLACE_MAX_ARGS, EXPECTED_EMPLACE, ~)
     >::type
     then(BOOST_RV_REF(F) f) const
     {
-      typedef expected<typename result_of<F(value_type)>::type, exceptional_type> result_type;
+      typedef expected<void, exceptional_type> result_type;
       if(valid())
       {
         try
@@ -422,6 +422,51 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_EXPECTED_EMPLACE_MAX_ARGS, EXPECTED_EMPLACE, ~)
         }
       }
       return result_type(exceptional, error);
+    }
+
+    template <typename F>
+    typename boost::enable_if<
+      boost::is_same<typename result_of<F(value_type)>::type, void>,
+      expected<typename result_of<F(value_type)>::type, exceptional_type>
+    >::type
+    recover(BOOST_RV_REF(F) f) const
+    {
+      typedef expected<void, exceptional_type> result_type;
+      if(!valid())
+      {
+        try
+        {
+          f(error);
+          return result_type();
+        }
+        catch(...)
+        {
+          return result_type(exceptional);
+        }
+      }
+      return result_type(value);
+    }
+
+    template <typename F>
+    typename boost::disable_if<
+      boost::is_same<typename result_of<F(value_type)>::type, void>,
+      expected<typename result_of<F(value_type)>::type, exceptional_type>
+    >::type
+    recover(BOOST_RV_REF(F) f) const
+    {
+      typedef expected<typename result_of<F(value_type)>::type, exceptional_type> result_type;
+      if(!valid())
+      {
+        try
+        {
+          return result_type(f(error));
+        }
+        catch(...)
+        {
+          return result_type(exceptional);
+        }
+      }
+      return result_type(value);
     }
   };
 
@@ -556,7 +601,7 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_EXPECTED_EMPLACE_MAX_ARGS, EXPECTED_EMPLACE, ~)
     >::type
     then(BOOST_RV_REF(F) f) const
     {
-      typedef expected<typename result_of<F()>::type, exceptional_type> result_type;
+      typedef expected<void, exceptional_type> result_type;
       if(valid())
       {
         try
@@ -592,6 +637,51 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_EXPECTED_EMPLACE_MAX_ARGS, EXPECTED_EMPLACE, ~)
         }
       }
       return result_type(exceptional, error);
+    }
+
+    template <typename F>
+    typename boost::enable_if<
+      boost::is_same<typename result_of<F()>::type, void>,
+      expected<typename result_of<F()>::type, exceptional_type>
+    >::type
+    recover(BOOST_RV_REF(F) f) const
+    {
+      typedef expected<void, exceptional_type> result_type;
+      if(!valid())
+      {
+        try
+        {
+          f(error);
+          return result_type();
+        }
+        catch(...)
+        {
+          return result_type(exceptional);
+        }
+      }
+      return result_type();
+    }
+
+    template <typename F>
+    typename boost::disable_if<
+      boost::is_same<typename result_of<F()>::type, void>,
+      expected<typename result_of<F()>::type, exceptional_type>
+    >::type
+    recover(BOOST_RV_REF(F) f) const
+    {
+      typedef expected<typename result_of<F()>::type, exceptional_type> result_type;
+      if(!valid())
+      {
+        try
+        {
+          return result_type(f(error));
+        }
+        catch(...)
+        {
+          return result_type(exceptional);
+        }
+      }
+      return result_type();
     }
   };
 
