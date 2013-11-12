@@ -62,6 +62,29 @@ void do_nothing_fun(){}
 
 BOOST_AUTO_TEST_SUITE(except_expected_constructors)
 
+#ifdef EXPECTED_CPP11_TESTS
+BOOST_AUTO_TEST_CASE(expected_default_constructor)
+{
+  expected<int> e;
+  BOOST_CHECK_EQUAL(e.valid(), true);
+  BOOST_CHECK_EQUAL(e.get(), int());
+
+  class DefaultConstructibleTest
+  {
+    int s;
+  public:
+    DefaultConstructibleTest() = default;
+    DefaultConstructibleTest(int i) : s(i){}
+
+    int get() const { return s; }
+  };
+
+  expected<DefaultConstructibleTest> e2;
+  BOOST_CHECK_EQUAL(e2.valid(), true);
+  BOOST_CHECK_EQUAL(e2.get().get(), 0);
+}
+#endif
+
 BOOST_AUTO_TEST_CASE(expected_from_value)
 {
   // From value constructor.

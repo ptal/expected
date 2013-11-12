@@ -18,6 +18,12 @@
 #include <boost/utility/result_of.hpp>
 #include <boost/utility/swap.hpp>
 
+// TODO: We'd need to check if std::is_default_constructible is there too.
+#ifndef BOOST_NO_CXX11_FUNCTION_TEMPLATE_DEFAULT_ARGS
+  #define BOOST_EXPECTED_USE_DEFAULT_CONSTRUCTOR 
+  #include <type_traits>
+#endif
+
 #if defined BOOST_NO_CXX11_VARIADIC_TEMPLATES
   #include <boost/preprocessor/facilities/intercept.hpp>
   #include <boost/preprocessor/repetition/enum_params.hpp>
@@ -162,7 +168,7 @@ namespace boost
   private:
     union {
       exceptional_type error;
-      value_type value; 
+      value_type value;
     };
     bool has_value;
 
@@ -172,6 +178,14 @@ namespace boost
     //  has_nothrow_move_constructor is not yet into Boost.TypeTraits.
 
     // Constructors/Destructors/Assignments
+
+#ifdef BOOST_EXPECTED_USE_DEFAULT_CONSTRUCTOR
+    template <typename U = ValueType, class = typename std::enable_if<std::is_default_constructible<U>::value>::type>
+    BOOST_CONSTEXPR expected()
+    : value()
+    , has_value(true)
+    {}
+#endif
 
     BOOST_CONSTEXPR expected(const value_type& rhs)
     : value(rhs)
