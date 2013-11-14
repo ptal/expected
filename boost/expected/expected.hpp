@@ -393,6 +393,16 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_EXPECTED_EMPLACE_MAX_ARGS, EXPECTED_EMPLACE, ~)
       return value;
     }
 
+    BOOST_CONSTEXPR error_type const& error() const BOOST_NOEXCEPT
+    {
+      return error;
+    }
+
+    error_type& error() BOOST_NOEXCEPT
+    {
+      return error;
+    }
+
     template <typename F>
     typename boost::enable_if<
       boost::is_same<typename result_of<F(value_type)>::type, void>,
