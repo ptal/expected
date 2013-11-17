@@ -49,15 +49,15 @@ namespace boost
     {
       return exceptional_type(e);
     }
-    
+
     static exceptional_type catch_exception()
     {
       throw;
     }
-    
+
     static void bad_access(const exceptional_type &e)
     {
-      boost::throw_exception(bad_expected_access<exceptional_type>(e)); 
+      boost::throw_exception(bad_expected_access<exceptional_type>(e));
     }
   };
 
@@ -72,24 +72,26 @@ namespace boost
     {
       return boost::copy_exception(e);
     }
-    
+
     static exceptional_type catch_exception()
     {
       return boost::current_exception();
     }
-    
+
     static void bad_access(const exceptional_type &e)
     {
       boost::rethrow_exception(e);
     }
   };
-  
+
+#if ! defined BOOST_NO_CXX11_HDR_EXCEPTION  && ! defined BOOST_NO_CXX11_RVALUE_REFERENCES
   template <>
-  struct exceptional_traits<std::exception_ptr> 
+  struct exceptional_traits<std::exception_ptr>
   : public exceptional_traits<boost::exception_ptr>
   {
     typedef std::exception_ptr exceptional_type;
   };
+#endif
 
   struct exceptional_tag {};
   BOOST_CONSTEXPR_OR_CONST exceptional_tag exceptional = {};
@@ -124,7 +126,7 @@ namespace boost
   private:
     union {
       exceptional_type error;
-      value_type value; 
+      value_type value;
     };
     bool has_value;
 
@@ -139,7 +141,7 @@ namespace boost
     : value(rhs)
     , has_value(true)
     {}
-    
+
     BOOST_CONSTEXPR expected(BOOST_RV_REF(value_type) rhs)
     //BOOST_NOEXCEPT_IF(
     //  has_nothrow_move_constructor<value_type>::value
@@ -148,9 +150,9 @@ namespace boost
     , has_value(true)
     {}
 
-    expected(const expected& rhs) 
+    expected(const expected& rhs)
     BOOST_NOEXCEPT_IF(
-      has_nothrow_copy_constructor<value_type>::value && 
+      has_nothrow_copy_constructor<value_type>::value &&
       has_nothrow_copy_constructor<exceptional_type>::value
     )
     : has_value(rhs.has_value)
@@ -167,7 +169,7 @@ namespace boost
 
     expected(BOOST_RV_REF(expected) rhs)
     //BOOST_NOEXCEPT_IF(
-    //  has_nothrow_move_constructor<value_type>::value && 
+    //  has_nothrow_move_constructor<value_type>::value &&
     //  has_nothrow_move_constructor<exceptional_type>::value
     //)
     : has_value(rhs.has_value)
@@ -182,7 +184,7 @@ namespace boost
       }
     }
 
-    expected(exceptional_tag, exceptional_type const& e) 
+    expected(exceptional_tag, exceptional_type const& e)
     BOOST_NOEXCEPT_IF(
       has_nothrow_copy_constructor<exceptional_type>::value
     )
@@ -319,6 +321,20 @@ namespace boost
     {
       return value;
     }
+    BOOST_CONSTEXPR value_type const* operator->() const BOOST_NOEXCEPT
+    {
+      return &value;
+    }
+
+    value_type* operator->() BOOST_NOEXCEPT
+    {
+      return &value;
+    }
+
+    exceptional_type& get_error()
+    {
+      return error;
+    }
 
     // Utilities
     /*template <typename F>
@@ -345,6 +361,7 @@ namespace boost
   }
 
   // Factories
+#if ! defined BOOST_NO_CXX11_VARIADIC_TEMPLATES && ! defined BOOST_NO_CXX11_RVALUE_REFERENCES
   template<typename T, typename E, typename... Args>
   expected<T,E> make_expected(Args&&... args)
   {
@@ -356,6 +373,7 @@ namespace boost
   {
     return expected<T>(emplace, boost::forward<Args>(args)...);
   }
+#endif
 
   template <typename T>
   expected<T> make_exceptional_expected() BOOST_NOEXCEPT
@@ -412,3 +430,4 @@ namespace boost
 }
 
 #endif // BOOST_EXPECTED_HPP
+
