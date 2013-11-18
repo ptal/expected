@@ -18,7 +18,7 @@
  * num_get facet using the expected interface
  */
 template <class CharT=char, class InputIterator = std::istreambuf_iterator<CharT> >
-struct my_num_get: public std::locale::facet
+struct NumGet: public std::locale::facet
 {
 public:
   /**
@@ -34,7 +34,7 @@ public:
    */
   typedef InputIterator iter_type;
 
-  explicit my_num_get(size_t refs = 0) :
+  explicit NumGet(size_t refs = 0) :
     std::locale::facet(refs)
   {
   }
@@ -78,7 +78,7 @@ public:
 };
 
 template <class CharT, class InputIterator>
-std::locale::id my_num_get<CharT, InputIterator>::id;
+std::locale::id NumGet<CharT, InputIterator>::id;
 
 template <class CharT=char, class InputIterator = std::istreambuf_iterator<CharT> >
 boost::expected<std::pair<InputIterator, int>, // todo solve the issues when using InputIterator instead of std::pair<InputIterator, int>
@@ -92,7 +92,7 @@ matchedString(std::string, InputIterator s, InputIterator e) {
  * num_get facet using the expected interface
  */
 template <class CharT=char, class InputIterator = std::istreambuf_iterator<CharT> >
-struct num_interval_get: public std::locale::facet
+struct NumIntervalGet: public std::locale::facet
 {
 public:
   /**
@@ -108,7 +108,7 @@ public:
    */
   typedef InputIterator iter_type;
 
-  explicit num_interval_get(size_t refs = 0) :
+  explicit NumIntervalGet(size_t refs = 0) :
     std::locale::facet(refs)
   {
   }
@@ -139,12 +139,12 @@ public:
     typedef typename get_result_type<Num>::type result_type;
 
     //auto facet = std::use_facet<::num_get<char_type, iter_type> >(ios.getloc());
-    auto  f = std::use_facet<::my_num_get<char_type, iter_type> >(ios.getloc()).template get<Num>(s, e, ios);
+    auto  f = std::use_facet<::NumGet<char_type, iter_type> >(ios.getloc()).template get<Num>(s, e, ios);
     if (! f) return result_type(boost::exceptional, f.get_error());
-    //auto  m = std::use_facet<::my_num_get<char_type, iter_type> >(ios.getloc()).template get<Num>(f->first, e, ios);
+    //auto  m = std::use_facet<::NumGet<char_type, iter_type> >(ios.getloc()).template get<Num>(f->first, e, ios);
     auto  m = matchedString("..", f->first, e); // todo finish this function
     if (! m) return result_type(boost::exceptional, m.get_error());
-    auto l = std::use_facet<::my_num_get<char_type, iter_type> >(ios.getloc()).template get<Num>(m->first, e, ios);
+    auto l = std::use_facet<::NumGet<char_type, iter_type> >(ios.getloc()).template get<Num>(m->first, e, ios);
     if (! l) return result_type(boost::exceptional, l.get_error());
 
     return result_type(make_pair(l->first, make_pair(f->second, l->second)));
@@ -157,7 +157,7 @@ public:
 };
 
 template <class CharT, class InputIterator>
-std::locale::id num_interval_get<CharT, InputIterator>::id;
+std::locale::id NumIntervalGet<CharT, InputIterator>::id;
 
 
 using namespace boost;
@@ -166,9 +166,9 @@ int main()
 {
   {
     std::stringstream is("123");
-    ::my_num_get<> facet;
-    my_num_get<char>::iter_type end;
-    my_num_get<char>::get_result_type<long>::type x = facet.get<long> (is, end, is);
+    ::NumGet<> facet;
+    NumGet<char>::iter_type end;
+    NumGet<char>::get_result_type<long>::type x = facet.get<long> (is, end, is);
     if (!x) {
       std::cout << int(x.get_error().second) << std::endl;
       return 1;
@@ -178,11 +178,11 @@ int main()
   }
   if (0)
   {
-    std::stringstream is("1 2 3");
-    // auto facet = std::use_facet<::num_interval_get<> >(is.getloc());
-    ::num_interval_get<> facet;
-    num_interval_get<>::iter_type end;
-    num_interval_get<>::get_result_type<long>::type x = facet.get<long> (is, end, is);
+    std::stringstream is("1..3");
+    // auto facet = std::use_facet<::NumIntervalGet<> >(is.getloc());
+    ::NumIntervalGet<> facet;
+    NumIntervalGet<>::iter_type end;
+    NumIntervalGet<>::get_result_type<long>::type x = facet.get<long> (is, end, is);
     if (!x) {
       std::cout << int(x.get_error().second) << std::endl;
       return 1;
