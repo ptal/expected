@@ -66,4 +66,5 @@ test-suite "Expected"
     : 
       [ run test_expected.cpp  boost_unit_test ]
       [ run num_get.cpp ]
+      [ run num_get_2.cpp ]
     ;
