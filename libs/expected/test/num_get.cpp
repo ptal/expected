@@ -140,7 +140,6 @@ public:
     using namespace std;
     typedef typename get_result_type<Num>::type result_type;
 
-    //auto facet = std::use_facet< ::num_get<char_type, iter_type> >(ios.getloc());
     auto  f = std::use_facet< ::NumGet<char_type, iter_type> >(ios.getloc()).template get<Num>(s, e, ios);
     if (! f) return result_type(boost::exceptional, f.get_error());
     auto  m = matchedString("..", f->first, e);

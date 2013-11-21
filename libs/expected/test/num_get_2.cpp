@@ -14,6 +14,119 @@
 #include <locale>
 #include <sstream>
 
+namespace boost {
+// to be moved to monads.hpp
+
+template <class T>
+struct monad_traits;
+
+template <class T>
+struct monad {
+  T v;
+  monad(T&& v) : v(std::forward<T>(v)) {}
+
+  template <class F>
+  auto operator|(F&& f) -> decltype(next(v, std::forward<F>(f))) const {
+    return monad_next(v, std::forward<F>(f));
+  }
+
+};
+
+template <class T>
+monad<std::decay<T>> make_monad(T&& v) {
+  return monad<std::decay<T>>(std::forward<T>(v));
+}
+
+// to be moved to expected.hpp
+template <class T, class E>
+struct monad_traits<expected<T, E> >
+{
+  typedef expected<T, E> monad_type;
+  typedef T value_type;
+  typedef E error_type;
+
+  static bool valid(monad_type m) {
+    return m.valid();
+  }
+  static value_type value(monad_type m) {
+    return m.value();
+  }
+  static error_type error(monad_type m) {
+    return m.get_error();
+  }
+
+  template <class F>
+  struct result_type {
+    typedef expected<typename std::result_of<F(value_type)>::type, E> type;
+  };
+
+  template <class F>
+  static typename result_type<F>::type next(monad_type m, F f) {
+    return m.next(f);
+  }
+};
+
+} // boost
+
+////////////
+
+template <class I, typename T, class E >
+using pair_expected = std::pair<I, boost::expected<T,E>> ;
+
+template <class E, class I, typename T  >
+pair_expected<I,T,E> make_pair_expected(I i, T v) {
+  return std::make_pair(i, boost::expected<T,E>(v));
+}
+
+template <class T, class I, typename E  >
+pair_expected<I,T,E> make_pair_expected_from_error(I i, E e) {
+  return std::make_pair(i, boost::expected<T,E>(boost::exceptional, e));
+}
+
+
+// making pair_expected a monad
+
+namespace boost {
+template <class T, class I, typename E  >
+struct monad_traits<pair_expected<I,T,E> >
+{
+  typedef pair_expected<I,T,E> monad_type;
+  typedef std::pair<I,T> value_type;
+  typedef E error_type;
+
+  static bool valid(monad_type m) {
+    return m.second.valid();
+  }
+
+  static value_type value(monad_type m) {
+    return std::make_pair(m.first, m.second.get());
+  }
+
+  static error_type error(monad_type m) {
+    return m.second.get_error();
+  }
+
+  template <class F>
+  struct result_type {
+    typedef typename std::result_of<F(value_type)>::type type;
+  };
+
+  template <class F>
+  static typename result_type<F>::type
+  next(monad_type m, F f) {
+    typedef typename std::result_of<F(value_type)>::type result_type;
+    typedef typename result_type::second_type expected_type;
+    if (valid(m)) {
+      return f(value(m));
+    }
+    return make_pair(m.first, expected_type(exceptional, error(m)));
+  }
+
+};
+
+}
+
+
 /**
  * num_get facet using the expected interface
  */
@@ -39,30 +152,6 @@ public:
   {
   }
 
-  template <typename Num>
-  struct get_result_type {
-    typedef std::pair<iter_type, boost::expected<Num, std::ios_base::iostate> > type;
-    static type make(iter_type it, Num n) {
-      return std::make_pair(it, boost::expected<Num, std::ios_base::iostate>(n));
-    }
-    static type make(iter_type it, std::ios_base::iostate errc) {
-      return std::make_pair(it, boost::expected<Num, std::ios_base::iostate>(boost::exceptional, errc));
-    }
-    static bool valid(type v) {
-      return v.second;
-    }
-    static iter_type iterator(type v) {
-      return v.first;
-    }
-    static Num value(type v) {
-      return *v.second;
-    }
-    static std::ios_base::iostate error(type v) {
-      return *v.second.get_error();
-    }
-
-
-  };
   /**
    *
    * @param s start input stream iterator
@@ -74,22 +163,21 @@ public:
    */
 
   template <typename Num>
-  typename get_result_type<Num>::type get(InputIterator s,
+  pair_expected<iter_type, Num, std::ios_base::iostate> get(InputIterator s,
       InputIterator e, std::ios_base& ios) const
   {
     using namespace boost;
     using namespace std;
-    typedef get_result_type<Num> fact_type;
-    //typedef typename fact_type::type result_type;
 
     ios_base::iostate err = std::ios_base::goodbit;
     Num v;
     //auto is = std::use_facet<std::num_get<char_type, iter_type> >(ios.getloc());
 
     InputIterator it = std::use_facet<std::num_get<char_type, iter_type> >(ios.getloc()).get(s, e, ios, err, v);
-    if (err & (std::ios_base::badbit | std::ios_base::failbit))
-      return fact_type::make(it, err);
-    return fact_type::make(it, v);
+    if (err & (std::ios_base::badbit | std::ios_base::failbit)) {
+      return make_pair_expected_from_error<Num>(it, err);
+    }
+    return make_pair_expected<std::ios_base::iostate>(it, v);
   }
 
   /**
@@ -104,9 +192,17 @@ std::locale::id NumGet<CharT, InputIterator>::id;
 
 // todo finish this function
 template <class CharT=char, class InputIterator = std::istreambuf_iterator<CharT> >
-std::pair<InputIterator, boost::expected<int, std::ios_base::iostate> >
-matchedString(std::string, InputIterator s, InputIterator e) {
-  return  std::make_pair(s, boost::expected<int, std::ios_base::iostate>(0)); // todo check the match
+pair_expected<InputIterator, long, std::ios_base::iostate>
+matchedString(std::string str, InputIterator s, InputIterator e) {
+  if (*s != str[0]) {
+      return make_pair_expected_from_error<long>(s, std::ios_base::goodbit);
+  }
+  ++s;
+  if (*s != str[1]) {
+      return make_pair_expected_from_error<long>(s, std::ios_base::goodbit);
+  }
+  ++s;
+  return  make_pair_expected<std::ios_base::iostate>(s, 0L); // todo check the match
 }
 
 /**
@@ -134,17 +230,6 @@ public:
   {
   }
 
-  template <typename Num>
-  struct get_result_type {
-    typedef std::pair<iter_type, boost::expected<std::pair<Num, Num>, std::ios_base::iostate> > type;
-    static type make(iter_type it, Num f, Num l) {
-      return std::make_pair(it, boost::expected<std::pair<Num, Num>, std::ios_base::iostate> (std::make_pair(f, l)));
-    }
-    static type make(iter_type it, std::ios_base::iostate errc) {
-      return std::make_pair(it, boost::expected<std::pair<Num, Num>, std::ios_base::iostate>(boost::exceptional, errc));
-    }
-  };
-
   /**
    *
    * @param s start input stream iterator
@@ -155,23 +240,81 @@ public:
    *  * the value obtained or the error code
    */
 
+
   template <typename Num>
-  typename get_result_type<Num>::type get(InputIterator s,
+  pair_expected<iter_type, std::pair<Num,Num>, std::ios_base::iostate> get(InputIterator s,
       InputIterator e, std::ios_base& ios)  const
   {
     using namespace boost;
-    using namespace std;
-    typedef get_result_type<Num> fact_type;
+    typedef std::pair<Num, Num> value_type;
+    //typedef typename std::result_of<F(std::pair<I, T>)>::type result_type;
+    //typedef typename result_type::second_type expected_type;
 
-    //auto facet = std::use_facet< ::num_get<char_type, iter_type> >(ios.getloc());
-    auto  f = std::use_facet< ::NumGet<char_type, iter_type> >(ios.getloc()).template get<Num>(s, e, ios);
-    if (! f.second) return fact_type::make(f.first, f.second.get_error());
+    //auto  f = std::use_facet< ::NumGet<char_type, iter_type> >(ios.getloc()).template get<Num>(s, e, ios);
+    auto  f = ::NumGet<char_type, iter_type>().template get<Num>(s, e, ios);
+    if (! f.second) return make_pair_expected_from_error<value_type>(f.first, f.second.get_error());
+
     auto  m = matchedString("..", f.first, e);
-    if (! m.second) return fact_type::make(m.first, m.second.get_error());
-    auto l = std::use_facet< ::NumGet<char_type, iter_type> >(ios.getloc()).template get<Num>(m.first, e, ios);
-    if (! l.second) return fact_type::make(l.first, l.second.get_error());
+    if (! m.second) return make_pair_expected_from_error<value_type>(m.first, m.second.get_error());
+    //auto l = std::use_facet< ::NumGet<char_type, iter_type> >(ios.getloc()).template get<Num>(m.first, e, ios);
+    auto l = ::NumGet<char_type, iter_type>().template get<Num>(m.first, e, ios);
+    if (! l.second) return make_pair_expected_from_error<value_type>(l.first, l.second.get_error());
 
-    return fact_type::make(l.first, *f.second, *l.second);
+    value_type tmp = std::make_pair(*f.second, *l.second);
+    return make_pair_expected<std::ios_base::iostate>(l.first, tmp);
+  }
+
+  template <typename Num>
+  pair_expected<iter_type, std::pair<Num,Num>, std::ios_base::iostate>
+  get2(InputIterator s, InputIterator e, std::ios_base& ios)  const
+  {
+    using namespace boost;
+    typedef std::pair<Num, Num> value_type;
+
+    typedef monad_traits<pair_expected<iter_type, Num, std::ios_base::iostate> > t1;
+
+    //auto  f = std::use_facet< ::NumGet<char_type, iter_type> >(ios.getloc()).template get<Num>(s, e, ios);
+    auto f = ::NumGet<char_type, iter_type>().template get<Num> (s, e, ios);
+    auto m = t1::next(f, [e](std::pair<iter_type,Num> f) {
+      return matchedString("..", f.first, e);
+    });
+    auto l = t1::next(m, [&ios, e](std::pair<iter_type, Num> m) {
+      //return std::use_facet< ::NumGet<char_type, iter_type> >(ios.getloc()).template get<Num>(m.first, e, ios);
+      return ::NumGet<char_type, iter_type>().template get<Num> (m.first, e, ios);
+    });
+    return t1::next(l, [f](std::pair<iter_type,Num> l) {
+      value_type tmp(*f.second, l.second);
+      return make_pair_expected<std::ios_base::iostate>(l.first, tmp);
+    });
+
+  }
+
+  template <typename Num>
+  pair_expected<iter_type, std::pair<Num,Num>, std::ios_base::iostate> get3(InputIterator s,
+      InputIterator e, std::ios_base& ios)  const
+  {
+    using namespace boost;
+    typedef std::pair<Num, Num> value_type;
+
+    //auto  f = std::use_facet< ::NumGet<char_type, iter_type> >(ios.getloc()).template get<Num>(s, e, ios);
+    auto  f = ::NumGet<char_type, iter_type>().template get<Num>(s, e, ios);
+
+    return make_monad(f)
+      | [e](std::pair<iter_type,Num> f) {
+
+        return matchedString("..", f.first, e);
+
+      } | [&ios, e](std::pair<iter_type,Num> m) {
+
+        //return std::use_facet< ::NumGet<char_type, iter_type> >(ios.getloc()).template get<Num>(m.first, e, ios);
+        ::NumGet<char_type, iter_type>().template get<Num>(m.first, e, ios);
+
+      } | [f](std::pair<iter_type,Num> l) {
+
+        value_type tmp(*f.second, l.second);
+        return make_pair_expected<std::ios_base::iostate>(l.first, tmp);
+
+      };
   }
 
   /**
@@ -191,8 +334,8 @@ int main()
   {
     std::stringstream is("123");
     ::NumGet<> facet;
-    NumGet<char>::iter_type end;
-    NumGet<char>::get_result_type<long>::type x = facet.get<long> (is, end, is);
+    NumGet<>::iter_type end;
+    auto x = facet.get<long> (is, end, is);
     if (!x.second) {
       std::cout << int(x.second.get_error()) << std::endl;
       return 1;
@@ -200,15 +343,40 @@ int main()
 
     std::cout << *x.second << std::endl;
   }
-  if (0)
   {
+
     std::stringstream is("1..3");
-    // auto facet = std::use_facet< ::NumIntervalGet<> >(is.getloc());
-    ::NumIntervalGet<> facet;
     NumIntervalGet<>::iter_type end;
-    NumIntervalGet<>::get_result_type<long>::type x = facet.get<long> (is, end, is);
+    //auto x = std::use_facet< ::NumIntervalGet<> >(is.getloc()).get<long> (is, end, is);
+    auto x = ::NumIntervalGet<>().get<long> (is, end, is);
     if (!x.second) {
-      std::cout << int(x.second.get_error()) << std::endl;
+      std::cout << x.second.get_error() << std::endl;
+      return 1;
+    }
+
+    std::cout << x.second->first << ".." << x.second->second << std::endl;
+  }
+  {
+
+    std::stringstream is("1..3");
+    NumIntervalGet<>::iter_type end;
+    //auto x = std::use_facet< ::NumIntervalGet<> >(is.getloc()).get2<long> (is, end, is);
+    auto x = ::NumIntervalGet<>().get2<long> (is, end, is);
+    if (!x.second) {
+      std::cout << x.second.get_error() << std::endl;
+      return 1;
+    }
+
+    std::cout << x.second->first << ".." << x.second->second << std::endl;
+  }
+  {
+
+    std::stringstream is("1..3");
+    NumIntervalGet<>::iter_type end;
+    //auto x = std::use_facet< ::NumIntervalGet<> >(is.getloc()).get3<long> (is, end, is);
+    auto x = ::NumIntervalGet<>().get2<long> (is, end, is);
+    if (!x.second) {
+      std::cout << x.second.get_error() << std::endl;
       return 1;
     }
 
