@@ -22,19 +22,35 @@ struct monad_traits;
 
 template <class T>
 struct monad {
+  typedef T value_type;
   T v;
   monad(T&& v) : v(std::forward<T>(v)) {}
 
-  template <class F>
-  auto operator|(F&& f) -> decltype(next(v, std::forward<F>(f))) const {
-    return monad_next(v, std::forward<F>(f));
-  }
-
+  operator T() const { return v; }
 };
 
 template <class T>
-monad<std::decay<T>> make_monad(T&& v) {
-  return monad<std::decay<T>>(std::forward<T>(v));
+struct is_monad : std::false_type {
+};
+template <class T>
+struct is_monad<monad<T>> : std::true_type {
+};
+
+template <class T>
+monad<typename std::decay<T>::type> make_monad(T&& v) {
+  return monad<typename std::decay<T>::type>(std::forward<T>(v));
+}
+
+//template <class T, class F>
+//auto operator|(monad<T>&& m, F&& f)
+//  -> decltype(make_monad(monad_traits<T>::next(m.v, std::forward<F>(f)))) const {
+//    return    make_monad(monad_traits<T>::next(m.v, std::forward<F>(f)));
+//}
+
+template <class M, class F>
+auto operator|(M&& m, F&& f)
+  -> decltype(make_monad(monad_traits<typename M::value_type>::next(m.v, std::forward<F>(f)))) const {
+    return    make_monad(monad_traits<typename M::value_type>::next(m.v, std::forward<F>(f)));
 }
 
 // to be moved to expected.hpp
@@ -299,7 +315,7 @@ public:
     //auto  f = std::use_facet< ::NumGet<char_type, iter_type> >(ios.getloc()).template get<Num>(s, e, ios);
     auto  f = ::NumGet<char_type, iter_type>().template get<Num>(s, e, ios);
 
-    return make_monad(f)
+    return make_monad(std::move(f))
       | [e](std::pair<iter_type,Num> f) {
 
         return matchedString("..", f.first, e);
@@ -307,9 +323,39 @@ public:
       } | [&ios, e](std::pair<iter_type,Num> m) {
 
         //return std::use_facet< ::NumGet<char_type, iter_type> >(ios.getloc()).template get<Num>(m.first, e, ios);
-        ::NumGet<char_type, iter_type>().template get<Num>(m.first, e, ios);
+        return ::NumGet<char_type, iter_type>().template get<Num>(m.first, e, ios);
 
       } | [f](std::pair<iter_type,Num> l) {
+
+        value_type tmp(*f.second, l.second);
+        return make_pair_expected<std::ios_base::iostate>(l.first, tmp);
+
+      };
+  }
+
+  template <typename Num>
+  pair_expected<iter_type, std::pair<Num,Num>, std::ios_base::iostate> get4(InputIterator s,
+      InputIterator e, std::ios_base& ios)  const
+  {
+    using namespace boost;
+    typedef std::pair<Num, Num> value_type;
+
+    //auto  f = std::use_facet< ::NumGet<char_type, iter_type> >(ios.getloc()).template get<Num>(s, e, ios);
+    auto  f = ::NumGet<char_type, iter_type>().template get<Num>(s, e, ios);
+
+    auto m = make_monad(std::move(f))
+      | [e](std::pair<iter_type,Num> f) {
+
+        return matchedString("..", f.first, e);
+
+      };
+    auto l = std::move(m) | [&ios, e](std::pair<iter_type,Num> m) {
+
+        //return std::use_facet< ::NumGet<char_type, iter_type> >(ios.getloc()).template get<Num>(m.first, e, ios);
+        return ::NumGet<char_type, iter_type>().template get<Num>(m.first, e, ios);
+
+      };
+    return  std::move(l) | [f](std::pair<iter_type,Num> l) {
 
         value_type tmp(*f.second, l.second);
         return make_pair_expected<std::ios_base::iostate>(l.first, tmp);
@@ -374,7 +420,20 @@ int main()
     std::stringstream is("1..3");
     NumIntervalGet<>::iter_type end;
     //auto x = std::use_facet< ::NumIntervalGet<> >(is.getloc()).get3<long> (is, end, is);
-    auto x = ::NumIntervalGet<>().get2<long> (is, end, is);
+    auto x = ::NumIntervalGet<>().get3<long> (is, end, is);
+    if (!x.second) {
+      std::cout << x.second.get_error() << std::endl;
+      return 1;
+    }
+
+    std::cout << x.second->first << ".." << x.second->second << std::endl;
+  }
+  {
+
+    std::stringstream is("1..3");
+    NumIntervalGet<>::iter_type end;
+    //auto x = std::use_facet< ::NumIntervalGet<> >(is.getloc()).get4<long> (is, end, is);
+    auto x = ::NumIntervalGet<>().get4<long> (is, end, is);
     if (!x.second) {
       std::cout << x.second.get_error() << std::endl;
       return 1;
