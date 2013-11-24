@@ -52,9 +52,8 @@ struct monad {
 };
 
 template <class T, class F>
-auto operator|(monad<T>&& m, F&& f)
-  -> decltype(make_monad(monad_traits<T>::next(m.v, std::forward<F>(f))))  {
-    //return    make_monad(monad_traits<T>::next(m.v, std::forward<F>(f)));
+auto operator|(monad<T> m, F&& f)
+  -> decltype(m.next(std::forward<F>(f)))  {
     return  m.next(std::forward<F>(f));
 }
 
@@ -148,6 +147,12 @@ struct monad_traits<pair_expected<I,T,E> >
 
 }
 
+template <class T, class I, typename E, class F>
+auto operator|(pair_expected<T, I, E> m, F&& f)
+  -> decltype(boost::monad_traits<pair_expected<T, I, E>>::next(m, std::forward<F>(f)))  {
+    return    boost::monad_traits<pair_expected<T, I, E>>::next(m, std::forward<F>(f));
+}
+
 
 /**
  * num_get facet using the expected interface
@@ -210,6 +215,7 @@ public:
 
 template <class CharT, class InputIterator>
 std::locale::id NumGet<CharT, InputIterator>::id;
+
 
 
 // todo finish this function
@@ -366,6 +372,33 @@ public:
 
       });
   }
+  template <typename Num>
+  pair_expected<iter_type, std::pair<Num,Num>, std::ios_base::iostate> get5(InputIterator s,
+      InputIterator e, std::ios_base& ios)  const
+  {
+    using namespace boost;
+    typedef std::pair<Num, Num> value_type;
+
+    //auto  f = std::use_facet< ::NumGet<char_type, iter_type> >(ios.getloc()).template get<Num>(s, e, ios);
+    auto  f = ::NumGet<char_type, iter_type>().template get<Num>(s, e, ios);
+
+    return f
+      | [e](std::pair<iter_type,Num> f) {
+
+        return matchedString("..", f.first, e);
+
+      } | [&ios, e](std::pair<iter_type,Num> m) {
+
+        //return std::use_facet< ::NumGet<char_type, iter_type> >(ios.getloc()).template get<Num>(m.first, e, ios);
+        return ::NumGet<char_type, iter_type>().template get<Num>(m.first, e, ios);
+
+      } | [f](std::pair<iter_type,Num> l) {
+
+        value_type tmp(*f.second, l.second);
+        return make_pair_expected<std::ios_base::iostate>(l.first, tmp);
+
+      };
+  }
 
   /**
    * Unique identifier for this type of facet.
@@ -438,6 +471,19 @@ int main()
     NumIntervalGet<>::iter_type end;
     //auto x = std::use_facet< ::NumIntervalGet<> >(is.getloc()).get4<long> (is, end, is);
     auto x = ::NumIntervalGet<>().get4<long> (is, end, is);
+    if (!x.second) {
+      std::cout << x.second.get_error() << std::endl;
+      return 1;
+    }
+
+    std::cout << x.second->first << ".." << x.second->second << std::endl;
+  }
+  {
+
+    std::stringstream is("1..3");
+    NumIntervalGet<>::iter_type end;
+    //auto x = std::use_facet< ::NumIntervalGet<> >(is.getloc()).get5<long> (is, end, is);
+    auto x = ::NumIntervalGet<>().get5<long> (is, end, is);
     if (!x.second) {
       std::cout << x.second.get_error() << std::endl;
       return 1;
