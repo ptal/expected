@@ -116,7 +116,7 @@ BOOST_AUTO_TEST_CASE(expected_from_catch_block)
   }
   catch(...)
   {
-    expected<int> e;
+    expected<int> e(exceptional);
 
     BOOST_REQUIRE_THROW(e.get(), std::exception);
     BOOST_CHECK_EQUAL(e.valid(), false);
@@ -268,7 +268,7 @@ BOOST_AUTO_TEST_CASE(expected_from_exception_catch)
   }
   catch(...)
   {
-    expected<int> e = make_exceptional_expected<int>();
+    expected<int> e = make_expected_from_error<int>();
 
     BOOST_REQUIRE_THROW(e.get(), std::exception);
     BOOST_CHECK_EQUAL(e.valid(), false);
@@ -285,7 +285,7 @@ BOOST_AUTO_TEST_CASE(expected_from_error_catch_exception)
   }
   catch(...)
   {
-    auto throw_lambda = [](){ make_exceptional_expected<int,std::error_condition>();};
+    auto throw_lambda = [](){ make_expected_from_error<int,std::error_condition>();};
 
     BOOST_CHECK_THROW(throw_lambda(), test_exception);
   }
@@ -294,7 +294,7 @@ BOOST_AUTO_TEST_CASE(expected_from_error_catch_exception)
 BOOST_AUTO_TEST_CASE(expected_from_error)
 {
   // From exceptional constructor.
-  auto e = make_exceptional_expected<int>(std::make_error_condition(std::errc::invalid_argument));
+  auto e = make_expected_from_error<int>(std::make_error_condition(std::errc::invalid_argument));
   auto error_from_except_check = [](const bad_expected_access<std::error_condition>& except)
   {
     return std::errc(except.error().value()) == std::errc::invalid_argument;
@@ -307,7 +307,7 @@ BOOST_AUTO_TEST_CASE(expected_from_error)
 BOOST_AUTO_TEST_CASE(expected_from_exception)
 {
   // From exceptional constructor.
-  auto e = make_exceptional_expected<int>(test_exception());
+  auto e = make_expected_from_error<int>(test_exception());
   BOOST_CHECK_THROW(e.get(), test_exception);
   BOOST_CHECK_EQUAL(e.valid(), false);
   BOOST_CHECK_EQUAL(static_cast<bool>(e), false);
@@ -316,7 +316,7 @@ BOOST_AUTO_TEST_CASE(expected_from_exception)
 BOOST_AUTO_TEST_CASE(expected_from_exception_ptr)
 {
   // From exception_ptr constructor.
-  auto e = make_exceptional_expected<int>(boost::copy_exception(test_exception()));
+  auto e = make_expected_from_error<int>(boost::copy_exception(test_exception()));
   BOOST_CHECK_THROW(e.get(), test_exception);
   BOOST_CHECK_EQUAL(e.valid(), false);
   BOOST_CHECK_EQUAL(static_cast<bool>(e), false);
@@ -346,8 +346,8 @@ BOOST_AUTO_TEST_CASE(expected_swap_value)
 BOOST_AUTO_TEST_CASE(expected_swap_exception)
 {
   // From value constructor.
-  expected<int> e = make_exceptional_expected<int>(std::invalid_argument("e"));
-  expected<int> e2 = make_exceptional_expected<int>(std::invalid_argument("e2"));
+  expected<int> e = make_expected_from_error<int>(std::invalid_argument("e"));
+  expected<int> e2 = make_expected_from_error<int>(std::invalid_argument("e2"));
 
   e.swap(e2);
 

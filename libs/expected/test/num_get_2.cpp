@@ -13,6 +13,7 @@
 #include <streambuf>
 #include <locale>
 #include <sstream>
+#include <type_traits>
 
 namespace boost {
 // to be moved to monads.hpp
@@ -27,7 +28,7 @@ template <class T>
 struct is_monad : std::false_type {
 };
 template <class T>
-struct is_monad<monad<T>> : std::true_type {
+struct is_monad<monad<T> > : std::true_type {
 };
 
 template <class T>
@@ -69,11 +70,11 @@ struct monad_traits<expected<T, E> >
   static bool valid(monad_type m) {
     return m.valid();
   }
-  static value_type value(monad_type m) {
-    return m.value();
+  static value_type get(monad_type m) {
+    return m.get();
   }
   static error_type error(monad_type m) {
-    return m.get_error();
+    return m.error();
   }
 
   template <class F>
@@ -92,7 +93,7 @@ struct monad_traits<expected<T, E> >
 ////////////
 
 template <class I, typename T, class E >
-using pair_expected = std::pair<I, boost::expected<T,E>> ;
+using pair_expected = std::pair<I, boost::expected<T,E> > ;
 
 template <class E, class I, typename T  >
 pair_expected<I,T,E> make_pair_expected(I i, T v) {
@@ -108,6 +109,7 @@ pair_expected<I,T,E> make_pair_expected_from_error(I i, E e) {
 // making pair_expected a monad
 
 namespace boost {
+
 template <class T, class I, typename E  >
 struct monad_traits<pair_expected<I,T,E> >
 {
@@ -119,12 +121,12 @@ struct monad_traits<pair_expected<I,T,E> >
     return m.second.valid();
   }
 
-  static value_type value(monad_type m) {
+  static value_type get(monad_type m) {
     return std::make_pair(m.first, m.second.get());
   }
 
   static error_type error(monad_type m) {
-    return m.second.get_error();
+    return m.second.error();
   }
 
   template <class F>
@@ -138,19 +140,81 @@ struct monad_traits<pair_expected<I,T,E> >
     typedef typename std::result_of<F(value_type)>::type result_type;
     typedef typename result_type::second_type expected_type;
     if (valid(m)) {
-      return f(value(m));
+      return f(get(m));
     }
     return make_pair(m.first, expected_type(exceptional, error(m)));
   }
 
 };
 
-}
+} // boost
+
+//template <class T, class I, typename E, class F>
+//auto operator|(pair_expected<T, I, E> m, F&& f)
+//  -> decltype(boost::monad_traits<pair_expected<T, I, E> >::next(m, std::forward<F>(f)))  {
+//    return    boost::monad_traits<pair_expected<T, I, E> >::next(m, std::forward<F>(f));
+//}
+
+namespace boost {
+
+template <class T>
+struct monad_wrapper;
+
+template <class T, class I, typename E  >
+struct monad_wrapper<pair_expected<I,T,E> >
+{
+  typedef pair_expected<I,T,E> monad_type;
+  typedef std::pair<I,T> value_type;
+  typedef E error_type;
+
+  monad_type m;
+  monad_wrapper(monad_type v) : m(v) {}
+
+  operator monad_type() const { return m; }
+
+  bool valid() const {
+    return m.second.valid();
+  }
+
+  value_type get() const {
+    return std::make_pair(m.first, m.second.get());
+  }
+
+  error_type error() const {
+    return m.second.error();
+  }
+
+  template <class F>
+  struct result_type {
+    typedef typename std::result_of<F(value_type)>::type type;
+  };
+
+  template <class F>
+  typename result_type<F>::type
+  next(F f) const {
+    typedef typename std::result_of<F(value_type)>::type result_type;
+    typedef typename result_type::second_type expected_type;
+    if (valid()) {
+      return f(get());
+    }
+    return make_pair(m.first, expected_type(exceptional, error()));
+  }
+
+//  template <class F>
+//  friend
+//  auto operator|(pair_expected<T, I, E> m, F&& f)
+//    -> decltype(boost::monad_wrapper<pair_expected<T, I, E> >(m).next(std::forward<F>(f)))  {
+//      return    boost::monad_wrapper<pair_expected<T, I, E> >(m).next(std::forward<F>(f));
+//  }
+
+};
+
+} // boost
 
 template <class T, class I, typename E, class F>
 auto operator|(pair_expected<T, I, E> m, F&& f)
-  -> decltype(boost::monad_traits<pair_expected<T, I, E>>::next(m, std::forward<F>(f)))  {
-    return    boost::monad_traits<pair_expected<T, I, E>>::next(m, std::forward<F>(f));
+  -> decltype(boost::monad_wrapper<pair_expected<T, I, E> >(m).next(std::forward<F>(f)))  {
+    return    boost::monad_wrapper<pair_expected<T, I, E> >(m).next(std::forward<F>(f));
 }
 
 
@@ -280,13 +344,13 @@ public:
 
     //auto  f = std::use_facet< ::NumGet<char_type, iter_type> >(ios.getloc()).template get<Num>(s, e, ios);
     auto  f = ::NumGet<char_type, iter_type>().template get<Num>(s, e, ios);
-    if (! f.second) return make_pair_expected_from_error<value_type>(f.first, f.second.get_error());
+    if (! f.second) return make_pair_expected_from_error<value_type>(f.first, f.second.error());
 
     auto  m = matchedString("..", f.first, e);
-    if (! m.second) return make_pair_expected_from_error<value_type>(m.first, m.second.get_error());
+    if (! m.second) return make_pair_expected_from_error<value_type>(m.first, m.second.error());
     //auto l = std::use_facet< ::NumGet<char_type, iter_type> >(ios.getloc()).template get<Num>(m.first, e, ios);
     auto l = ::NumGet<char_type, iter_type>().template get<Num>(m.first, e, ios);
-    if (! l.second) return make_pair_expected_from_error<value_type>(l.first, l.second.get_error());
+    if (! l.second) return make_pair_expected_from_error<value_type>(l.first, l.second.error());
 
     value_type tmp = std::make_pair(*f.second, *l.second);
     return make_pair_expected<std::ios_base::iostate>(l.first, tmp);
@@ -420,7 +484,7 @@ int main()
     NumGet<>::iter_type end;
     auto x = facet.get<long> (is, end, is);
     if (!x.second) {
-      std::cout << int(x.second.get_error()) << std::endl;
+      std::cout << int(x.second.error()) << std::endl;
       return 1;
     }
 
@@ -433,7 +497,7 @@ int main()
     //auto x = std::use_facet< ::NumIntervalGet<> >(is.getloc()).get<long> (is, end, is);
     auto x = ::NumIntervalGet<>().get<long> (is, end, is);
     if (!x.second) {
-      std::cout << x.second.get_error() << std::endl;
+      std::cout << x.second.error() << std::endl;
       return 1;
     }
 
@@ -446,7 +510,7 @@ int main()
     //auto x = std::use_facet< ::NumIntervalGet<> >(is.getloc()).get2<long> (is, end, is);
     auto x = ::NumIntervalGet<>().get2<long> (is, end, is);
     if (!x.second) {
-      std::cout << x.second.get_error() << std::endl;
+      std::cout << x.second.error() << std::endl;
       return 1;
     }
 
@@ -459,7 +523,7 @@ int main()
     //auto x = std::use_facet< ::NumIntervalGet<> >(is.getloc()).get3<long> (is, end, is);
     auto x = ::NumIntervalGet<>().get3<long> (is, end, is);
     if (!x.second) {
-      std::cout << x.second.get_error() << std::endl;
+      std::cout << x.second.error() << std::endl;
       return 1;
     }
 
@@ -472,7 +536,7 @@ int main()
     //auto x = std::use_facet< ::NumIntervalGet<> >(is.getloc()).get4<long> (is, end, is);
     auto x = ::NumIntervalGet<>().get4<long> (is, end, is);
     if (!x.second) {
-      std::cout << x.second.get_error() << std::endl;
+      std::cout << x.second.error() << std::endl;
       return 1;
     }
 
@@ -485,7 +549,7 @@ int main()
     //auto x = std::use_facet< ::NumIntervalGet<> >(is.getloc()).get5<long> (is, end, is);
     auto x = ::NumIntervalGet<>().get5<long> (is, end, is);
     if (!x.second) {
-      std::cout << x.second.get_error() << std::endl;
+      std::cout << x.second.error() << std::endl;
       return 1;
     }
 

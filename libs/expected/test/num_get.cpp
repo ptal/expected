@@ -141,11 +141,11 @@ public:
     typedef typename get_result_type<Num>::type result_type;
 
     auto  f = std::use_facet< ::NumGet<char_type, iter_type> >(ios.getloc()).template get<Num>(s, e, ios);
-    if (! f) return result_type(boost::exceptional, f.get_error());
+    if (! f) return result_type(boost::exceptional, f.error());
     auto  m = matchedString("..", f->first, e);
-    if (! m) return result_type(boost::exceptional, m.get_error());
+    if (! m) return result_type(boost::exceptional, m.error());
     auto l = std::use_facet< ::NumGet<char_type, iter_type> >(ios.getloc()).template get<Num>(*m, e, ios);
-    if (! l) return result_type(boost::exceptional, l.get_error());
+    if (! l) return result_type(boost::exceptional, l.error());
 
     return result_type(make_pair(l->first, make_pair(f->second, l->second)));
   }
@@ -170,7 +170,7 @@ int main()
     NumGet<char>::iter_type end;
     NumGet<char>::get_result_type<long>::type x = facet.get<long> (is, end, is);
     if (!x) {
-      std::cout << int(x.get_error().second) << std::endl;
+      std::cout << int(x.error().second) << std::endl;
       return 1;
     }
 
@@ -184,7 +184,7 @@ int main()
     NumIntervalGet<>::iter_type end;
     NumIntervalGet<>::get_result_type<long>::type x = facet.get<long> (is, end, is);
     if (!x) {
-      std::cout << int(x.get_error().second) << std::endl;
+      std::cout << int(x.error().second) << std::endl;
       return 1;
     }
 
