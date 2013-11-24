@@ -21,13 +21,7 @@ template <class T>
 struct monad_traits;
 
 template <class T>
-struct monad {
-  typedef T value_type;
-  T v;
-  monad(T&& v) : v(std::forward<T>(v)) {}
-
-  operator T() const { return v; }
-};
+struct monad;
 
 template <class T>
 struct is_monad : std::false_type {
@@ -41,17 +35,29 @@ monad<typename std::decay<T>::type> make_monad(T&& v) {
   return monad<typename std::decay<T>::type>(std::forward<T>(v));
 }
 
-//template <class T, class F>
-//auto operator|(monad<T>&& m, F&& f)
-//  -> decltype(make_monad(monad_traits<T>::next(m.v, std::forward<F>(f)))) const {
-//    return    make_monad(monad_traits<T>::next(m.v, std::forward<F>(f)));
-//}
+template <class T>
+struct monad {
+  typedef T value_type;
+  T v;
+  monad(T&& v) : v(std::forward<T>(v)) {}
 
-template <class M, class F>
-auto operator|(M&& m, F&& f)
-  -> decltype(make_monad(monad_traits<typename M::value_type>::next(m.v, std::forward<F>(f)))) const {
-    return    make_monad(monad_traits<typename M::value_type>::next(m.v, std::forward<F>(f)));
+  operator T() const { return v; }
+
+  template <class F>
+  auto next(F&& f) const
+  -> decltype(make_monad(monad_traits<value_type>::next(v, std::forward<F>(f))))  {
+    return    make_monad(monad_traits<value_type>::next(v, std::forward<F>(f)));
+  }
+
+};
+
+template <class T, class F>
+auto operator|(monad<T>&& m, F&& f)
+  -> decltype(make_monad(monad_traits<T>::next(m.v, std::forward<F>(f))))  {
+    //return    make_monad(monad_traits<T>::next(m.v, std::forward<F>(f)));
+    return  m.next(std::forward<F>(f));
 }
+
 
 // to be moved to expected.hpp
 template <class T, class E>
@@ -343,24 +349,22 @@ public:
     //auto  f = std::use_facet< ::NumGet<char_type, iter_type> >(ios.getloc()).template get<Num>(s, e, ios);
     auto  f = ::NumGet<char_type, iter_type>().template get<Num>(s, e, ios);
 
-    auto m = make_monad(std::move(f))
-      | [e](std::pair<iter_type,Num> f) {
+    return make_monad(std::move(f))
+      .next([e](std::pair<iter_type,Num> f) {
 
         return matchedString("..", f.first, e);
 
-      };
-    auto l = std::move(m) | [&ios, e](std::pair<iter_type,Num> m) {
+      } ).next( [&ios, e](std::pair<iter_type,Num> m) {
 
         //return std::use_facet< ::NumGet<char_type, iter_type> >(ios.getloc()).template get<Num>(m.first, e, ios);
         return ::NumGet<char_type, iter_type>().template get<Num>(m.first, e, ios);
 
-      };
-    return  std::move(l) | [f](std::pair<iter_type,Num> l) {
+      } ).next( [f](std::pair<iter_type,Num> l) {
 
         value_type tmp(*f.second, l.second);
         return make_pair_expected<std::ios_base::iostate>(l.first, tmp);
 
-      };
+      });
   }
 
   /**
