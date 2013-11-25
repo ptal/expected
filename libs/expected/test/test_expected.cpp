@@ -75,13 +75,13 @@ BOOST_AUTO_TEST_CASE(expected_from_copy_exception)
   BOOST_CHECK_EQUAL(static_cast<bool>(e), false);
 }
 
-BOOST_AUTO_TEST_CASE(expected_from_emplace)
+BOOST_AUTO_TEST_CASE(expected_from_in_place)
 {
-  // From emplace constructor.
-  expected<std::string> e(emplace, "emplace");
+  // From in_place2 constructor.
+  expected<std::string> e(in_place2, "in_place2");
   BOOST_REQUIRE_NO_THROW(e.get());
-  BOOST_CHECK_EQUAL(e.get(), "emplace");
-  BOOST_CHECK_EQUAL(*e, "emplace");
+  BOOST_CHECK_EQUAL(e.get(), "in_place2");
+  BOOST_CHECK_EQUAL(*e, "in_place2");
   BOOST_CHECK(e.valid());
   BOOST_CHECK(static_cast<bool>(e));
 }
@@ -204,11 +204,11 @@ BOOST_AUTO_TEST_CASE(expected_from_moved_expected)
   BOOST_CHECK(static_cast<bool>(e2));
 }
 
-BOOST_AUTO_TEST_CASE(expected_from_emplace)
+BOOST_AUTO_TEST_CASE(expected_from_im_place)
 {
-  // From emplace constructor.
-  expected<std::string> e(emplace, "emplace");
-  BOOST_CHECK_EQUAL(e.get(), "emplace");
+  // From in_place2 constructor.
+  expected<std::string> e(in_place2, "in_place2");
+  BOOST_CHECK_EQUAL(e.get(), "in_place2");
 
   // From emplace method.
   e.emplace("emplace method");
@@ -237,24 +237,24 @@ BOOST_AUTO_TEST_SUITE_END()
 
 BOOST_AUTO_TEST_SUITE(expected_factories)
 
-BOOST_AUTO_TEST_CASE(expected_from_emplace)
+BOOST_AUTO_TEST_CASE(expected_from_in_place)
 {
-  // From emplace factory.
-  auto e = make_expected<std::string>("emplace");
+  // From in_place2 factory.
+  auto e = make_expected<std::string>("in_place2");
   BOOST_REQUIRE_NO_THROW(e.get());
-  BOOST_CHECK_EQUAL(e.get(), "emplace");
-  BOOST_CHECK_EQUAL(*e, "emplace");
+  BOOST_CHECK_EQUAL(e.get(), "in_place2");
+  BOOST_CHECK_EQUAL(*e, "in_place2");
   BOOST_CHECK(e.valid());
   BOOST_CHECK(static_cast<bool>(e));
 }
 
-BOOST_AUTO_TEST_CASE(expected_from_emplace_error)
+BOOST_AUTO_TEST_CASE(expected_from_in_place_error)
 {
-  // From emplace factory.
-  auto e = make_expected<std::string, std::error_condition>("emplace");
+  // From in_place2 factory.
+  auto e = make_expected<std::string, std::error_condition>("in_place2");
   BOOST_REQUIRE_NO_THROW(e.get());
-  BOOST_CHECK_EQUAL(e.get(), "emplace");
-  BOOST_CHECK_EQUAL(*e, "emplace");
+  BOOST_CHECK_EQUAL(e.get(), "in_place2");
+  BOOST_CHECK_EQUAL(*e, "in_place2");
   BOOST_CHECK(e.valid());
   BOOST_CHECK(static_cast<bool>(e));
 }

@@ -24,62 +24,62 @@ namespace boost
   class bad_expected_access : public std::logic_error
   {
     public:
-      typedef Error exceptional_type;
+      typedef Error error_type;
     private:
-      exceptional_type error_value;
+      error_type error_value;
     public:
       bad_expected_access(const Error& e)
       : std::logic_error("Found an error instead of the expected value.")
       , error_value(e)
       {}
 
-      exceptional_type& error() { return error_value; }
-      const exceptional_type& error() const { return error_value; }
+      error_type& error() { return error_value; }
+      const error_type& error() const { return error_value; }
 
-      // Add implicit/explicit conversion to exceptional_type ?
+      // Add implicit/explicit conversion to error_type ?
   };
 
   // Traits classes
-  template <typename ExceptionalType>
-  struct exceptional_traits
+  template <typename ErrorType>
+  struct expected_traits
   {
-    typedef ExceptionalType exceptional_type;
+    typedef ErrorType error_type;
 
     template <class E>
-    static exceptional_type from_error(E const& e)
+    static error_type from_error(E const& e)
     {
-      return exceptional_type(e);
+      return error_type(e);
     }
 
-    static exceptional_type default_error()
+    static error_type default_error()
     {
       throw;
     }
 
-    static void bad_access(const exceptional_type &e)
+    static void bad_access(const error_type &e)
     {
-      boost::throw_exception(bad_expected_access<exceptional_type>(e));
+      boost::throw_exception(bad_expected_access<error_type>(e));
     }
   };
 
   // Specialization for exception_ptr
   template <>
-  struct exceptional_traits<boost::exception_ptr>
+  struct expected_traits<boost::exception_ptr>
   {
-    typedef boost::exception_ptr exceptional_type;
+    typedef boost::exception_ptr error_type;
 
     template <class E>
-    static exceptional_type from_error(E const& e)
+    static error_type from_error(E const& e)
     {
       return boost::copy_exception(e);
     }
 
-    static exceptional_type default_error()
+    static error_type default_error()
     {
       return boost::current_exception();
     }
 
-    static void bad_access(const exceptional_type &e)
+    static void bad_access(const error_type &e)
     {
       boost::rethrow_exception(e);
     }
@@ -87,20 +87,20 @@ namespace boost
 
 #if ! defined BOOST_NO_CXX11_HDR_EXCEPTION  && ! defined BOOST_NO_CXX11_RVALUE_REFERENCES
   template <>
-  struct exceptional_traits<std::exception_ptr>
-  : public exceptional_traits<boost::exception_ptr>
+  struct expected_traits<std::exception_ptr>
+  : public expected_traits<boost::exception_ptr>
   {
-    typedef std::exception_ptr exceptional_type;
+    typedef std::exception_ptr error_type;
   };
 #endif
 
-  struct exceptional_tag {};
-  BOOST_CONSTEXPR_OR_CONST exceptional_tag exceptional = {};
+  struct exceptional_t {};
+  BOOST_CONSTEXPR_OR_CONST exceptional_t exceptional = {};
 
-  struct emplace_tag {};
-  BOOST_CONSTEXPR_OR_CONST emplace_tag emplace = {};
+  struct in_place_t {};
+  BOOST_CONSTEXPR_OR_CONST in_place_t in_place2 = {};
 
-  template <typename ValueType, typename ExceptionalType=boost::exception_ptr>
+  template <typename ValueType, typename ErrorType=boost::exception_ptr>
   class expected;
 
     // Factories
@@ -137,47 +137,45 @@ namespace boost
     expected<T,E>
   >::type make_expected_from_error(E const& e);
 
-/*
   template <typename F>
   expected<typename boost::result_of<F()>::type>
-  make_expected_from_call(F&& fuct) BOOST_NOEXCEPT
+  make_expected_from_call(F fuct) BOOST_NOEXCEPT
   {
     try {
-      return make_expected(fun());
+      return make_expected(fuct());
     } catch (...) {
-      return make_expected_from_error();
+      return make_expected_from_error<typename boost::result_of<F()>::type>();
     }
   }
-  */
 
 
-  template <typename ValueType, typename ExceptionalType>
+  template <typename ValueType, typename ErrorType>
   class expected
   {
   public:
     typedef ValueType value_type;
-    typedef ExceptionalType exceptional_type;
-    typedef exceptional_traits<exceptional_type> traits_type;
+    typedef ErrorType error_type;
+    typedef expected_traits<error_type> traits_type;
 
   private:
-    typedef expected<value_type, exceptional_type> this_type;
+    typedef expected<value_type, error_type> this_type;
 
     // Static asserts.
-    typedef boost::is_same<value_type, exceptional_tag> is_same_value_exceptional_tag;
-    typedef boost::is_same<value_type, emplace_tag> is_same_value_emplace_tag;
-    typedef boost::is_same<exceptional_type, exceptional_tag> is_same_exceptional_exceptional_tag;
-    typedef boost::is_same<exceptional_type, emplace_tag> is_same_exceptional_emplace_tag;
-    BOOST_STATIC_ASSERT_MSG( !is_same_value_exceptional_tag::value, "bad ValueType" );
-    BOOST_STATIC_ASSERT_MSG( !is_same_value_emplace_tag::value, "bad ValueType" );
-    BOOST_STATIC_ASSERT_MSG( !is_same_exceptional_exceptional_tag::value, "bad ExceptionalType" );
-    BOOST_STATIC_ASSERT_MSG( !is_same_exceptional_emplace_tag::value, "bad ExceptionalType" );
+    typedef boost::is_same<value_type, exceptional_t> is_same_value_exceptional_t;
+    typedef boost::is_same<value_type, in_place_t> is_same_value_in_place_t;
+    typedef boost::is_same<error_type, exceptional_t> is_same_error_exceptional_t;
+    typedef boost::is_same<error_type, in_place_t> is_same_error_in_place_t;
+    BOOST_STATIC_ASSERT_MSG( !is_same_value_exceptional_t::value, "bad ValueType" );
+    BOOST_STATIC_ASSERT_MSG( !is_same_value_in_place_t::value, "bad ValueType" );
+    BOOST_STATIC_ASSERT_MSG( !is_same_error_exceptional_t::value, "bad ErrorType" );
+    BOOST_STATIC_ASSERT_MSG( !is_same_error_in_place_t::value, "bad ErrorType" );
 
     // C++03 movable support
     BOOST_COPYABLE_AND_MOVABLE(this_type)
 
   private:
     union {
-      exceptional_type err;
+      error_type err;
       value_type val;
     };
     bool has_value;
@@ -209,7 +207,7 @@ namespace boost
     expected(const expected& rhs)
     BOOST_NOEXCEPT_IF(
       has_nothrow_copy_constructor<value_type>::value &&
-      has_nothrow_copy_constructor<exceptional_type>::value
+      has_nothrow_copy_constructor<error_type>::value
     )
     : has_value(rhs.has_value)
     {
@@ -219,14 +217,14 @@ namespace boost
       }
       else
       {
-        ::new (&err) exceptional_type(rhs.err);
+        ::new (&err) error_type(rhs.err);
       }
     }
 
     expected(BOOST_RV_REF(expected) rhs)
     //BOOST_NOEXCEPT_IF(
     //  has_nothrow_move_constructor<value_type>::value &&
-    //  has_nothrow_move_constructor<exceptional_type>::value
+    //  has_nothrow_move_constructor<error_type>::value
     //)
     : has_value(rhs.has_value)
     {
@@ -236,13 +234,13 @@ namespace boost
       }
       else
       {
-        ::new (&err) exceptional_type(boost::move(rhs.err));
+        ::new (&err) error_type(boost::move(rhs.err));
       }
     }
 
-    expected(exceptional_tag, exceptional_type const& e)
+    expected(exceptional_t, error_type const& e)
     BOOST_NOEXCEPT_IF(
-      has_nothrow_copy_constructor<exceptional_type>::value
+      has_nothrow_copy_constructor<error_type>::value
     )
     : err(e)
     , has_value(false)
@@ -250,14 +248,14 @@ namespace boost
 
     // Requires  typeid(e) == typeid(E)
     template <class E>
-    expected(exceptional_tag, E const& e)
+    expected(exceptional_t, E const& e)
     : err(traits_type::from_error(e))
     , has_value(false)
     {}
 
 #if ! defined BOOST_NO_CXX11_VARIADIC_TEMPLATES
     template <class... Args>
-    BOOST_CONSTEXPR explicit expected(emplace_tag, Args&&... args)
+    BOOST_CONSTEXPR explicit expected(in_place_t, Args&&... args)
     : val(boost::forward<Args>(args)...)
     , has_value(true)
     {}
@@ -268,7 +266,7 @@ namespace boost
     //, has_value(false)
     //{}
 
-    expected(exceptional_tag)
+    expected(exceptional_t)
     : err(traits_type::default_error())
     , has_value(false)
     {}
@@ -277,11 +275,11 @@ namespace boost
     ~expected()
     //BOOST_NOEXCEPT_IF(
     //  is_nothrow_destructible<value_type>::val &&
-    //  is_nothrow_destructible<exceptional_type>::value_type
+    //  is_nothrow_destructible<error_type>::value_type
     //)
     {
       if (valid()) val.~value_type();
-      else err.~exceptional_type();
+      else err.~error_type();
     }
 
     // Assignments
@@ -313,8 +311,8 @@ namespace boost
     template <class... Args>
     expected& emplace(Args&&... args)
     {
-      // Why emplace doesn't work (instead of emplace_tag()) ?
-      this_type(emplace_tag(), boost::forward<Args>(args)...).swap(*this);
+      // Why emplace doesn't work (instead of in_place_t()) ?
+      this_type(in_place_t(), boost::forward<Args>(args)...).swap(*this);
       return *this;
     }
 #endif
@@ -330,9 +328,9 @@ namespace boost
         }
         else
         {
-          exceptional_type t = boost::move(rhs.err);
+          error_type t = boost::move(rhs.err);
           new (&rhs.val) value_type(boost::move(val));
-          new (&err) exceptional_type(t);
+          new (&err) error_type(t);
           boost::swap(has_value, rhs.has_value);
         }
       }
@@ -393,7 +391,7 @@ namespace boost
       return &val;
     }
 
-    exceptional_type error() const
+    error_type error() const
     {
       return err;
     }
@@ -427,13 +425,13 @@ namespace boost
   template<typename T, typename E, typename... Args>
   expected<T,E> make_expected(Args&&... args)
   {
-    return expected<T,E>(emplace, boost::forward<Args>(args)...);
+    return expected<T,E>(in_place2, boost::forward<Args>(args)...);
   }
 
   template<typename T, typename... Args>
   expected<T> make_expected(Args&&... args)
   {
-    return expected<T>(emplace, boost::forward<Args>(args)...);
+    return expected<T>(in_place2, boost::forward<Args>(args)...);
   }
 #endif
 
