@@ -42,20 +42,12 @@ BOOST_AUTO_TEST_CASE(except_default_constructor)
   BOOST_CHECK(static_cast<bool>(e));
 }
 
-//BOOST_AUTO_TEST_CASE(except_default_constructor_constexpr)
-//{
-//  // From value constructor.
-//  BOOST_CONSTEXPR expected<int,int> e;
-//  BOOST_CHECK(e.valid());
-//}
-//clang-darwin.compile.c++ bin/test_expected.test/clang-darwin-3.4xl/debug/link-static/test_expected.o
-//test_expected.cpp:48:37: error: constexpr variable cannot have non-literal type 'const expected<int, int>'
-//  BOOST_CONSTEXPR expected<int,int> e;
-//                                    ^
-//../../../boost/expected/expected.hpp:313:5: note: 'expected<int, int>' is not literal because it has a user-provided destructor
-//    ~expected()
-//    ^
-//1 error generated.
+BOOST_AUTO_TEST_CASE(except_default_constructor_constexpr)
+{
+  // From value constructor.
+  BOOST_CONSTEXPR expected<int,int> e;
+  BOOST_CHECK(e.valid());
+}
 
 BOOST_AUTO_TEST_SUITE_END()
 BOOST_AUTO_TEST_SUITE(except_expected_constructors)
