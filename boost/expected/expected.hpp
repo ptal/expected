@@ -20,23 +20,59 @@
 #include <boost/utility/result_of.hpp>
 #include <type_traits>
 #include <utility>
+#include <initializer_list>
 
-# define REQUIRES(...) typename std::enable_if<__VA_ARGS__, void*>::type = 0
-# define RETURN_IF(RET, ...) typename std::enable_if<__VA_ARGS__, RET>::type
+#if 0
+namespace boost
+{
+    template<bool Cond, typename T = void>
+      using enable_if_t = typename ::boost::enable_if_c<Cond, T>::type;
 
+    template<bool Cond>
+      using requires_t = typename ::boost::enable_if_c<Cond>::type;
 
+}
+
+# define REQUIRES(...) ::boost::enable_if_t<__VA_ARGS__, void*> = 0
+# define T_REQUIRES(...) typename = ::boost::requires_t<(__VA_ARGS__)>
+
+#else
+
+# define REQUIRES(...) typename ::boost::enable_if_c<__VA_ARGS__, void*>::type = 0
+# define T_REQUIRES(...) typename = typename ::boost::enable_if_c<(__VA_ARGS__)>::type
+
+#endif
 
 # if defined __clang__
-# if (__clang_major__ < 2) || (__clang_major__ == 2) && (__clang_minor__ < 9)
-# define BOOST_NO_CXX11_RVALUE_REFERENCE_FOR_THIS
-# endif
+#  if (__clang_major__ < 2) || (__clang_major__ == 2) && (__clang_minor__ < 9)
+#   define BOOST_EXPECTED_NO_CXX11_RVALUE_REFERENCE_FOR_THIS
+#  endif
+# elif defined __GNUC__
+#  if (__GNUC__*10000 + __GNUC_MINOR__*100 + __GNUC_PATCHLEVEL__ < 40801) || !defined(__GXX_EXPERIMENTAL_CXX0X__)
+#   define BOOST_EXPECTED_NO_CXX11_RVALUE_REFERENCE_FOR_THIS
+#  endif
 # else
-# define BOOST_NO_CXX11_RVALUE_REFERENCE_FOR_THIS
+#  define BOOST_EXPECTED_NO_CXX11_RVALUE_REFERENCE_FOR_THIS
 # endif
+
+
+// ../../../boost/expected/expected.hpp: In instantiation of ‘class boost::expected<int>’:
+// test_expected.cpp:79:17:   required from here
+// ../../../boost/expected/expected.hpp:596:15: desole, pas implante: use of ‘type_pack_expansion’ in template
+
+#if defined BOOST_NO_CXX11_FUNCTION_TEMPLATE_DEFAULT_ARGS
+# define BOOST_EXPECTED_NO_CXX11_FUNCTION_TEMPLATE_DEFAULT_ARGS
+#else
+# if defined __GNUC__
+#  if __GNUC__ < 4 || (__GNUC__ == 4 && __GNUC_MINOR__ < 8) || !defined(__GXX_EXPERIMENTAL_CXX0X__)
+#   define BOOST_EXPECTED_NO_CXX11_FUNCTION_TEMPLATE_DEFAULT_ARGS
+#  endif
+# endif
+#endif
+
 
 namespace boost
 {
-
 
   // bad_expected_access exception class.
   template <class Error>
@@ -119,73 +155,28 @@ namespace boost
   struct in_place_t {};
   BOOST_CONSTEXPR_OR_CONST in_place_t in_place2 = {};
 
-  template <typename ValueType, typename ErrorType=boost::exception_ptr>
-  class expected;
-
-    // Factories
-#if ! defined BOOST_NO_CXX11_VARIADIC_TEMPLATES && ! defined BOOST_NO_CXX11_RVALUE_REFERENCES
-  template<typename T, typename E, typename... Args>
-  expected<T,E> make_expected(Args&&... args);
-
-  template<typename T, typename... Args>
-  expected<T> make_expected(Args&&... args);
-#endif
-
-  template <typename T>
-  expected<T> make_expected_from_error() BOOST_NOEXCEPT;
-
-  template <typename T, typename E>
-  expected<T, E> make_expected_from_error();
-
-  template <typename T, typename U, typename E>
-  typename boost::disable_if<
-    boost::is_same<U, E>,
-    expected<T,U>
-  >::type make_expected_from_error(E const& e);
-
-  // Requires  typeid(e) == typeid(E)
-  template <typename T, typename E>
-    RETURN_IF(expected<T>, boost::is_base_of<std::exception, E>::value || boost::is_base_of<boost::exception, E>::value)
-  make_expected_from_error(E const& e) BOOST_NOEXCEPT;
-
-  template <typename T, typename E>
-  typename boost::disable_if_c<
-    boost::is_base_of<std::exception, E>::value || boost::is_base_of<boost::exception, E>::value,
-    expected<T,E>
-  >::type make_expected_from_error(E const& e);
-
-  template <typename F>
-  expected<typename boost::result_of<F()>::type>
-  make_expected_from_call(F fuct) BOOST_NOEXCEPT
-  {
-    try {
-      return make_expected(fuct());
-    } catch (...) {
-      return make_expected_from_error<typename boost::result_of<F()>::type>();
-    }
+  // workaround: std utility functions aren't constexpr yet
+  template <class T> inline
+    BOOST_CONSTEXPR T&& constexpr_forward(typename std::remove_reference<T>::type& t) BOOST_NOEXCEPT {
+    return static_cast<T&&>(t);
   }
 
-// workaround: std utility functions aren't constexpr yet
-template <class T> inline constexpr T&& constexpr_forward(typename std::remove_reference<T>::type& t) noexcept
-{
-  return static_cast<T&&>(t);
-}
+  template <class T> inline
+    BOOST_CONSTEXPR T&& constexpr_forward(typename std::remove_reference<T>::type&& t) BOOST_NOEXCEPT {
+      static_assert(!std::is_lvalue_reference<T>::value, "!!");
+      return static_cast<T&&>(t);
+  }
 
-template <class T> inline constexpr T&& constexpr_forward(typename std::remove_reference<T>::type&& t) noexcept
-{
-    static_assert(!std::is_lvalue_reference<T>::value, "!!");
-    return static_cast<T&&>(t);
-}
+  template <class T> inline
+    BOOST_CONSTEXPR typename std::remove_reference<T>::type&& constexpr_move(T&& t) BOOST_NOEXCEPT {
+      return static_cast<typename std::remove_reference<T>::type&&>(t);
+  }
 
-template <class T> inline constexpr typename std::remove_reference<T>::type&& constexpr_move(T&& t) noexcept
-{
-    return static_cast<typename std::remove_reference<T>::type&&>(t);
-}
-
-template<class _Ty> inline constexpr _Ty * constexpr_addressof(_Ty& _Val)
-{
-    return ((_Ty *) &(char&)_Val);
-}
+  template<class T> inline
+    BOOST_CONSTEXPR T * constexpr_addressof(T& Val)
+  {
+    return ((T *) &(char&)Val);
+  }
 
 namespace detail {
 
@@ -270,6 +261,11 @@ namespace detail {
     constexpr_expected_base(in_place_t, Args&&... args)
     : has_value(true), storage(constexpr_forward<Args>(args)...) {}
 
+    template <class U, class... Args>
+    explicit BOOST_CONSTEXPR
+    constexpr_expected_base(in_place_t, std::initializer_list<U> il, Args&&... args)
+    : has_value(true), storage(il, constexpr_forward<Args>(args)...) {}
+
      ~constexpr_expected_base() = default;
   };
 
@@ -303,6 +299,11 @@ namespace detail {
     no_constexpr_expected_base(in_place_t, Args&&... args)
     : has_value(true), storage(constexpr_forward<Args>(args)...) {}
 
+    template <class U, class... Args>
+    explicit BOOST_CONSTEXPR
+    no_constexpr_expected_base(in_place_t, std::initializer_list<U> il, Args&&... args)
+    : has_value(true), storage(il, constexpr_forward<Args>(args)...) {}
+
     ~no_constexpr_expected_base() {
       if (has_value) storage.val.~value_type();
       else storage.err.~error_type();
@@ -317,7 +318,7 @@ namespace detail {
     >::type;
 }
 
-  template <typename ValueType, typename ErrorType>
+  template <typename ValueType, typename ErrorType=boost::exception_ptr>
   class expected
 #if defined XXX
   : detail::expected_base<ValueType, ErrorType>
@@ -350,11 +351,10 @@ namespace detail {
     error_type* errorptr() { return std::addressof(base_type::storage.err); }
     BOOST_CONSTEXPR const error_type* errorptr() const { return static_addressof(base_type::storage.err); }
 
-#if ! defined BOOST_NO_CXX11_RVALUE_REFERENCE_FOR_THIS
+#if ! defined BOOST_EXPECTED_NO_CXX11_RVALUE_REFERENCE_FOR_THIS
     BOOST_CONSTEXPR const bool& contained_has_value() const& { return base_type::has_value; }
     bool& contained_has_value() & { return base_type::has_value; }
     bool&& contained_has_value() && { return std::move(base_type::has_value); }
-
 
     BOOST_CONSTEXPR const value_type& contained_val() const& { return base_type::storage.val; }
     value_type& contained_val() & { return base_type::storage.val; }
@@ -386,7 +386,6 @@ namespace detail {
     BOOST_CONSTEXPR const error_type& contained_err() const { return err; }
     error_type& contained_err() { return err; }
 
-
 #endif
 
     // C++03 movable support
@@ -404,7 +403,7 @@ namespace detail {
   public:
 
     // About noexcept specification:
-    //  has_nothrow_move_constructor is not yet into Boost.TypeTraits.
+    //  is_nothrow_move_constructible is not yet into Boost.TypeTraits.
 
     // Constructors/Destructors/Assignments
 
@@ -428,10 +427,10 @@ namespace detail {
     BOOST_CONSTEXPR expected(BOOST_RV_REF(value_type) v
       , REQUIRES(std::is_move_constructible<value_type>::value)
     )
-    //BOOST_NOEXCEPT_IF(
-    //      std::has_nothrow_move_constructor<value_type>::value
-    //  &&  std::has_nothrow_move_constructor<error_type>::value
-    //)
+    BOOST_NOEXCEPT_IF(
+          std::is_nothrow_move_constructible<value_type>::value
+      &&  std::is_nothrow_move_constructible<error_type>::value
+    )
 #if  defined XXX
     : base_type(constexpr_move(v))
 #else
@@ -468,10 +467,10 @@ namespace detail {
       , REQUIRES( std::is_move_constructible<value_type>::value
              && std::is_move_constructible<error_type>::value)
     )
-    //BOOST_NOEXCEPT_IF(
-    //  std::has_nothrow_move_constructor<value_type>::value &&
-    //  std::has_nothrow_move_constructor<error_type>::value
-    //)
+    BOOST_NOEXCEPT_IF(
+      std::is_nothrow_move_constructible<value_type>::value &&
+      std::is_nothrow_move_constructible<error_type>::value
+    )
 #if  defined XXX
     : base_type(detail::only_set_valid, rhs.valid())
 #else
@@ -516,16 +515,33 @@ namespace detail {
 
 #if ! defined BOOST_NO_CXX11_VARIADIC_TEMPLATES
     template <class... Args
-      //, REQUIRES(std::is_constructible<value_type, Args&...>::value)
-    >
+#if !defined BOOST_EXPECTED_NO_CXX11_FUNCTION_TEMPLATE_DEFAULT_ARGS
+      , T_REQUIRES(std::is_constructible<value_type, Args&...>::value)
+#endif
+      >
     BOOST_CONSTEXPR explicit expected(in_place_t, Args&&... args)
 #if  defined XXX
-    : base_type(boost::forward<Args>(args)...)
+    : base_type(in_place_t{}, boost::forward<Args>(args)...)
 #else
     : val(boost::forward<Args>(args)...)
     , has_value(true)
 #endif
     {}
+
+    template <class U, class... Args
+#if !defined BOOST_EXPECTED_NO_CXX11_FUNCTION_TEMPLATE_DEFAULT_ARGS
+      , T_REQUIRES(std::is_constructible<value_type, std::initializer_list<U> >::value)
+#endif
+      >
+    BOOST_CONSTEXPR explicit expected(in_place_t, std::initializer_list<U> il, Args&&... args)
+#if  defined XXX
+    : base_type(in_place_t{}, il, constexpr_forward<Args>(args)...)
+#else
+    : val(boost::forward<Args>(args)...)
+    , has_value(true)
+#endif
+    {}
+
 #endif
 
     BOOST_CONSTEXPR expected(
@@ -592,7 +608,11 @@ namespace detail {
     }
 
 #if ! defined BOOST_NO_CXX11_VARIADIC_TEMPLATES
-    template <class... Args>
+    template <class... Args
+#if !defined BOOST_EXPECTED_NO_CXX11_FUNCTION_TEMPLATE_DEFAULT_ARGS
+      , T_REQUIRES(std::is_constructible<value_type, Args&...>::value)
+#endif
+      >
     expected& emplace(Args&&... args)
     {
       // Why emplace doesn't work (instead of in_place_t()) ?
@@ -682,7 +702,7 @@ namespace detail {
 
     // Utilities
 
-#if ! defined BOOST_NO_CXX11_RVALUE_REFERENCE_FOR_THIS
+#if ! defined BOOST_EXPECTED_NO_CXX11_RVALUE_REFERENCE_FOR_THIS
 
     template <class V>
     BOOST_CONSTEXPR value_type value_or(V&& v) const&   {
@@ -713,25 +733,12 @@ namespace detail {
 
     template <typename F>
     expected<typename boost::result_of<F(value_type)>::type, ErrorType>
-    next(F fuct)
-    {
-      typedef typename boost::result_of<F(value_type)>::type result_value_type;
-      if (valid()) {
-        return make_expected<ErrorType>(funct(contained_val()));
-      } else {
-        return make_expected_from_error<result_value_type>(contained_err());
-      }
-    }
+    next(F fuct);
+
     template <typename F>
     expected
-    recover(F fuct)
-    {
-      if (valid()) {
-        return funct(contained_val());
-      } else {
-        return *this;
-      }
-    }
+    recover(F fuct);
+
   };
 
   // Relational operators
@@ -813,43 +820,63 @@ namespace detail {
   }
 
   template <typename T, typename U, typename E>
-  typename boost::disable_if<
-    boost::is_same<U, E>,
-    expected<T,U>
-  >::type make_expected_from_error(E const& e)
-  {
+  expected<T,U> make_expected_from_error(E const& e
+      , REQUIRES(! boost::is_same<U, E>::value)
+  ) {
     return expected<T, U>(exceptional, e);
   }
 
   // Requires  typeid(e) == typeid(E)
   template <typename T, typename E>
-    RETURN_IF(expected<T>, boost::is_base_of<std::exception, E>::value || boost::is_base_of<boost::exception, E>::value)
-  make_expected_from_error(E const& e) BOOST_NOEXCEPT
-  {
+  expected<T> make_expected_from_error(E const& e
+        , REQUIRES(boost::is_base_of<std::exception, E>::value
+        || boost::is_base_of<boost::exception, E>::value)
+  ) BOOST_NOEXCEPT {
     return expected<T>(exceptional, e);
   }
 
   template <typename T, typename E>
-  typename boost::disable_if_c<
-    boost::is_base_of<std::exception, E>::value || boost::is_base_of<boost::exception, E>::value,
-    expected<T,E>
-  >::type make_expected_from_error(E const& e)
+  expected<T,E> make_expected_from_error(E const& e
+        , REQUIRES(! boost::is_base_of<std::exception, E>::value
+                && ! boost::is_base_of<boost::exception, E>::value)
+  )
   {
     return expected<T, E>(exceptional, e);
   }
 
-/*
+  template <typename T, typename E>
+    template <typename F>
+    expected<typename boost::result_of<F(T)>::type, E>
+    expected<T,E>::next(F fuct)
+    {
+      typedef typename boost::result_of<F(T)>::type result_value_type;
+      if (valid()) {
+        return make_expected<E>(funct(contained_val()));
+      } else {
+        return make_expected_from_error<result_value_type>(contained_err());
+      }
+    }
+  template <typename T, typename E>
+    template <typename F>
+    expected<T,E> expected<T,E>::recover(F fuct)
+    {
+      if (valid()) {
+        return funct(contained_val());
+      } else {
+        return *this;
+      }
+    }
+
   template <typename F>
   expected<typename boost::result_of<F()>::type>
-  make_expected_from_call(F&& fuct) BOOST_NOEXCEPT
+  make_expected_from_call(F fuct) BOOST_NOEXCEPT
   {
     try {
-      return make_expected(fun());
+      return make_expected(fuct());
     } catch (...) {
-      return make_expected_from_error();
+      return make_expected_from_error<typename boost::result_of<F()>::type>();
     }
   }
-  */
 }
 
 #endif // BOOST_EXPECTED_HPP

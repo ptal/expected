@@ -22,8 +22,48 @@
 #include <stdexcept>
 #include <exception>
 #include <system_error>
+# include <initializer_list>
 
 #include <boost/expected/expected.hpp>
+
+enum State
+{
+    sDefaultConstructed,
+    sValueCopyConstructed,
+    sValueMoveConstructed,
+    sCopyConstructed,
+    sMoveConstructed,
+    sMoveAssigned,
+    sCopyAssigned,
+    sValueCopyAssigned,
+    sValueMoveAssigned,
+    sMovedFrom,
+    sValueConstructed
+};
+
+struct OracleVal
+{
+    State s;
+    int i;
+    OracleVal(int i = 0) : s(sValueConstructed), i(i) {}
+};
+
+struct Oracle
+{
+    State s;
+    OracleVal val;
+
+    Oracle() : s(sDefaultConstructed) {}
+    Oracle(const OracleVal& v) : s(sValueCopyConstructed), val(v) {}
+    Oracle(OracleVal&& v) : s(sValueMoveConstructed), val(std::move(v)) {v.s = sMovedFrom;}
+    Oracle(const Oracle& o) : s(sCopyConstructed), val(o.val) {}
+    Oracle(Oracle&& o) : s(sMoveConstructed), val(std::move(o.val)) {o.s = sMovedFrom;}
+
+    Oracle& operator=(const OracleVal& v) { s = sValueCopyConstructed; val = v; return *this; }
+    Oracle& operator=(OracleVal&& v) { s = sValueMoveConstructed; val = std::move(v); v.s = sMovedFrom; return *this; }
+    Oracle& operator=(const Oracle& o) { s = sCopyConstructed; val = o.val; return *this; }
+    Oracle& operator=(Oracle&& o) { s = sMoveConstructed; val = std::move(o.val); o.s = sMovedFrom; return *this; }
+};
 
 using namespace boost;
 
@@ -39,7 +79,8 @@ BOOST_AUTO_TEST_CASE(except_default_constructor)
   expected<int> e;
   BOOST_REQUIRE_NO_THROW(e.get());
   BOOST_CHECK(e.valid());
-  BOOST_CHECK(static_cast<bool>(e));
+  BOOST_CHECK(! ! e);
+  BOOST_CHECK(bool(e));
 }
 
 BOOST_AUTO_TEST_CASE(except_default_constructor_constexpr)
@@ -48,6 +89,7 @@ BOOST_AUTO_TEST_CASE(except_default_constructor_constexpr)
   BOOST_CONSTEXPR expected<int,int> e;
   BOOST_CHECK(e.valid());
 }
+
 
 BOOST_AUTO_TEST_SUITE_END()
 BOOST_AUTO_TEST_SUITE(except_expected_constructors)
@@ -61,6 +103,48 @@ BOOST_AUTO_TEST_CASE(expected_from_value)
   BOOST_CHECK_EQUAL(*e, 5);
   BOOST_CHECK(e.valid());
   BOOST_CHECK(static_cast<bool>(e));
+}
+
+BOOST_AUTO_TEST_CASE(expected_from_cnv_value)
+{
+  OracleVal v;
+  expected<Oracle> e(v);
+  BOOST_REQUIRE_NO_THROW(e.get());
+  BOOST_CHECK(! ! e) ;
+  BOOST_CHECK(e.valid());
+  BOOST_CHECK(bool(e));
+  BOOST_CHECK_EQUAL(e.get().s,  sMoveConstructed);
+  BOOST_CHECK_EQUAL(v.s, sValueConstructed);
+
+  expected<Oracle> e2(std::move(v));
+  BOOST_REQUIRE_NO_THROW(e2.get());
+  BOOST_CHECK(! ! e2) ;
+  BOOST_CHECK(e2.valid());
+  BOOST_CHECK(bool(e2));
+  BOOST_CHECK_EQUAL(e.get().s, sMoveConstructed);
+  BOOST_CHECK_EQUAL(v.s, sMovedFrom);
+
+}
+
+BOOST_AUTO_TEST_CASE(expected_from_in_place_value)
+{
+  OracleVal v;
+  expected<Oracle> e{in_place_t{}, v};
+  BOOST_REQUIRE_NO_THROW(e.get());
+  BOOST_CHECK(! ! e) ;
+  BOOST_CHECK(e.valid());
+  BOOST_CHECK(bool(e));
+  BOOST_CHECK_EQUAL(e.get().s, sValueCopyConstructed);
+  BOOST_CHECK_EQUAL(v.s, sValueConstructed);
+
+  expected<Oracle> e2{in_place_t{}, std::move(v)};
+  BOOST_REQUIRE_NO_THROW(e2.get());
+  BOOST_CHECK(! ! e2) ;
+  BOOST_CHECK(e2.valid());
+  BOOST_CHECK(bool(e2));
+  BOOST_CHECK_EQUAL(e2.get().s, sValueMoveConstructed);
+  BOOST_CHECK_EQUAL(v.s, sMovedFrom);
+
 }
 
 BOOST_AUTO_TEST_CASE(expected_from_exception)
@@ -172,7 +256,17 @@ BOOST_AUTO_TEST_CASE(expected_from_error)
 }
 
 BOOST_AUTO_TEST_SUITE_END()
+BOOST_AUTO_TEST_SUITE(except_valid)
 
+BOOST_AUTO_TEST_CASE(except_valid_constexpr)
+{
+  // From value constructor.
+  BOOST_CONSTEXPR expected<int,int> e;
+  BOOST_CONSTEXPR bool b = e.valid();
+  BOOST_CHECK(b);
+}
+
+BOOST_AUTO_TEST_SUITE_END()
 BOOST_AUTO_TEST_SUITE(except_expected_assignment)
 
 BOOST_AUTO_TEST_CASE(expected_from_value)
