@@ -7,8 +7,6 @@
 #ifndef BOOST_EXPECTED_HPP
 #define BOOST_EXPECTED_HPP
 
-#define XXX
-
 #include <stdexcept>
 
 #include <boost/config.hpp>
@@ -320,9 +318,7 @@ namespace detail {
 
   template <typename ValueType, typename ErrorType=boost::exception_ptr>
   class expected
-#if defined XXX
   : detail::expected_base<ValueType, ErrorType>
-#endif
   {
   public:
     typedef ValueType value_type;
@@ -331,9 +327,7 @@ namespace detail {
 
   private:
     typedef expected<value_type, error_type> this_type;
-#if defined XXX
     typedef detail::expected_base<value_type, error_type> base_type;
-#endif
 
     // Static asserts.
     typedef boost::is_same<value_type, exceptional_t> is_same_value_exceptional_t;
@@ -345,7 +339,6 @@ namespace detail {
     BOOST_STATIC_ASSERT_MSG( !is_same_error_exceptional_t::value, "bad ErrorType" );
     BOOST_STATIC_ASSERT_MSG( !is_same_error_in_place_t::value, "bad ErrorType" );
 
-#if defined XXX
     value_type* dataptr() { return std::addressof(base_type::storage.val); }
     BOOST_CONSTEXPR const value_type* dataptr() const { return static_addressof(base_type::storage.val); }
     error_type* errorptr() { return std::addressof(base_type::storage.err); }
@@ -372,33 +365,9 @@ namespace detail {
     BOOST_CONSTEXPR const error_type& contained_err() const { return base_type::storage.err; }
     error_type& contained_err() { return base_type::storage.err; }
 #endif
-#else
-
-    value_type* dataptr() { return std::addressof(val); }
-    BOOST_CONSTEXPR const value_type* dataptr() const { return static_addressof(val); }
-    error_type* errorptr() { return std::addressof(err); }
-    BOOST_CONSTEXPR const error_type* errorptr() const { return static_addressof(err); }
-
-    BOOST_CONSTEXPR const bool& contained_has_value() const BOOST_NOEXCEPT { return has_value; }
-    bool& contained_has_value() BOOST_NOEXCEPT { return has_value; }
-    BOOST_CONSTEXPR const value_type& contained_val() const { return val; }
-    value_type& contained_val() { return val; }
-    BOOST_CONSTEXPR const error_type& contained_err() const { return err; }
-    error_type& contained_err() { return err; }
-
-#endif
 
     // C++03 movable support
     BOOST_COPYABLE_AND_MOVABLE(this_type)
-
-#if ! defined XXX
- private:
-    union {
-      error_type err;
-      value_type val;
-    };
-    bool has_value;
-#endif
 
   public:
 
@@ -415,14 +384,8 @@ namespace detail {
       , REQUIRES(std::is_copy_constructible<value_type>::value)
     )
     // BOOST_NOEXCEPT_IF(BOOST_NOEXCEPT_EXPR(val(v)))
-#if  defined XXX
     : base_type(v)
     {}
-#else
-    : val(v)
-    , has_value(true)
-    {}
-#endif
 
     BOOST_CONSTEXPR expected(BOOST_RV_REF(value_type) v
       , REQUIRES(std::is_move_constructible<value_type>::value)
@@ -431,12 +394,7 @@ namespace detail {
           std::is_nothrow_move_constructible<value_type>::value
       &&  std::is_nothrow_move_constructible<error_type>::value
     )
-#if  defined XXX
     : base_type(constexpr_move(v))
-#else
-    : val(boost::move(v))
-    , has_value(true)
-#endif
     {}
 
     expected(const expected& rhs
@@ -447,11 +405,7 @@ namespace detail {
       has_nothrow_copy_constructor<value_type>::value &&
       has_nothrow_copy_constructor<error_type>::value
     )
-#if  defined XXX
     : base_type(detail::only_set_valid, rhs.valid())
-#else
-    : has_value(rhs.valid())
-#endif
     {
       if (rhs.valid())
       {
@@ -471,11 +425,7 @@ namespace detail {
       std::is_nothrow_move_constructible<value_type>::value &&
       std::is_nothrow_move_constructible<error_type>::value
     )
-#if  defined XXX
     : base_type(detail::only_set_valid, rhs.valid())
-#else
-    : has_value(rhs.has_value)
-#endif
     {
       if (rhs.valid())
       {
@@ -494,23 +444,13 @@ namespace detail {
     BOOST_NOEXCEPT_IF(
       has_nothrow_copy_constructor<error_type>::value
     )
-#if  defined XXX
     : base_type(exceptional, e)
-#else
-    : err(e)
-    , has_value(false)
-#endif
     {}
 
     // Requires  typeid(e) == typeid(E)
     template <class E>
     expected(exceptional_t, E const& e)
-#if  defined XXX
     : base_type(exceptional, traits_type::from_error(e))
-#else
-    : err(traits_type::from_error(e))
-    , has_value(false)
-#endif
     {}
 
 #if ! defined BOOST_NO_CXX11_VARIADIC_TEMPLATES
@@ -520,12 +460,7 @@ namespace detail {
 #endif
       >
     BOOST_CONSTEXPR explicit expected(in_place_t, Args&&... args)
-#if  defined XXX
     : base_type(in_place_t{}, boost::forward<Args>(args)...)
-#else
-    : val(boost::forward<Args>(args)...)
-    , has_value(true)
-#endif
     {}
 
     template <class U, class... Args
@@ -534,12 +469,7 @@ namespace detail {
 #endif
       >
     BOOST_CONSTEXPR explicit expected(in_place_t, std::initializer_list<U> il, Args&&... args)
-#if  defined XXX
     : base_type(in_place_t{}, il, constexpr_forward<Args>(args)...)
-#else
-    : val(boost::forward<Args>(args)...)
-    , has_value(true)
-#endif
     {}
 
 #endif
@@ -549,38 +479,16 @@ namespace detail {
     ) BOOST_NOEXCEPT_IF(
       has_nothrow_default_constructor<value_type>::value
     )
-#if  defined XXX
     : base_type()
-#else
-    : val()
-    , has_value(true)
-#endif
     {
     }
 
     expected(exceptional_t)
-#if  defined XXX
     : base_type(exceptional, traits_type::default_error())
-#else
-    : err(traits_type::default_error())
-    , has_value(false)
-#endif
     {}
 
 
-#if  defined XXX
     ~expected() = default;
-#else
-    ~expected()
-    //BOOST_NOEXCEPT_IF(
-    //  is_nothrow_destructible<value_type>::value &&
-    //  is_nothrow_destructible<error_type>::value
-    //)
-    {
-      if (valid()) val.~value_type();
-      else err.~error_type();
-    }
-#endif
 
     // Assignments
     expected& operator=(BOOST_COPY_ASSIGN_REF(expected) e)
