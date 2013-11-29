@@ -22,7 +22,7 @@
 #include <stdexcept>
 #include <exception>
 #include <system_error>
-# include <initializer_list>
+#include <initializer_list>
 
 #include <boost/expected/expected.hpp>
 
@@ -77,7 +77,7 @@ BOOST_AUTO_TEST_CASE(except_default_constructor)
 {
   // From value constructor.
   expected<int> e;
-  BOOST_REQUIRE_NO_THROW(e.get());
+  BOOST_REQUIRE_NO_THROW(e.value());
   BOOST_CHECK(e.valid());
   BOOST_CHECK(! ! e);
   BOOST_CHECK(bool(e));
@@ -98,8 +98,8 @@ BOOST_AUTO_TEST_CASE(expected_from_value)
 {
   // From value constructor.
   expected<int> e(5);
-  BOOST_REQUIRE_NO_THROW(e.get());
-  BOOST_CHECK_EQUAL(e.get(), 5);
+  BOOST_REQUIRE_NO_THROW(e.value());
+  BOOST_CHECK_EQUAL(e.value(), 5);
   BOOST_CHECK_EQUAL(*e, 5);
   BOOST_CHECK(e.valid());
   BOOST_CHECK(static_cast<bool>(e));
@@ -109,19 +109,19 @@ BOOST_AUTO_TEST_CASE(expected_from_cnv_value)
 {
   OracleVal v;
   expected<Oracle> e(v);
-  BOOST_REQUIRE_NO_THROW(e.get());
+  BOOST_REQUIRE_NO_THROW(e.value());
   BOOST_CHECK(! ! e) ;
   BOOST_CHECK(e.valid());
   BOOST_CHECK(bool(e));
-  BOOST_CHECK_EQUAL(e.get().s,  sMoveConstructed);
+  BOOST_CHECK_EQUAL(e.value().s,  sMoveConstructed);
   BOOST_CHECK_EQUAL(v.s, sValueConstructed);
 
   expected<Oracle> e2(std::move(v));
-  BOOST_REQUIRE_NO_THROW(e2.get());
+  BOOST_REQUIRE_NO_THROW(e2.value());
   BOOST_CHECK(! ! e2) ;
   BOOST_CHECK(e2.valid());
   BOOST_CHECK(bool(e2));
-  BOOST_CHECK_EQUAL(e.get().s, sMoveConstructed);
+  BOOST_CHECK_EQUAL(e.value().s, sMoveConstructed);
   BOOST_CHECK_EQUAL(v.s, sMovedFrom);
 
 }
@@ -130,19 +130,19 @@ BOOST_AUTO_TEST_CASE(expected_from_in_place_value)
 {
   OracleVal v;
   expected<Oracle> e{in_place_t{}, v};
-  BOOST_REQUIRE_NO_THROW(e.get());
+  BOOST_REQUIRE_NO_THROW(e.value());
   BOOST_CHECK(! ! e) ;
   BOOST_CHECK(e.valid());
   BOOST_CHECK(bool(e));
-  BOOST_CHECK_EQUAL(e.get().s, sValueCopyConstructed);
+  BOOST_CHECK_EQUAL(e.value().s, sValueCopyConstructed);
   BOOST_CHECK_EQUAL(v.s, sValueConstructed);
 
   expected<Oracle> e2{in_place_t{}, std::move(v)};
-  BOOST_REQUIRE_NO_THROW(e2.get());
+  BOOST_REQUIRE_NO_THROW(e2.value());
   BOOST_CHECK(! ! e2) ;
   BOOST_CHECK(e2.valid());
   BOOST_CHECK(bool(e2));
-  BOOST_CHECK_EQUAL(e2.get().s, sValueMoveConstructed);
+  BOOST_CHECK_EQUAL(e2.value().s, sValueMoveConstructed);
   BOOST_CHECK_EQUAL(v.s, sMovedFrom);
 
 }
@@ -151,7 +151,7 @@ BOOST_AUTO_TEST_CASE(expected_from_exception)
 {
   // From exceptional constructor.
   expected<int> e(exceptional, test_exception());
-  BOOST_REQUIRE_THROW(e.get(), test_exception);
+  BOOST_REQUIRE_THROW(e.value(), test_exception);
   BOOST_CHECK_EQUAL(e.valid(), false);
   BOOST_CHECK_EQUAL(static_cast<bool>(e), false);
 }
@@ -161,8 +161,8 @@ BOOST_AUTO_TEST_CASE(expected_from_copy_value)
   // From copy constructor.
   expected<int> ef(5);
   expected<int> e(ef);
-  BOOST_REQUIRE_NO_THROW(e.get());
-  BOOST_CHECK_EQUAL(e.get(), 5);
+  BOOST_REQUIRE_NO_THROW(e.value());
+  BOOST_CHECK_EQUAL(e.value(), 5);
   BOOST_CHECK_EQUAL(*e, 5);
   BOOST_CHECK(e.valid());
   BOOST_CHECK(static_cast<bool>(e));
@@ -173,7 +173,7 @@ BOOST_AUTO_TEST_CASE(expected_from_copy_exception)
   // From exceptional constructor.
   expected<int> ef(exceptional, test_exception());
   expected<int> e(ef);
-  BOOST_REQUIRE_THROW(e.get(), test_exception);
+  BOOST_REQUIRE_THROW(e.value(), test_exception);
   BOOST_CHECK_EQUAL(e.valid(), false);
   BOOST_CHECK_EQUAL(static_cast<bool>(e), false);
 }
@@ -182,8 +182,8 @@ BOOST_AUTO_TEST_CASE(expected_from_in_place)
 {
   // From in_place2 constructor.
   expected<std::string> e(in_place2, "in_place2");
-  BOOST_REQUIRE_NO_THROW(e.get());
-  BOOST_CHECK_EQUAL(e.get(), "in_place2");
+  BOOST_REQUIRE_NO_THROW(e.value());
+  BOOST_CHECK_EQUAL(e.value(), "in_place2");
   BOOST_CHECK_EQUAL(*e, "in_place2");
   BOOST_CHECK(e.valid());
   BOOST_CHECK(static_cast<bool>(e));
@@ -193,7 +193,7 @@ BOOST_AUTO_TEST_CASE(expected_from_exception_ptr)
 {
   // From exception_ptr constructor.
   expected<int> e(exceptional, boost::copy_exception(test_exception()));
-  BOOST_REQUIRE_THROW(e.get(), test_exception);
+  BOOST_REQUIRE_THROW(e.value(), test_exception);
   BOOST_CHECK_EQUAL(e.valid(), false);
   BOOST_CHECK_EQUAL(static_cast<bool>(e), false);
 }
@@ -203,8 +203,8 @@ BOOST_AUTO_TEST_CASE(expected_from_moved_value)
   // From move value constructor.
   std::string value = "my value";
   expected<std::string> e = std::move(value);
-  BOOST_REQUIRE_NO_THROW(e.get());
-  BOOST_CHECK_EQUAL(e.get(), "my value");
+  BOOST_REQUIRE_NO_THROW(e.value());
+  BOOST_CHECK_EQUAL(e.value(), "my value");
   BOOST_CHECK_EQUAL(*e, "my value");
   BOOST_CHECK(e.valid());
   BOOST_CHECK(static_cast<bool>(e));
@@ -221,7 +221,7 @@ BOOST_AUTO_TEST_CASE(expected_from_catch_block)
   {
     expected<int> e(exceptional);
 
-    BOOST_REQUIRE_THROW(e.get(), std::exception);
+    BOOST_REQUIRE_THROW(e.value(), std::exception);
     BOOST_CHECK_EQUAL(e.valid(), false);
     BOOST_CHECK_EQUAL(static_cast<bool>(e), false);
   }
@@ -235,8 +235,8 @@ BOOST_AUTO_TEST_CASE(expected_from_value)
 {
   // From value constructor.
   expected<int, std::error_condition> e(5);
-  BOOST_REQUIRE_NO_THROW(e.get());
-  BOOST_CHECK_EQUAL(e.get(), 5);
+  BOOST_REQUIRE_NO_THROW(e.value());
+  BOOST_CHECK_EQUAL(e.value(), 5);
   BOOST_CHECK_EQUAL(*e, 5);
   BOOST_CHECK(e.valid());
   BOOST_CHECK(static_cast<bool>(e));
@@ -250,7 +250,7 @@ BOOST_AUTO_TEST_CASE(expected_from_error)
   {
     return std::errc(except.error().value()) == std::errc::invalid_argument;
   };
-  BOOST_REQUIRE_EXCEPTION(e.get(), bad_expected_access<std::error_condition>, error_from_except_check);
+  BOOST_REQUIRE_EXCEPTION(e.value(), bad_expected_access<std::error_condition>, error_from_except_check);
   BOOST_CHECK_EQUAL(e.valid(), false);
   BOOST_CHECK_EQUAL(static_cast<bool>(e), false);
 }
@@ -272,12 +272,12 @@ BOOST_AUTO_TEST_SUITE(except_expected_assignment)
 BOOST_AUTO_TEST_CASE(expected_from_value)
 {
   expected<int> e(5);
-  BOOST_CHECK_EQUAL(e.get(), 5);
+  BOOST_CHECK_EQUAL(e.value(), 5);
 
   // From value assignment.
   e = 8;
-  BOOST_REQUIRE_NO_THROW(e.get());
-  BOOST_CHECK_EQUAL(e.get(), 8);
+  BOOST_REQUIRE_NO_THROW(e.value());
+  BOOST_CHECK_EQUAL(e.value(), 8);
   BOOST_CHECK_EQUAL(*e, 8);
   BOOST_CHECK(e.valid());
   BOOST_CHECK(static_cast<bool>(e));
@@ -290,8 +290,8 @@ BOOST_AUTO_TEST_CASE(expected_from_copy_expected)
 
   // From value assignment.
   e = e2;
-  BOOST_REQUIRE_NO_THROW(e.get());
-  BOOST_CHECK_EQUAL(e.get(), 8);
+  BOOST_REQUIRE_NO_THROW(e.value());
+  BOOST_CHECK_EQUAL(e.value(), 8);
   BOOST_CHECK_EQUAL(*e, 8);
   BOOST_CHECK(e.valid());
   BOOST_CHECK(static_cast<bool>(e));
@@ -304,14 +304,14 @@ BOOST_AUTO_TEST_CASE(expected_from_moved_expected)
 
   // From value assignment.
   e = std::move(e2);
-  BOOST_REQUIRE_NO_THROW(e.get());
-  BOOST_CHECK_EQUAL(e.get(), "e2");
+  BOOST_REQUIRE_NO_THROW(e.value());
+  BOOST_CHECK_EQUAL(e.value(), "e2");
   BOOST_CHECK_EQUAL(*e, "e2");
   BOOST_CHECK(e.valid());
   BOOST_CHECK(static_cast<bool>(e));
 
-  BOOST_REQUIRE_NO_THROW(e2.get());
-  BOOST_CHECK_EQUAL(e2.get(), "");
+  BOOST_REQUIRE_NO_THROW(e2.value());
+  BOOST_CHECK_EQUAL(e2.value(), "");
   BOOST_CHECK_EQUAL(*e2, "");
   BOOST_CHECK(e2.valid());
   BOOST_CHECK(static_cast<bool>(e2));
@@ -321,12 +321,12 @@ BOOST_AUTO_TEST_CASE(expected_from_im_place)
 {
   // From in_place2 constructor.
   expected<std::string> e(in_place2, "in_place2");
-  BOOST_CHECK_EQUAL(e.get(), "in_place2");
+  BOOST_CHECK_EQUAL(e.value(), "in_place2");
 
   // From emplace method.
   e.emplace("emplace method");
-  BOOST_REQUIRE_NO_THROW(e.get());
-  BOOST_CHECK_EQUAL(e.get(), "emplace method");
+  BOOST_REQUIRE_NO_THROW(e.value());
+  BOOST_CHECK_EQUAL(e.value(), "emplace method");
   BOOST_CHECK_EQUAL(*e, "emplace method");
   BOOST_CHECK(e.valid());
   BOOST_CHECK(static_cast<bool>(e));
@@ -339,8 +339,8 @@ BOOST_AUTO_TEST_CASE(expected_from_move_value)
   std::string value = "my value";
   // From assignment operator.
   e = std::move(value);
-  BOOST_REQUIRE_NO_THROW(e.get());
-  BOOST_CHECK_EQUAL(e.get(), "my value");
+  BOOST_REQUIRE_NO_THROW(e.value());
+  BOOST_CHECK_EQUAL(e.value(), "my value");
   BOOST_CHECK_EQUAL(*e, "my value");
   BOOST_CHECK(e.valid());
   BOOST_CHECK(static_cast<bool>(e));
@@ -354,8 +354,8 @@ BOOST_AUTO_TEST_CASE(expected_from_in_place)
 {
   // From in_place2 factory.
   auto e = make_expected<std::string>("in_place2");
-  BOOST_REQUIRE_NO_THROW(e.get());
-  BOOST_CHECK_EQUAL(e.get(), "in_place2");
+  BOOST_REQUIRE_NO_THROW(e.value());
+  BOOST_CHECK_EQUAL(e.value(), "in_place2");
   BOOST_CHECK_EQUAL(*e, "in_place2");
   BOOST_CHECK(e.valid());
   BOOST_CHECK(static_cast<bool>(e));
@@ -365,8 +365,8 @@ BOOST_AUTO_TEST_CASE(expected_from_in_place_error)
 {
   // From in_place2 factory.
   auto e = make_expected<std::string, std::error_condition>("in_place2");
-  BOOST_REQUIRE_NO_THROW(e.get());
-  BOOST_CHECK_EQUAL(e.get(), "in_place2");
+  BOOST_REQUIRE_NO_THROW(e.value());
+  BOOST_CHECK_EQUAL(e.value(), "in_place2");
   BOOST_CHECK_EQUAL(*e, "in_place2");
   BOOST_CHECK(e.valid());
   BOOST_CHECK(static_cast<bool>(e));
@@ -383,7 +383,7 @@ BOOST_AUTO_TEST_CASE(expected_from_exception_catch)
   {
     expected<int> e = make_expected_from_error<int>();
 
-    BOOST_REQUIRE_THROW(e.get(), std::exception);
+    BOOST_REQUIRE_THROW(e.value(), std::exception);
     BOOST_CHECK_EQUAL(e.valid(), false);
     BOOST_CHECK_EQUAL(static_cast<bool>(e), false);
   }
@@ -412,7 +412,7 @@ BOOST_AUTO_TEST_CASE(expected_from_error)
   {
     return std::errc(except.error().value()) == std::errc::invalid_argument;
   };
-  BOOST_CHECK_EXCEPTION(e.get(), bad_expected_access<std::error_condition>, error_from_except_check);
+  BOOST_CHECK_EXCEPTION(e.value(), bad_expected_access<std::error_condition>, error_from_except_check);
   BOOST_CHECK_EQUAL(e.valid(), false);
   BOOST_CHECK_EQUAL(static_cast<bool>(e), false);
 }
@@ -421,7 +421,7 @@ BOOST_AUTO_TEST_CASE(expected_from_exception)
 {
   // From exceptional constructor.
   auto e = make_expected_from_error<int>(test_exception());
-  BOOST_CHECK_THROW(e.get(), test_exception);
+  BOOST_CHECK_THROW(e.value(), test_exception);
   BOOST_CHECK_EQUAL(e.valid(), false);
   BOOST_CHECK_EQUAL(static_cast<bool>(e), false);
 }
@@ -430,7 +430,7 @@ BOOST_AUTO_TEST_CASE(expected_from_exception_ptr)
 {
   // From exception_ptr constructor.
   auto e = make_expected_from_error<int>(boost::copy_exception(test_exception()));
-  BOOST_CHECK_THROW(e.get(), test_exception);
+  BOOST_CHECK_THROW(e.value(), test_exception);
   BOOST_CHECK_EQUAL(e.valid(), false);
   BOOST_CHECK_EQUAL(static_cast<bool>(e), false);
 }
@@ -447,13 +447,13 @@ BOOST_AUTO_TEST_CASE(expected_swap_value)
 
   e.swap(e2);
 
-  BOOST_CHECK_EQUAL(e.get(), 8);
-  BOOST_CHECK_EQUAL(e2.get(), 5);
+  BOOST_CHECK_EQUAL(e.value(), 8);
+  BOOST_CHECK_EQUAL(e2.value(), 5);
 
   e2.swap(e);
 
-  BOOST_CHECK_EQUAL(e.get(), 5);
-  BOOST_CHECK_EQUAL(e2.get(), 8);
+  BOOST_CHECK_EQUAL(e.value(), 5);
+  BOOST_CHECK_EQUAL(e2.value(), 8);
 }
 
 BOOST_AUTO_TEST_CASE(expected_swap_exception)
@@ -467,13 +467,13 @@ BOOST_AUTO_TEST_CASE(expected_swap_exception)
   auto equal_to_e = [](const std::invalid_argument& except) { return std::string(except.what()) == "e"; };
   auto equal_to_e2 = [](const std::invalid_argument& except) { return std::string(except.what()) == "e2"; };
 
-  BOOST_CHECK_EXCEPTION(e.get(), std::invalid_argument, equal_to_e2);
-  BOOST_CHECK_EXCEPTION(e2.get(), std::invalid_argument, equal_to_e);
+  BOOST_CHECK_EXCEPTION(e.value(), std::invalid_argument, equal_to_e2);
+  BOOST_CHECK_EXCEPTION(e2.value(), std::invalid_argument, equal_to_e);
 
   e2.swap(e);
 
-  BOOST_CHECK_EXCEPTION(e.get(), std::invalid_argument, equal_to_e);
-  BOOST_CHECK_EXCEPTION(e2.get(), std::invalid_argument, equal_to_e2);
+  BOOST_CHECK_EXCEPTION(e.value(), std::invalid_argument, equal_to_e);
+  BOOST_CHECK_EXCEPTION(e2.value(), std::invalid_argument, equal_to_e2);
 }
 
 BOOST_AUTO_TEST_CASE(expected_swap_function_value)
@@ -484,13 +484,13 @@ BOOST_AUTO_TEST_CASE(expected_swap_function_value)
 
   swap(e, e2);
 
-  BOOST_CHECK_EQUAL(e.get(), 8);
-  BOOST_CHECK_EQUAL(e2.get(), 5);
+  BOOST_CHECK_EQUAL(e.value(), 8);
+  BOOST_CHECK_EQUAL(e2.value(), 5);
 
   swap(e, e2);
 
-  BOOST_CHECK_EQUAL(e.get(), 5);
-  BOOST_CHECK_EQUAL(e2.get(), 8);
+  BOOST_CHECK_EQUAL(e.value(), 5);
+  BOOST_CHECK_EQUAL(e2.value(), 8);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

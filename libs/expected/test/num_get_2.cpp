@@ -71,7 +71,7 @@ struct monad_traits<expected<T, E> >
     return m.valid();
   }
   static value_type get(monad_type m) {
-    return m.get();
+    return m.value();
   }
   static error_type error(monad_type m) {
     return m.error();
@@ -122,7 +122,7 @@ struct monad_traits<pair_expected<I,T,E> >
   }
 
   static value_type get(monad_type m) {
-    return std::make_pair(m.first, m.second.get());
+    return std::make_pair(m.first, m.second.value());
   }
 
   static error_type error(monad_type m) {
@@ -176,8 +176,8 @@ struct monad_wrapper<pair_expected<I,T,E> >
     return m.second.valid();
   }
 
-  value_type get() const {
-    return std::make_pair(m.first, m.second.get());
+  value_type value() const {
+    return std::make_pair(m.first, m.second.value());
   }
 
   error_type error() const {
@@ -195,7 +195,7 @@ struct monad_wrapper<pair_expected<I,T,E> >
     typedef typename std::result_of<F(value_type)>::type result_type;
     typedef typename result_type::second_type expected_type;
     if (valid()) {
-      return f(get());
+      return f(value());
     }
     return make_pair(m.first, expected_type(exceptional, error()));
   }

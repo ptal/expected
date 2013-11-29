@@ -72,6 +72,35 @@ namespace boost
 namespace boost
 {
 
+
+template <typename T>
+struct has_overloaded_addressof
+{
+  template <class X>
+  static BOOST_CONSTEXPR bool has_overload(...) { return false; }
+
+  template <class X, size_t S = sizeof(std::declval< X&>().operator&()) >
+  static BOOST_CONSTEXPR bool has_overload(bool) { return true; }
+
+  BOOST_CONSTEXPR static bool value = has_overload<T>(true);
+};
+
+
+
+template <typename T>
+BOOST_CONSTEXPR T* static_addressof(T& ref,
+  REQUIRES(!has_overloaded_addressof<T>::value)
+) {
+  return &ref;
+}
+
+template <typename T>
+BOOST_CONSTEXPR T* static_addressof(T& ref,
+  REQUIRES(has_overloaded_addressof<T>::value)
+) {
+  return std::addressof(ref);
+}
+
   // bad_expected_access exception class.
   template <class Error>
   class bad_expected_access : public std::logic_error
@@ -93,26 +122,29 @@ namespace boost
   };
 
   // Traits classes
-  template <typename ErrorType>
-  struct expected_traits
+  template <typename ErrorType, class Exception>
+  struct expected_error_traits
   {
     typedef ErrorType error_type;
+    typedef Exception exception_type;
 
     template <class E>
-    static error_type from_error(E const& e)
-    {
+    static error_type from_error(error_type const& e) {
       return error_type(e);
     }
 
-    static error_type default_error()
-    {
+    static error_type default_error() {
       throw;
     }
 
-    static void bad_access(const error_type &e)
-    {
-      boost::throw_exception(bad_expected_access<error_type>(e));
+    static void bad_access(const error_type &e) {
+      throw Exception(e);
     }
+  };
+
+  template <typename ErrorType>
+  struct expected_traits : expected_error_traits<ErrorType, bad_expected_access<ErrorType> >
+  {
   };
 
   // Specialization for exception_ptr
@@ -122,18 +154,15 @@ namespace boost
     typedef boost::exception_ptr error_type;
 
     template <class E>
-    static error_type from_error(E const& e)
-    {
+    static error_type from_error(E const& e) {
       return boost::copy_exception(e);
     }
 
-    static error_type default_error()
-    {
+    static error_type default_error() {
       return boost::current_exception();
     }
 
-    static void bad_access(const error_type &e)
-    {
+    static void bad_access(const error_type &e) {
       boost::rethrow_exception(e);
     }
   };
@@ -141,9 +170,21 @@ namespace boost
 #if ! defined BOOST_NO_CXX11_HDR_EXCEPTION  && ! defined BOOST_NO_CXX11_RVALUE_REFERENCES
   template <>
   struct expected_traits<std::exception_ptr>
-  : public expected_traits<boost::exception_ptr>
   {
     typedef std::exception_ptr error_type;
+
+    template <class E>
+    static error_type from_error(E const& e) {
+      return std::make_exception_ptr(e);
+    }
+
+    static error_type default_error() {
+      return std::current_exception();
+    }
+
+    static void bad_access(const error_type &e) {
+      std::rethrow_exception(e);
+    }
   };
 #endif
 
@@ -179,130 +220,130 @@ namespace boost
 namespace detail {
 
   template <typename T, typename E>
-  union constexpr_expected_storage {
+  union trivial_expected_storage {
     typedef T value_type;
     typedef E error_type;
 
     error_type err;
     value_type val;
 
-    BOOST_CONSTEXPR constexpr_expected_storage()
+    BOOST_CONSTEXPR trivial_expected_storage()
       BOOST_NOEXCEPT_IF(has_nothrow_default_constructor<value_type>::value)
     : val()
     {}
 
-    BOOST_CONSTEXPR constexpr_expected_storage(exceptional_t, error_type const& e)
+    BOOST_CONSTEXPR trivial_expected_storage(exceptional_t, error_type const& e)
     : err(e)
     {}
 
     template <class... Args>
-    BOOST_CONSTEXPR constexpr_expected_storage(Args&&... args)
+    BOOST_CONSTEXPR trivial_expected_storage(Args&&... args)
     : val(constexpr_forward<Args>(args)...)
     {}
 
-    ~constexpr_expected_storage() = default;
+    ~trivial_expected_storage() = default;
   };
 
   template <typename T, typename E>
-  union no_constexpr_expected_storage {
+  union no_trivial_expected_storage {
     typedef T value_type;
     typedef E error_type;
 
     error_type err;
     value_type val;
 
-    BOOST_CONSTEXPR no_constexpr_expected_storage()
+    BOOST_CONSTEXPR no_trivial_expected_storage()
       : val()
     {}
 
-    BOOST_CONSTEXPR no_constexpr_expected_storage(exceptional_t, error_type const& e)
+    BOOST_CONSTEXPR no_trivial_expected_storage(exceptional_t, error_type const& e)
     : err(e)
     {}
 
     template <class... Args>
-      BOOST_CONSTEXPR no_constexpr_expected_storage(Args&&... args) //BOOST_NOEXCEPT_IF()
+      BOOST_CONSTEXPR no_trivial_expected_storage(Args&&... args) //BOOST_NOEXCEPT_IF()
       : val(constexpr_forward<Args>(args)...)
     {}
 
-   ~no_constexpr_expected_storage() {};
+   ~no_trivial_expected_storage() {};
   };
 
   BOOST_CONSTEXPR struct only_set_valid_t{} only_set_valid{};
 
   template <typename T, typename E>
-  struct constexpr_expected_base {
+  struct trivial_expected_base {
     typedef T value_type;
     typedef E error_type;
 
     bool has_value;
-    constexpr_expected_storage<T, E> storage;
+    trivial_expected_storage<T, E> storage;
 
-    BOOST_CONSTEXPR constexpr_expected_base()
+    BOOST_CONSTEXPR trivial_expected_base()
       BOOST_NOEXCEPT_IF(has_nothrow_default_constructor<value_type>::value)
     : has_value(true), storage() {}
 
-    BOOST_CONSTEXPR constexpr_expected_base(only_set_valid_t, bool has_value)
+    BOOST_CONSTEXPR trivial_expected_base(only_set_valid_t, bool has_value)
     : has_value(has_value) {}
 
-    BOOST_CONSTEXPR constexpr_expected_base(const value_type& v)
+    BOOST_CONSTEXPR trivial_expected_base(const value_type& v)
     : has_value(true), storage(v) {}
 
-    BOOST_CONSTEXPR constexpr_expected_base(value_type&& v)
+    BOOST_CONSTEXPR trivial_expected_base(value_type&& v)
     : has_value(true), storage(constexpr_move(v)) {}
 
-    BOOST_CONSTEXPR constexpr_expected_base(exceptional_t, error_type const& e)
+    BOOST_CONSTEXPR trivial_expected_base(exceptional_t, error_type const& e)
     : has_value(false), storage(exceptional, e)
     {}
 
     template <class... Args>
     explicit BOOST_CONSTEXPR
-    constexpr_expected_base(in_place_t, Args&&... args)
+    trivial_expected_base(in_place_t, Args&&... args)
     : has_value(true), storage(constexpr_forward<Args>(args)...) {}
 
     template <class U, class... Args>
     explicit BOOST_CONSTEXPR
-    constexpr_expected_base(in_place_t, std::initializer_list<U> il, Args&&... args)
+    trivial_expected_base(in_place_t, std::initializer_list<U> il, Args&&... args)
     : has_value(true), storage(il, constexpr_forward<Args>(args)...) {}
 
-     ~constexpr_expected_base() = default;
+     ~trivial_expected_base() = default;
   };
 
   template <typename T, typename E>
-  struct no_constexpr_expected_base {
+  struct no_trivial_expected_base {
     typedef T value_type;
     typedef E error_type;
 
     bool has_value;
-    no_constexpr_expected_storage<T, E> storage;
+    no_trivial_expected_storage<T, E> storage;
 
-    BOOST_CONSTEXPR no_constexpr_expected_base()
+    BOOST_CONSTEXPR no_trivial_expected_base()
       BOOST_NOEXCEPT_IF(has_nothrow_default_constructor<value_type>::value)
     : has_value(true), storage() {}
 
-    BOOST_CONSTEXPR no_constexpr_expected_base(only_set_valid_t, bool has_value)
+    BOOST_CONSTEXPR no_trivial_expected_base(only_set_valid_t, bool has_value)
     : has_value(has_value) {}
 
-    BOOST_CONSTEXPR no_constexpr_expected_base(const value_type& v)
+    BOOST_CONSTEXPR no_trivial_expected_base(const value_type& v)
     : has_value(true), storage(v) {}
 
-    BOOST_CONSTEXPR no_constexpr_expected_base(value_type&& v)
+    BOOST_CONSTEXPR no_trivial_expected_base(value_type&& v)
     : has_value(true), storage(constexpr_move(v)) {}
 
-    BOOST_CONSTEXPR no_constexpr_expected_base(exceptional_t, error_type const& e)
+    BOOST_CONSTEXPR no_trivial_expected_base(exceptional_t, error_type const& e)
     : has_value(false), storage(exceptional, e)
     {}
 
     template <class... Args>
     explicit BOOST_CONSTEXPR
-    no_constexpr_expected_base(in_place_t, Args&&... args)
+    no_trivial_expected_base(in_place_t, Args&&... args)
     : has_value(true), storage(constexpr_forward<Args>(args)...) {}
 
     template <class U, class... Args>
     explicit BOOST_CONSTEXPR
-    no_constexpr_expected_base(in_place_t, std::initializer_list<U> il, Args&&... args)
+    no_trivial_expected_base(in_place_t, std::initializer_list<U> il, Args&&... args)
     : has_value(true), storage(il, constexpr_forward<Args>(args)...) {}
 
-    ~no_constexpr_expected_base() {
+    ~no_trivial_expected_base() {
       if (has_value) storage.val.~value_type();
       else storage.err.~error_type();
     }
@@ -311,8 +352,8 @@ namespace detail {
   template <typename T, typename E>
     using expected_base = typename std::conditional<
       has_trivial_destructor<T>::value && has_trivial_destructor<E>::value,
-      constexpr_expected_base<T,E>,
-      no_constexpr_expected_base<T,E>
+      trivial_expected_base<T,E>,
+      no_trivial_expected_base<T,E>
     >::type;
 }
 
@@ -483,7 +524,7 @@ namespace detail {
     {
     }
 
-    expected(exceptional_t)
+    BOOST_CONSTEXPR explicit expected(exceptional_t)
     : base_type(exceptional, traits_type::default_error())
     {}
 
@@ -527,6 +568,18 @@ namespace detail {
       this_type(in_place_t(), boost::forward<Args>(args)...).swap(*this);
       return *this;
     }
+
+    template <class U, class... Args
+#if !defined BOOST_EXPECTED_NO_CXX11_FUNCTION_TEMPLATE_DEFAULT_ARGS
+      //, T_REQUIRES(std::is_constructible<value_type, Args&...>::value)
+#endif
+      >
+    expected& emplace(std::initializer_list<U> il, Args&&... args)
+    {
+      // Why emplace doesn't work (instead of in_place_t()) ?
+      this_type(in_place_t(), il, boost::forward<Args>(args)...).swap(*this);
+      return *this;
+    }
 #endif
 
     // Modifiers
@@ -566,19 +619,25 @@ namespace detail {
     }
 
 #if ! defined(BOOST_NO_CXX11_EXPLICIT_CONVERSION_OPERATORS)
-    explicit operator bool() const BOOST_NOEXCEPT
+    BOOST_CONSTEXPR explicit operator bool() const BOOST_NOEXCEPT
     {
       return valid();
     }
 #endif
 
-    const value_type& get() const
+    value_type const& value() const
     {
-      if (!valid()) traits_type::bad_access(contained_err());
-      return contained_val();
+      return valid()
+        ? contained_val()
+        : (
+            traits_type::bad_access(contained_err()),
+            contained_val()
+          )
+        ;
+
     }
 
-    value_type& get()
+    value_type& value()
     {
       if (!valid()) traits_type::bad_access(contained_err());
       return contained_val();
@@ -593,6 +652,7 @@ namespace detail {
     {
       return contained_val();
     }
+
     BOOST_CONSTEXPR value_type const* operator->() const BOOST_NOEXCEPT
     {
       return dataptr();
@@ -603,7 +663,7 @@ namespace detail {
       return dataptr();
     }
 
-    error_type error() const
+    BOOST_CONSTEXPR error_type const& error() const BOOST_NOEXCEPT
     {
       return contained_err();
     }
@@ -614,20 +674,46 @@ namespace detail {
 
     template <class V>
     BOOST_CONSTEXPR value_type value_or(V&& v) const&   {
-      return *this ? **this : static_cast<value_type>(constexpr_forward<V>(v));
+      return *this
+        ? **this
+        : static_cast<value_type>(constexpr_forward<V>(v));
     }
 
     template <class V>
     BOOST_CONSTEXPR value_type value_or(V&& v) const &&  {
-      return *this ? std::move(const_cast<expected<value_type, error_type>&>(*this).contained_val()) : static_cast<value_type>(constexpr_forward<V>(v));
+      return *this
+        ? std::move(const_cast<expected<value_type, error_type>&>(*this).contained_val())
+        : static_cast<value_type>(constexpr_forward<V>(v));
+    }
+
+    template <class Exception>
+    BOOST_CONSTEXPR value_type value_or_throw() const&   {
+      return *this
+        ? **this
+        : throw Exception(error());
+    }
+
+    template <class Exception>
+    BOOST_CONSTEXPR value_type value_or_throw() const &&  {
+      return *this
+        ? std::move(const_cast<expected<value_type, error_type>&>(*this).contained_val())
+        : throw Exception(error());
     }
 
 # else
 
     template <class V>
-    BOOST_CONSTEXPR value_type value_or(V&& v) const
-    {
-      return *this ? **this : static_cast<value_type>(constexpr_forward<V>(v));
+    BOOST_CONSTEXPR value_type value_or(V&& v) const {
+      return *this
+        ? **this
+        : static_cast<value_type>(constexpr_forward<V>(v));
+    }
+
+    template <class Exception>
+    BOOST_CONSTEXPR value_type value_or_throw() const {
+      return *this
+        ? **this
+        : throw Exception(error());
     }
 
 # endif
