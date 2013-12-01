@@ -424,7 +424,7 @@ namespace detail {
     BOOST_CONSTEXPR expected(const value_type& v
       , REQUIRES(std::is_copy_constructible<value_type>::value)
     )
-    // BOOST_NOEXCEPT_IF(BOOST_NOEXCEPT_EXPR(val(v)))
+    BOOST_NOEXCEPT_IF(has_nothrow_copy_constructor<value_type>::value)
     : base_type(v)
     {}
 
@@ -722,7 +722,7 @@ namespace detail {
     expected<typename boost::result_of<F(expected)>::type, ErrorType>
     then(F fuct)
     {
-      return make_expected(funct(contained_val()));
+      return make_expected(funct(*this));
     }
 
     template <typename F>
@@ -787,7 +787,14 @@ namespace detail {
   }
 
   // Factories
-#if ! defined BOOST_NO_CXX11_VARIADIC_TEMPLATES && ! defined BOOST_NO_CXX11_RVALUE_REFERENCES
+
+  template<typename T>
+  expected<T> make_expected(T&& v )
+  {
+    return expected<T>(v);
+  }
+
+#if 0 && ! defined BOOST_NO_CXX11_VARIADIC_TEMPLATES && ! defined BOOST_NO_CXX11_RVALUE_REFERENCES
   template<typename T, typename E, typename... Args>
   expected<T,E> make_expected(Args&&... args)
   {
@@ -820,6 +827,7 @@ namespace detail {
     return expected<T, U>(exceptional, e);
   }
 
+  // fix these signatures.
   // Requires  typeid(e) == typeid(E)
   template <typename T, typename E>
   expected<T> make_expected_from_error(E const& e
@@ -855,7 +863,7 @@ namespace detail {
     expected<T,E> expected<T,E>::recover(F fuct)
     {
       if (valid()) {
-        return funct(contained_val());
+        return funct(contained_err());
       } else {
         return *this;
       }
@@ -871,6 +879,18 @@ namespace detail {
       return make_expected_from_error<typename boost::result_of<F()>::type>();
     }
   }
+#if 0
+  template <class E, class F>
+  expected<typename boost::result_of<F()>::type, E>
+  make_expected_from_call(F fuct) BOOST_NOEXCEPT
+  {
+    try {
+      return expected<typename boost::result_of<F()>::type, E>(fuct());
+    } catch (...) {
+      return make_expected_from_error<typename boost::result_of<F()>::type>();
+    }
+  }
+#endif
 }
 
 #endif // BOOST_EXPECTED_HPP

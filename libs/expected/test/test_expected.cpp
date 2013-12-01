@@ -71,6 +71,13 @@ class test_exception : public std::exception
 {
 };
 
+int throwing_fun(){ throw test_exception(); }
+int nothrowing_fun(){ return 4; }
+
+void void_throwing_fun(){ throw test_exception(); }
+void do_nothing_fun(){}
+
+
 BOOST_AUTO_TEST_SUITE(except_default_constructor)
 
 BOOST_AUTO_TEST_CASE(except_default_constructor)
@@ -80,7 +87,7 @@ BOOST_AUTO_TEST_CASE(except_default_constructor)
   BOOST_REQUIRE_NO_THROW(e.value());
   BOOST_CHECK(e.valid());
   BOOST_CHECK(! ! e);
-  BOOST_CHECK(bool(e));
+  BOOST_CHECK(static_cast<bool>(e));
 }
 
 BOOST_AUTO_TEST_CASE(except_default_constructor_constexpr)
@@ -317,7 +324,7 @@ BOOST_AUTO_TEST_CASE(expected_from_moved_expected)
   BOOST_CHECK(static_cast<bool>(e2));
 }
 
-BOOST_AUTO_TEST_CASE(expected_from_im_place)
+BOOST_AUTO_TEST_CASE(expected_from_in_place)
 {
   // From in_place2 constructor.
   expected<std::string> e(in_place2, "in_place2");
@@ -364,7 +371,7 @@ BOOST_AUTO_TEST_CASE(expected_from_in_place)
 BOOST_AUTO_TEST_CASE(expected_from_in_place_error)
 {
   // From in_place2 factory.
-  auto e = make_expected<std::string, std::error_condition>("in_place2");
+  auto e = expected<std::string, std::error_condition>("in_place2");
   BOOST_REQUIRE_NO_THROW(e.value());
   BOOST_CHECK_EQUAL(e.value(), "in_place2");
   BOOST_CHECK_EQUAL(*e, "in_place2");
@@ -435,6 +442,57 @@ BOOST_AUTO_TEST_CASE(expected_from_exception_ptr)
   BOOST_CHECK_EQUAL(static_cast<bool>(e), false);
 }
 
+BOOST_AUTO_TEST_CASE(make_expected_from_call_fun)
+{
+  BOOST_CHECK_NO_THROW(make_expected_from_call(throwing_fun));
+  expected<int> e = make_expected_from_call(throwing_fun);
+  BOOST_CHECK_THROW(e.value(), std::exception);
+  BOOST_CHECK_EQUAL(e.valid(), false);
+  BOOST_CHECK_EQUAL(static_cast<bool>(e), false);
+
+  e = make_expected_from_call(nothrowing_fun);
+  BOOST_CHECK_NO_THROW(e.value());
+  BOOST_CHECK_EQUAL(e.value(), 4);
+  BOOST_CHECK_EQUAL(*e, 4);
+  BOOST_CHECK_EQUAL(e.valid(), true);
+  BOOST_CHECK_EQUAL(static_cast<bool>(e), true);
+
+#if 0
+  BOOST_CHECK_THROW(make_expected_from_call<std::error_condition>(throwing_fun), test_exception);
+
+  BOOST_CHECK_NO_THROW(make_expected_from_call<std::error_condition>(nothrowing_fun));
+  expected<int, std::error_condition> e2 = make_expected_from_call<std::error_condition>(nothrowing_fun);
+  BOOST_CHECK_NO_THROW(e2.value());
+  BOOST_CHECK_EQUAL(e2.value(), 4);
+  BOOST_CHECK_EQUAL(*e2, 4);
+  BOOST_CHECK_EQUAL(e2.valid(), true);
+  BOOST_CHECK_EQUAL(static_cast<bool>(e2), true);
+#endif
+}
+
+BOOST_AUTO_TEST_CASE(make_expected_from_call_void_fun)
+{
+#if 0
+  BOOST_CHECK_NO_THROW(make_expected_from_call(void_throwing_fun));
+  expected<void> e = make_expected_from_call(void_throwing_fun);
+  BOOST_CHECK_THROW(e.value(), std::exception);
+  BOOST_CHECK_EQUAL(e.valid(), false);
+  BOOST_CHECK_EQUAL(static_cast<bool>(e), false);
+
+  e = make_expected_from_call(do_nothing_fun);
+  BOOST_CHECK_NO_THROW(e.value());
+  BOOST_CHECK_EQUAL(e.valid(), true);
+  BOOST_CHECK_EQUAL(static_cast<bool>(e), true);
+
+  BOOST_CHECK_THROW(make_expected_from_call<std::error_condition>(void_throwing_fun), test_exception);
+
+  BOOST_CHECK_NO_THROW(make_expected_from_call<std::error_condition>(do_nothing_fun));
+  expected<void, std::error_condition> e2 = make_expected_from_call<std::error_condition>(do_nothing_fun);
+  BOOST_CHECK_NO_THROW(e2.value());
+  BOOST_CHECK_EQUAL(e2.valid(), true);
+  BOOST_CHECK_EQUAL(static_cast<bool>(e2), true);
+#endif
+}
 BOOST_AUTO_TEST_SUITE_END()
 
 BOOST_AUTO_TEST_SUITE(error_expected_modifier)
