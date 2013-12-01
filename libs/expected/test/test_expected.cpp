@@ -1,6 +1,7 @@
 //! \file test_expected.cpp
 
 // Copyright Pierre Talbot 2013.
+// Copyright Vicente J. Botet Escriba 2013.
 
 // Use, modification and distribution are subject to the
 // Boost Software License, Version 1.0.
@@ -591,7 +592,6 @@ BOOST_AUTO_TEST_CASE(expected_next)
 
 }
 
-#if 0
 BOOST_AUTO_TEST_CASE(expected_void_next)
 {
   auto fun = [](bool b)
@@ -618,7 +618,6 @@ BOOST_AUTO_TEST_CASE(expected_void_next)
   BOOST_CHECK_THROW(fun(true).next(launch_except), test_exception);
 
 }
-#endif
 
 BOOST_AUTO_TEST_SUITE_END()
 
@@ -680,7 +679,6 @@ BOOST_AUTO_TEST_CASE(expected_recover)
 
 }
 
-#if 0
 BOOST_AUTO_TEST_CASE(expected_void_recover)
 {
   auto fun = [](bool b)
@@ -713,13 +711,12 @@ BOOST_AUTO_TEST_CASE(expected_void_recover)
 
   // Simple recover tests.
   BOOST_CHECK_EQUAL(fun(false).recover(recover_error).valid(), true);
-  BOOST_CHECK_EQUAL(fun(false).recover(recover_error_failure).valid(), false);
+  BOOST_CHECK_THROW(fun(false).recover(recover_error_failure), test_exception);
   BOOST_CHECK_EQUAL(fun(false).recover(recover_error_silent_failure).valid(), false);
 
   // With a then between.
-  BOOST_CHECK_EQUAL(fun(false).next(do_nothing).recover(recover_error_failure).valid(), false);
+  BOOST_CHECK_THROW(fun(false).next(do_nothing).recover(recover_error_failure), test_exception);
 
 }
-#endif
 
 BOOST_AUTO_TEST_SUITE_END()

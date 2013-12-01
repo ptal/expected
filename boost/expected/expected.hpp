@@ -244,6 +244,24 @@ namespace detail {
     ~trivial_expected_storage() = default;
   };
 
+  template <typename E>
+  union trivial_expected_storage<void, E> {
+    typedef E error_type;
+
+    error_type err;
+    unsigned char dummy;
+
+    BOOST_CONSTEXPR trivial_expected_storage()
+        : dummy(0)
+    {}
+
+    BOOST_CONSTEXPR trivial_expected_storage(exceptional_t, error_type const& e)
+    : err(e)
+    {}
+
+    ~trivial_expected_storage() = default;
+  };
+
   template <typename T, typename E>
   union no_trivial_expected_storage {
     typedef T value_type;
@@ -263,6 +281,23 @@ namespace detail {
     template <class... Args>
       BOOST_CONSTEXPR no_trivial_expected_storage(Args&&... args) //BOOST_NOEXCEPT_IF()
       : val(constexpr_forward<Args>(args)...)
+    {}
+
+   ~no_trivial_expected_storage() {};
+  };
+  template <typename E>
+  union no_trivial_expected_storage<void, E> {
+    typedef E error_type;
+
+    error_type err;
+    unsigned char dummy;
+
+    BOOST_CONSTEXPR no_trivial_expected_storage()
+        : dummy(0)
+    {}
+
+    BOOST_CONSTEXPR no_trivial_expected_storage(exceptional_t, error_type const& e)
+    : err(e)
     {}
 
    ~no_trivial_expected_storage() {};
@@ -308,6 +343,27 @@ namespace detail {
      ~trivial_expected_base() = default;
   };
 
+    template <typename E>
+  struct trivial_expected_base<void, E> {
+    typedef void value_type;
+    typedef E error_type;
+
+    bool has_value;
+    trivial_expected_storage<void, E> storage;
+
+    BOOST_CONSTEXPR trivial_expected_base()
+    : has_value(true), storage() {}
+
+    BOOST_CONSTEXPR trivial_expected_base(only_set_valid_t, bool has_value)
+    : has_value(has_value) {}
+
+    BOOST_CONSTEXPR trivial_expected_base(exceptional_t, error_type const& e)
+    : has_value(false), storage(exceptional, e)
+    {}
+
+     ~trivial_expected_base() = default;
+  };
+
   template <typename T, typename E>
   struct no_trivial_expected_base {
     typedef T value_type;
@@ -348,6 +404,32 @@ namespace detail {
       else storage.err.~error_type();
     }
   };
+
+  template <typename E>
+  struct no_trivial_expected_base<void, E> {
+    typedef void value_type;
+    typedef E error_type;
+
+    bool has_value;
+    no_trivial_expected_storage<void, E> storage;
+
+    BOOST_CONSTEXPR no_trivial_expected_base()
+    : has_value(true), storage() {}
+
+    BOOST_CONSTEXPR no_trivial_expected_base(only_set_valid_t, bool has_value)
+    : has_value(has_value) {}
+
+
+    BOOST_CONSTEXPR no_trivial_expected_base(exceptional_t, error_type const& e)
+    : has_value(false), storage(exceptional, e)
+    {}
+
+    ~no_trivial_expected_base() {
+      if (! has_value)
+        storage.err.~error_type();
+    }
+  };
+
 
   template <typename T, typename E>
     using expected_base = typename std::conditional<
@@ -412,14 +494,7 @@ namespace detail {
 
   public:
 
-    // About noexcept specification:
-    //  is_nothrow_move_constructible is not yet into Boost.TypeTraits.
-
     // Constructors/Destructors/Assignments
-
-    //../../../boost/expected/expected.hpp:140:91: error: called object type 'value_type' (aka 'long') is not a function or function pointer
-    //BOOST_CONSTEXPR expected(const value_type& rhs) BOOST_NOEXCEPT_IF(BOOST_NOEXCEPT_EXPR(val(rhs)))
-
 
     BOOST_CONSTEXPR expected(const value_type& v
       , REQUIRES(std::is_copy_constructible<value_type>::value)
@@ -528,7 +603,6 @@ namespace detail {
     : base_type(exceptional, traits_type::default_error())
     {}
 
-
     ~expected() = default;
 
     // Assignments
@@ -585,28 +659,19 @@ namespace detail {
     // Modifiers
     void swap(expected& rhs)
     {
-      if (valid())
-      {
-        if (rhs.valid())
-        {
+      if (valid()) {
+        if (rhs.valid()) {
           boost::swap(contained_val(), rhs.contained_val());
-        }
-        else
-        {
+        } else {
           error_type t = boost::move(rhs.contained_err());
           new (rhs.dataptr()) value_type(boost::move(contained_val()));
           new (errorptr()) error_type(t);
           std::swap(contained_has_value(), rhs.contained_has_value());
         }
-      }
-      else
-      {
-        if (rhs.valid())
-        {
+      } else {
+        if (rhs.valid()) {
           rhs.swap(*this);
-        }
-        else
-        {
+        } else {
           boost::swap(contained_err(), rhs.contained_err());
         }
       }
@@ -726,15 +791,279 @@ namespace detail {
     }
 
     template <typename F>
-    expected<typename boost::result_of<F(value_type)>::type, ErrorType>
-    next(F fuct);
+    typename ::boost::disable_if<boost::is_same<typename boost::result_of<F(value_type)>::type, void>,
+      expected<typename boost::result_of<F(value_type)>::type, ErrorType>
+    >::type
+    //expected<typename boost::result_of<F(value_type)>::type, ErrorType>
+    next(F fuct
+    //, REQUIRES(! boost::is_same<typename boost::result_of<F(value_type)>::type, void>::value)
+    )
+    {
+      typedef expected<typename boost::result_of<F(value_type)>::type, ErrorType> result_type;
+      if (valid()) {
+        return result_type(fuct(contained_val()));
+      } else {
+        return result_type(exceptional, contained_err());
+      }
+    }
+    template <typename F>
+    typename ::boost::enable_if< boost::is_same<typename boost::result_of<F(value_type)>::type, void>,
+      expected<void, ErrorType>
+    >::type
+    //expected<void, ErrorType>
+    next(F fuct
+    //, REQUIRES(boost::is_same<typename boost::result_of<Fvalue_type()>::type, void>::value)
+    )
+    {
+      typedef expected<typename boost::result_of<F(value_type)>::type, ErrorType> result_type;
+      if (valid()) {
+        fuct(contained_val());
+        return result_type();
+      } else {
+        return result_type(exceptional, contained_err());
+      }
+    }
 
     template <typename F>
-    expected
-    recover(F fuct);
+    expected recover(F fuct)
+    {
+      if (! valid()) {
+        return fuct(contained_err());
+      } else {
+        return *this;
+      }
+    }
+
+  };
+///////////////////
+
+  template <typename ErrorType>
+  class expected<void, ErrorType>
+  : detail::expected_base<void, ErrorType>
+  {
+  public:
+    typedef void value_type;
+    typedef ErrorType error_type;
+    typedef expected_traits<error_type> traits_type;
+
+  private:
+    typedef expected<void, error_type> this_type;
+    typedef detail::expected_base<void, error_type> base_type;
+
+    // Static asserts.
+    typedef boost::is_same<error_type, exceptional_t> is_same_error_exceptional_t;
+    typedef boost::is_same<error_type, in_place_t> is_same_error_in_place_t;
+    BOOST_STATIC_ASSERT_MSG( !is_same_error_exceptional_t::value, "bad ErrorType" );
+    BOOST_STATIC_ASSERT_MSG( !is_same_error_in_place_t::value, "bad ErrorType" );
+
+    error_type* errorptr() { return std::addressof(base_type::storage.err); }
+    BOOST_CONSTEXPR const error_type* errorptr() const { return static_addressof(base_type::storage.err); }
+
+#if ! defined BOOST_EXPECTED_NO_CXX11_RVALUE_REFERENCE_FOR_THIS
+    BOOST_CONSTEXPR const bool& contained_has_value() const& { return base_type::has_value; }
+    bool& contained_has_value() & { return base_type::has_value; }
+    bool&& contained_has_value() && { return std::move(base_type::has_value); }
+
+    BOOST_CONSTEXPR const error_type& contained_err() const& { return base_type::storage.err; }
+    error_type& contained_err() & { return base_type::storage.err; }
+    error_type&& contained_err() && { return std::move(base_type::storage.err); }
+
+#else
+    BOOST_CONSTEXPR const bool& contained_has_value() const BOOST_NOEXCEPT { return base_type::has_value; }
+    bool& contained_has_value() BOOST_NOEXCEPT { return base_type::has_value; }
+    BOOST_CONSTEXPR const error_type& contained_err() const { return base_type::storage.err; }
+    error_type& contained_err() { return base_type::storage.err; }
+#endif
+
+    // C++03 movable support
+    BOOST_COPYABLE_AND_MOVABLE(this_type)
+
+  public:
+
+    // Constructors/Destructors/Assignments
+
+    expected(const expected& rhs
+      , REQUIRES( std::is_copy_constructible<error_type>::value)
+    )
+    BOOST_NOEXCEPT_IF(
+      has_nothrow_copy_constructor<error_type>::value
+    )
+    : base_type(detail::only_set_valid, rhs.valid())
+    {
+      if (! rhs.valid()) {
+        ::new (errorptr()) error_type(rhs.contained_err());
+      }
+    }
+
+    expected(BOOST_RV_REF(expected) rhs
+      , REQUIRES( std::is_move_constructible<error_type>::value)
+    )
+    BOOST_NOEXCEPT_IF(
+      std::is_nothrow_move_constructible<error_type>::value
+    )
+    : base_type(detail::only_set_valid, rhs.valid())
+    {
+      if (! rhs.valid()) {
+        ::new (errorptr()) error_type(boost::move(rhs.contained_err()));
+      }
+    }
+
+    expected(exceptional_t, error_type const& e
+      , REQUIRES(std::is_copy_constructible<error_type>::value)
+
+    )
+    BOOST_NOEXCEPT_IF(
+      has_nothrow_copy_constructor<error_type>::value
+    )
+    : base_type(exceptional, e)
+    {}
+
+    // Requires  typeid(e) == typeid(E)
+    template <class E>
+    expected(exceptional_t, E const& e)
+    : base_type(exceptional, traits_type::from_error(e))
+    {}
+
+    BOOST_CONSTEXPR explicit expected(in_place_t)
+    {}
+
+    BOOST_CONSTEXPR expected() BOOST_NOEXCEPT
+    : base_type()
+    {
+    }
+
+    BOOST_CONSTEXPR explicit expected(exceptional_t)
+    : base_type(exceptional, traits_type::default_error())
+    {}
+
+    ~expected() = default;
+
+    // Assignments
+    expected& operator=(BOOST_COPY_ASSIGN_REF(expected) e)
+    {
+      this_type(e).swap(*this);
+      return *this;
+    }
+
+    expected& operator=(BOOST_RV_REF(expected) e)
+    {
+      this_type(boost::move(e)).swap(*this);
+      return *this;
+    }
+
+
+    expected& emplace()
+    {
+      this_type(in_place_t()).swap(*this);
+      return *this;
+    }
+
+    // Modifiers
+    void swap(expected& rhs)
+    {
+      if (valid()) {
+        if (! rhs.valid()) {
+          error_type t = boost::move(rhs.contained_err());
+          new (errorptr()) error_type(t);
+          std::swap(contained_has_value(), rhs.contained_has_value());
+        }
+      } else {
+        if (rhs.valid()) {
+          rhs.swap(*this);
+        } else {
+          boost::swap(contained_err(), rhs.contained_err());
+        }
+      }
+    }
+
+    // Observers
+    BOOST_CONSTEXPR bool valid() const BOOST_NOEXCEPT
+    {
+      return contained_has_value();
+    }
+
+#if ! defined(BOOST_NO_CXX11_EXPLICIT_CONVERSION_OPERATORS)
+    BOOST_CONSTEXPR explicit operator bool() const BOOST_NOEXCEPT
+    {
+      return valid();
+    }
+#endif
+
+    void void_() const {};
+
+    void value() const
+    {
+      return valid()
+        ? void_()
+        : (
+            traits_type::bad_access(contained_err())
+          )
+        ;
+
+    }
+
+    BOOST_CONSTEXPR error_type const& error() const BOOST_NOEXCEPT
+    {
+      return contained_err();
+    }
+
+    // Utilities
+
+    template <typename F>
+    expected<typename boost::result_of<F(expected)>::type, ErrorType>
+    then(F fuct)
+    {
+      return expected(funct(*this));
+    }
+
+    template <typename F>
+    //typename ::boost::disable_if<boost::is_same<typename boost::result_of<F()>::type, void>,
+    //  expected<typename boost::result_of<F()>::type, ErrorType>
+    //>::type
+    expected<typename boost::result_of<F()>::type, ErrorType>
+    next(F fuct
+    , REQUIRES(! boost::is_same<typename boost::result_of<F()>::type, void>::value)
+    )
+    {
+      typedef expected<typename boost::result_of<F()>::type, ErrorType> result_type;
+      if (valid()) {
+        return result_type(fuct());
+      } else {
+        return result_type(exceptional, contained_err());
+      }
+    }
+    template <typename F>
+    //typename ::boost::enable_if< boost::is_same<typename boost::result_of<F()>::type, void>,
+    //  expected<void, ErrorType>
+    //>::type
+    expected<void, ErrorType>
+    next(F fuct
+    , REQUIRES(boost::is_same<typename boost::result_of<F()>::type, void>::value)
+    )
+    {
+      typedef expected<typename boost::result_of<F()>::type, ErrorType> result_type;
+      if (valid()) {
+        fuct();
+        return result_type();
+      } else {
+        return result_type(exceptional, contained_err());
+      }
+    }
+
+    template <typename F>
+    expected recover(F fuct)
+    {
+      if (! valid()) {
+        return fuct(contained_err());
+      } else {
+        return *this;
+      }
+    }
 
   };
 
+
+/////////////////////
   // Relational operators
   template <class T, class E>
   BOOST_CONSTEXPR bool operator==(const expected<T, E>& x, const expected<T, E>& y)
@@ -846,32 +1175,11 @@ namespace detail {
     return expected<T, E>(exceptional, e);
   }
 
-  template <typename T, typename E>
-    template <typename F>
-    expected<typename boost::result_of<F(T)>::type, E>
-    expected<T,E>::next(F fuct)
-    {
-      typedef expected<typename boost::result_of<F(T)>::type, E> result_type;
-      if (valid()) {
-        return result_type(fuct(contained_val()));
-      } else {
-        return result_type(exceptional, contained_err());
-      }
-    }
-  template <typename T, typename E>
-    template <typename F>
-    expected<T,E> expected<T,E>::recover(F fuct)
-    {
-      if (! valid()) {
-        return fuct(contained_err());
-      } else {
-        return *this;
-      }
-    }
-
   template <typename F>
   expected<typename boost::result_of<F()>::type>
-  make_expected_from_call(F fuct) BOOST_NOEXCEPT
+  make_expected_from_call(F fuct
+      , REQUIRES( ! boost::is_same<typename boost::result_of<F()>::type, void>::value)
+  ) BOOST_NOEXCEPT
   {
     try {
       return make_expected(fuct());
@@ -879,18 +1187,21 @@ namespace detail {
       return make_expected_from_error<typename boost::result_of<F()>::type>();
     }
   }
-#if 0
-  template <class E, class F>
-  expected<typename boost::result_of<F()>::type, E>
-  make_expected_from_call(F fuct) BOOST_NOEXCEPT
+
+  template <typename F>
+  expected<void>
+  make_expected_from_call(F fuct
+      , REQUIRES( boost::is_same<typename boost::result_of<F()>::type, void>::value)
+  ) BOOST_NOEXCEPT
   {
     try {
-      return expected<typename boost::result_of<F()>::type, E>(fuct());
+      fuct();
+      return expected<void>();
     } catch (...) {
-      return make_expected_from_error<typename boost::result_of<F()>::type>();
+      return expected<void>(exceptional);
     }
   }
-#endif
+
 }
 
 #endif // BOOST_EXPECTED_HPP
