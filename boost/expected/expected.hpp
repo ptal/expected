@@ -357,7 +357,7 @@ namespace detail {
     >::type;
 }
 
-  template <typename ValueType, typename ErrorType=boost::exception_ptr>
+  template <typename ValueType, typename ErrorType=std::exception_ptr>
   class expected
   : detail::expected_base<ValueType, ErrorType>
   {
@@ -851,19 +851,19 @@ namespace detail {
     expected<typename boost::result_of<F(T)>::type, E>
     expected<T,E>::next(F fuct)
     {
-      typedef typename boost::result_of<F(T)>::type result_value_type;
+      typedef expected<typename boost::result_of<F(T)>::type, E> result_type;
       if (valid()) {
-        return make_expected<E>(funct(contained_val()));
+        return result_type(fuct(contained_val()));
       } else {
-        return make_expected_from_error<result_value_type>(contained_err());
+        return result_type(exceptional, contained_err());
       }
     }
   template <typename T, typename E>
     template <typename F>
     expected<T,E> expected<T,E>::recover(F fuct)
     {
-      if (valid()) {
-        return funct(contained_err());
+      if (! valid()) {
+        return fuct(contained_err());
       } else {
         return *this;
       }
