@@ -17,6 +17,10 @@
 #include <boost/utility/enable_if.hpp>
 #include <boost/utility/result_of.hpp>
 #include <boost/utility/swap.hpp>
+#include <utility>
+#include <initializer_list>
+
+// define BOOST_EXPECTED_USE_STD_EXCEPTION_PTR to enable the use of the standard exception library.
 
 // TODO: We'd need to check if std::is_default_constructible is there too.
 #ifndef BOOST_NO_CXX11_FUNCTION_TEMPLATE_DEFAULT_ARGS
@@ -36,7 +40,36 @@
   #define MAKE_BOOST_FWD_PARAM(z, count, unused) BOOST_PP_COMMA_IF(count) boost::forward<Arg##count>(arg##count)
 #endif 
 
-// define BOOST_EXPECTED_USE_STD_EXCEPTION_PTR to enable the use of the standard exception library.
+# define REQUIRES(...) typename ::boost::enable_if_c<__VA_ARGS__, void*>::type = 0
+# define T_REQUIRES(...) typename = typename ::boost::enable_if_c<(__VA_ARGS__)>::type
+
+# if defined __clang__
+#  if (__clang_major__ < 2) || (__clang_major__ == 2) && (__clang_minor__ < 9)
+#   define BOOST_EXPECTED_NO_CXX11_RVALUE_REFERENCE_FOR_THIS
+#  endif
+# elif defined __GNUC__
+#  if (__GNUC__*10000 + __GNUC_MINOR__*100 + __GNUC_PATCHLEVEL__ < 40801) || !defined(__GXX_EXPERIMENTAL_CXX0X__)
+#   define BOOST_EXPECTED_NO_CXX11_RVALUE_REFERENCE_FOR_THIS
+#  endif
+# else
+#  define BOOST_EXPECTED_NO_CXX11_RVALUE_REFERENCE_FOR_THIS
+# endif
+
+
+// ../../../boost/expected/expected.hpp: In instantiation of ‘class boost::expected<int>’:
+// test_expected.cpp:79:17:   required from here
+// ../../../boost/expected/expected.hpp:596:15: desole, pas implante: use of ‘type_pack_expansion’ in template
+
+#if defined BOOST_NO_CXX11_FUNCTION_TEMPLATE_DEFAULT_ARGS
+# define BOOST_EXPECTED_NO_CXX11_FUNCTION_TEMPLATE_DEFAULT_ARGS
+#else
+# if defined __GNUC__
+#  if __GNUC__ < 4 || (__GNUC__ == 4 && __GNUC_MINOR__ < 8) || !defined(__GXX_EXPERIMENTAL_CXX0X__)
+#   define BOOST_EXPECTED_NO_CXX11_FUNCTION_TEMPLATE_DEFAULT_ARGS
+#  endif
+# endif
+#endif
+
 
 namespace boost
 {
