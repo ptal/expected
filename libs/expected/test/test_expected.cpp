@@ -274,6 +274,13 @@ BOOST_AUTO_TEST_CASE(except_valid_constexpr)
   BOOST_CONSTEXPR bool b = e.valid();
   BOOST_CHECK(b);
 }
+BOOST_AUTO_TEST_CASE(except_value_constexpr)
+{
+  // From value constructor.
+  BOOST_CONSTEXPR expected<int,int> e(1);
+  BOOST_CONSTEXPR int x = e.value();
+  BOOST_CHECK_EQUAL(x, 1);
+}
 
 BOOST_AUTO_TEST_SUITE_END()
 BOOST_AUTO_TEST_SUITE(except_expected_assignment)

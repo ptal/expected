@@ -690,7 +690,7 @@ namespace detail {
     }
 #endif
 
-    value_type const& value() const
+    BOOST_CONSTEXPR value_type const& value() const
     {
       return valid()
         ? contained_val()
