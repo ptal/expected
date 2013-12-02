@@ -71,104 +71,133 @@
 #endif
 
 
-namespace boost
+namespace boost {
+namespace detail {
+
+template <typename T>
+struct has_overloaded_addressof
 {
-  // bad_expected_access exception class.
-  template <class Error>
-  class bad_expected_access : public std::logic_error
+  template <class X>
+  static BOOST_CONSTEXPR bool has_overload(...) { return false; }
+
+  template <class X, size_t S = sizeof(std::declval< X&>().operator&()) >
+  static BOOST_CONSTEXPR bool has_overload(bool) { return true; }
+
+  BOOST_CONSTEXPR static bool value = has_overload<T>(true);
+};
+
+template <typename T>
+BOOST_CONSTEXPR T* static_addressof(T& ref,
+  REQUIRES(!has_overloaded_addressof<T>::value))
+{
+  return &ref;
+}
+
+template <typename T>
+BOOST_CONSTEXPR T* static_addressof(T& ref,
+  REQUIRES(has_overloaded_addressof<T>::value))
+{
+  return std::addressof(ref);
+}
+
+} // namespace detail
+
+// bad_expected_access exception class.
+template <class Error>
+class bad_expected_access : public std::logic_error
+{
+  public:
+    typedef Error exceptional_type;
+  private:
+    exceptional_type error_value;
+  public:
+    bad_expected_access(const Error& e)
+    : std::logic_error("Found an error instead of the expected value.")
+    , error_value(e)
+    {}
+
+    exceptional_type& error() { return error_value; }
+    const exceptional_type& error() const { return error_value; }
+};
+
+// Traits classes
+template <typename ExceptionalType>
+struct exceptional_traits
+{
+  typedef ExceptionalType exceptional_type;
+
+  template <class E>
+  static exceptional_type make_exceptional(E const& e)
   {
-    public:
-      typedef Error exceptional_type;
-    private:
-      exceptional_type error_value;
-    public:
-      bad_expected_access(const Error& e)
-      : std::logic_error("Found an error instead of the expected value.")
-      , error_value(e)
-      {}
-
-      exceptional_type& error() { return error_value; }
-      const exceptional_type& error() const { return error_value; }
-  };
-
-  // Traits classes
-  template <typename ExceptionalType>
-  struct exceptional_traits
+    return exceptional_type(e);
+  }
+  
+  static exceptional_type catch_exception()
   {
-    typedef ExceptionalType exceptional_type;
-
-    template <class E>
-    static exceptional_type make_exceptional(E const& e)
-    {
-      return exceptional_type(e);
-    }
-    
-    static exceptional_type catch_exception()
-    {
-      throw;
-    }
-    
-    static void bad_access(const exceptional_type &e)
-    {
-      boost::throw_exception(bad_expected_access<exceptional_type>(e)); 
-    }
-  };
-
-  // Specialization for exception_ptr
-  template <>
-  struct exceptional_traits<boost::exception_ptr>
+    throw;
+  }
+  
+  static void bad_access(const exceptional_type &e)
   {
-    typedef boost::exception_ptr exceptional_type;
+    boost::throw_exception(bad_expected_access<exceptional_type>(e)); 
+  }
+};
 
-    template <class E>
-    static exceptional_type make_exceptional(E const& e)
-    {
-      return boost::copy_exception(e);
-    }
-    
-    static exceptional_type catch_exception()
-    {
-      return boost::current_exception();
-    }
-    
-    static void bad_access(const exceptional_type &e)
-    {
-      boost::rethrow_exception(e);
-    }
-  };
+// Specialization for exception_ptr
+template <>
+struct exceptional_traits<boost::exception_ptr>
+{
+  typedef boost::exception_ptr exceptional_type;
+
+  template <class E>
+  static exceptional_type make_exceptional(E const& e)
+  {
+    return boost::copy_exception(e);
+  }
+  
+  static exceptional_type catch_exception()
+  {
+    return boost::current_exception();
+  }
+  
+  static void bad_access(const exceptional_type &e)
+  {
+    boost::rethrow_exception(e);
+  }
+};
 
 #ifdef BOOST_EXPECTED_USE_STD_EXCEPTION_PTR
-  template <>
-  struct exceptional_traits<std::exception_ptr>
-  {
-    typedef std::exception_ptr exceptional_type;
+template <>
+struct exceptional_traits<std::exception_ptr>
+{
+  typedef std::exception_ptr exceptional_type;
 
-    template <class E>
-    static exceptional_type make_exceptional(E const& e)
-    {
-      return std::make_exception_ptr(e);
-    }
-    
-    static exceptional_type catch_exception()
-    {
-      return std::current_exception();
-    }
-    
-    static void bad_access(const exceptional_type &e)
-    {
-      std::rethrow_exception(e);
-    }
-  };
+  template <class E>
+  static exceptional_type make_exceptional(E const& e)
+  {
+    return std::make_exception_ptr(e);
+  }
+  
+  static exceptional_type catch_exception()
+  {
+    return std::current_exception();
+  }
+  
+  static void bad_access(const exceptional_type &e)
+  {
+    std::rethrow_exception(e);
+  }
+};
 #endif
 
-  struct exceptional_tag {};
-  BOOST_CONSTEXPR_OR_CONST exceptional_tag exceptional = {};
+struct exceptional_tag {};
+BOOST_CONSTEXPR_OR_CONST exceptional_tag exceptional = {};
 
-  struct emplace_tag {};
-  BOOST_CONSTEXPR_OR_CONST emplace_tag emplace = {};
+struct emplace_tag {};
+BOOST_CONSTEXPR_OR_CONST emplace_tag emplace = {};
 
-  template <class V, class E>
-  class expected;
+template <class V, class E>
+class expected;
 
 #ifdef BOOST_EXPECTED_USE_STD_EXCEPTION_PTR
   template <typename ValueType, typename ExceptionalType=std::exception_ptr>
