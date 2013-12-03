@@ -37,7 +37,7 @@ project expected
       <include>$(BOOST_ROOT)
       <include>. # .cpp files in expected/test.
       <include>../../.. # expected .hpp files.
-      <library>$(BOOST_ROOT/boost/test//boost_unit_test_framework
+      <library>$(BOOST_ROOT/boost/test//boost_unit_test_framework)
       
       <link>static
       <toolset>gcc:<cxxflags>-std=c++11
@@ -65,6 +65,6 @@ project expected
 test-suite "Expected"
     : 
       [ run test_expected.cpp  boost_unit_test ]
-      [ run num_get.cpp ]
-      [ run num_get_2.cpp ]
+#      [ run num_get.cpp ]
+#      [ run num_get_2.cpp ]
     ;
