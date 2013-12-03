@@ -418,18 +418,6 @@ BOOST_AUTO_TEST_CASE(expected_from_noexcept_fun)
 #ifdef EXPECTED_CPP11_TESTS
   BOOST_CHECK_EQUAL(static_cast<bool>(e), true);
 #endif
-
-  BOOST_CHECK_THROW(make_noexcept_expected<ERROR_CONDITION_NS::error_condition>(throwing_fun), test_exception);
-
-  BOOST_CHECK_NO_THROW(make_noexcept_expected<ERROR_CONDITION_NS::error_condition>(nothrowing_fun));
-  expected<int, ERROR_CONDITION_NS::error_condition> e2 = make_noexcept_expected<ERROR_CONDITION_NS::error_condition>(nothrowing_fun);
-  BOOST_CHECK_NO_THROW(e2.get());
-  BOOST_CHECK_EQUAL(e2.get(), 4);
-  BOOST_CHECK_EQUAL(*e2, 4);
-  BOOST_CHECK_EQUAL(e2.valid(), true);
-#ifdef EXPECTED_CPP11_TESTS
-  BOOST_CHECK_EQUAL(static_cast<bool>(e2), true);
-#endif
 }
 
 BOOST_AUTO_TEST_CASE(expected_from_noexcept_void_fun)
@@ -447,16 +435,6 @@ BOOST_AUTO_TEST_CASE(expected_from_noexcept_void_fun)
   BOOST_CHECK_EQUAL(e.valid(), true);
 #ifdef EXPECTED_CPP11_TESTS
   BOOST_CHECK_EQUAL(static_cast<bool>(e), true);
-#endif
-
-  BOOST_CHECK_THROW(make_noexcept_expected<ERROR_CONDITION_NS::error_condition>(void_throwing_fun), test_exception);
-
-  BOOST_CHECK_NO_THROW(make_noexcept_expected<ERROR_CONDITION_NS::error_condition>(do_nothing_fun));
-  expected<void, ERROR_CONDITION_NS::error_condition> e2 = make_noexcept_expected<ERROR_CONDITION_NS::error_condition>(do_nothing_fun);
-  BOOST_CHECK_NO_THROW(e2.get());
-  BOOST_CHECK_EQUAL(e2.valid(), true);
-#ifdef EXPECTED_CPP11_TESTS
-  BOOST_CHECK_EQUAL(static_cast<bool>(e2), true);
 #endif
 }
 
