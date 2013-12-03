@@ -20,6 +20,11 @@ feature.compose <iterator_debugging>off
   : <define>_HAS_ITERATOR_DEBUGGING=0
   ;
   
+if ! $(BOOST_ROOT)
+{
+    BOOST_ROOT = [ modules.peek : BOOST_ROOT ] ;
+}
+
 
 # Create an alias for the boost unit test framework. You don't need this
 # if you're using minimal or lightweight test.
@@ -29,10 +34,10 @@ alias boost_unit_test : /boost/test//boost_unit_test_framework/<link>static ;
 	
 project expected
     : requirements
-      <include>$(boost-root)
+      <include>$(BOOST_ROOT)
       <include>. # .cpp files in expected/test.
       <include>../../.. # expected .hpp files.
-      <library>$(boost-root)/boost/test//boost_unit_test_framework
+      <library>$(BOOST_ROOT/boost/test//boost_unit_test_framework
       
       <link>static
       <toolset>gcc:<cxxflags>-std=c++11
@@ -58,5 +63,8 @@ project expected
     ;
 
 test-suite "Expected"
-    : [ run test_expected.cpp  boost_unit_test ]
+    : 
+      [ run test_expected.cpp  boost_unit_test ]
+      [ run num_get.cpp ]
+      [ run num_get_2.cpp ]
     ;

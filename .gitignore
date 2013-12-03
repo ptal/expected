@@ -1,0 +1,10 @@
+
+*.o
+
+bin/*
+
+libs/expected/test/bin/*
+
+libs/expected/.DS_Store
+
+libs/expected/test/getInt.cpp
