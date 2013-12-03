@@ -826,11 +826,9 @@ public:
 # endif
 
   template <typename F>
-  typename boost::enable_if<
-    boost::is_same<typename result_of<F(value_type)>::type, void>,
-    expected<void, error_type>
-  >::type
-  then(BOOST_RV_REF(F) f) const
+  expected<void, error_type>
+  then(BOOST_RV_REF(F) f,
+    REQUIRES(boost::is_same<typename result_of<F(value_type)>::type, void>::value)) const
   {
     typedef expected<void, error_type> result_type;
     if(valid())
@@ -849,11 +847,9 @@ public:
   }
 
   template <typename F>
-  typename boost::disable_if<
-    boost::is_same<typename result_of<F(value_type)>::type, void>,
-    expected<typename result_of<F(value_type)>::type, error_type>
-  >::type
-  then(BOOST_RV_REF(F) f) const
+  expected<typename result_of<F(value_type)>::type, error_type>
+  then(BOOST_RV_REF(F) f,
+    REQUIRES(!boost::is_same<typename result_of<F(value_type)>::type, void>::value)) const
   {
     typedef expected<typename result_of<F(value_type)>::type, error_type> result_type;
     if(valid())
@@ -871,11 +867,8 @@ public:
   }
 
   template <typename F>
-  typename boost::enable_if<
-    boost::is_same<typename result_of<F(error_type)>::type, value_type>,
-    this_type
-  >::type
-  recover(BOOST_RV_REF(F) f) const
+  this_type recover(BOOST_RV_REF(F) f,
+    REQUIRES(boost::is_same<typename result_of<F(error_type)>::type, value_type>::value)) const
   {
     if(!valid())
     {
@@ -892,11 +885,8 @@ public:
   }
 
   template <typename F>
-  typename boost::enable_if<
-    boost::is_same<typename result_of<F(error_type)>::type, this_type>,
-    this_type
-  >::type
-  recover(BOOST_RV_REF(F) f) const
+  this_type recover(BOOST_RV_REF(F) f,
+    REQUIRES(boost::is_same<typename result_of<F(error_type)>::type, this_type>::value)) const
   {
     if(!valid())
     {
@@ -1089,11 +1079,8 @@ public:
   // Utilities
 
   template <typename F>
-  typename boost::enable_if<
-    boost::is_same<typename result_of<F()>::type, void>,
-    this_type
-  >::type
-  then(BOOST_RV_REF(F) f) const
+  this_type then(BOOST_RV_REF(F) f,
+    REQUIRES(boost::is_same<typename result_of<F()>::type, void>::value)) const
   {
     if(valid())
     {
@@ -1111,11 +1098,9 @@ public:
   }
 
   template <typename F>
-  typename boost::disable_if<
-    boost::is_same<typename result_of<F()>::type, void>,
-    expected<typename result_of<F()>::type, error_type>
-  >::type
-  then(BOOST_RV_REF(F) f) const
+  expected<typename result_of<F()>::type, error_type>
+  then(BOOST_RV_REF(F) f,
+    REQUIRES(!boost::is_same<typename result_of<F()>::type, void>::value)) const
   {
     typedef expected<typename result_of<F()>::type, error_type> result_type;
     if(valid())
@@ -1133,11 +1118,8 @@ public:
   }
 
   template <typename F>
-  typename boost::enable_if<
-    boost::is_same<typename result_of<F(error_type)>::type, value_type>,
-    this_type
-  >::type
-  recover(BOOST_RV_REF(F) f) const
+  this_type recover(BOOST_RV_REF(F) f,
+    REQUIRES(boost::is_same<typename result_of<F(error_type)>::type, value_type>::value)) const
   {
     if(!valid())
     {
@@ -1154,11 +1136,8 @@ public:
   }
 
   template <typename F>
-  typename boost::enable_if<
-    boost::is_same<typename result_of<F(error_type)>::type, this_type>,
-    this_type
-  >::type
-  recover(BOOST_RV_REF(F) f) const
+  this_type recover(BOOST_RV_REF(F) f,
+    REQUIRES(boost::is_same<typename result_of<F(error_type)>::type, this_type>::value)) const
   {
     if(!valid())
     {
