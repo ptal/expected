@@ -22,17 +22,11 @@
 #ifdef EXPECTED_CPP11_TESTS
   #define BOOST_RESULT_OF_USE_DECLTYPE
   #define BOOST_EXPECTED_USE_STD_EXCEPTION_PTR
+
+  typedef std::exception_ptr exception_ptr_type;
 #endif
 
 #include "../../../boost/expected/expected.hpp"
-
-#ifdef EXPECTED_CPP11_TESTS
-  #define MAKE_EXCEPTION_PTR(exception) std::make_exception_ptr(exception)
-  typedef std::exception_ptr exception_ptr_type;
-#else
-  #define MAKE_EXCEPTION_PTR(exception) boost::copy_exception(exception)
-  typedef boost::exception_ptr exception_ptr_type;
-#endif
 
 #include <boost/bind.hpp>
 
@@ -139,7 +133,7 @@ BOOST_AUTO_TEST_CASE(expected_from_copy_exception)
 BOOST_AUTO_TEST_CASE(expected_from_emplace)
 {
   // From emplace constructor.
-  expected<std::string> e(emplace, "emplace");
+  expected<std::string> e(in_place2, "emplace");
   BOOST_REQUIRE_NO_THROW(e.value());
   BOOST_CHECK_EQUAL(e.value(), "emplace");
   BOOST_CHECK_EQUAL(*e, "emplace");
@@ -153,7 +147,7 @@ BOOST_AUTO_TEST_CASE(expected_from_emplace)
 BOOST_AUTO_TEST_CASE(expected_from_exception_ptr)
 {
   // From exception_ptr constructor.
-  expected<int> e(exceptional, MAKE_EXCEPTION_PTR(test_exception()));
+  expected<int> e(exceptional, test_exception());
   BOOST_REQUIRE_THROW(e.value(), test_exception);
   BOOST_CHECK_EQUAL(e.valid(), false);
 #ifdef EXPECTED_CPP11_TESTS
@@ -289,7 +283,7 @@ BOOST_AUTO_TEST_CASE(expected_from_moved_expected)
 BOOST_AUTO_TEST_CASE(expected_from_emplace)
 {
   // From emplace constructor.
-  expected<std::string> e(emplace, "emplace");
+  expected<std::string> e(in_place2, "emplace");
   BOOST_CHECK_EQUAL(e.value(), "emplace");
 
   // From emplace method.
@@ -392,7 +386,7 @@ BOOST_AUTO_TEST_CASE(expected_from_error_catch_exception)
 BOOST_AUTO_TEST_CASE(expected_from_exception_ptr)
 {
   // From exception_ptr constructor.
-  boost::expected<int> e = make_expected_from_error<int>(MAKE_EXCEPTION_PTR(test_exception()));
+  boost::expected<int> e = make_expected_from_error<int>(test_exception());
   BOOST_CHECK_THROW(e.value(), test_exception);
   BOOST_CHECK_EQUAL(e.valid(), false);
 #ifdef EXPECTED_CPP11_TESTS
@@ -402,15 +396,15 @@ BOOST_AUTO_TEST_CASE(expected_from_exception_ptr)
 
 BOOST_AUTO_TEST_CASE(expected_from_noexcept_fun)
 {
-  BOOST_CHECK_NO_THROW(make_noexcept_expected(throwing_fun));
-  expected<int> e = make_noexcept_expected(throwing_fun);
+  BOOST_CHECK_NO_THROW(make_expected_from_call(throwing_fun));
+  expected<int> e = make_expected_from_call(throwing_fun);
   BOOST_CHECK_THROW(e.value(), std::exception);
   BOOST_CHECK_EQUAL(e.valid(), false);
 #ifdef EXPECTED_CPP11_TESTS
   BOOST_CHECK_EQUAL(static_cast<bool>(e), false);
 #endif
 
-  e = make_noexcept_expected(nothrowing_fun);
+  e = make_expected_from_call(nothrowing_fun);
   BOOST_CHECK_NO_THROW(e.value());
   BOOST_CHECK_EQUAL(e.value(), 4);
   BOOST_CHECK_EQUAL(*e, 4);
@@ -422,15 +416,15 @@ BOOST_AUTO_TEST_CASE(expected_from_noexcept_fun)
 
 BOOST_AUTO_TEST_CASE(expected_from_noexcept_void_fun)
 {
-  BOOST_CHECK_NO_THROW(make_noexcept_expected(void_throwing_fun));
-  expected<void> e = make_noexcept_expected(void_throwing_fun);
+  BOOST_CHECK_NO_THROW(make_expected_from_call(void_throwing_fun));
+  expected<void> e = make_expected_from_call(void_throwing_fun);
   BOOST_CHECK_THROW(e.value(), std::exception);
   BOOST_CHECK_EQUAL(e.valid(), false);
 #ifdef EXPECTED_CPP11_TESTS
   BOOST_CHECK_EQUAL(static_cast<bool>(e), false);
 #endif
 
-  e = make_noexcept_expected(do_nothing_fun);
+  e = make_expected_from_call(do_nothing_fun);
   BOOST_CHECK_NO_THROW(e.value());
   BOOST_CHECK_EQUAL(e.valid(), true);
 #ifdef EXPECTED_CPP11_TESTS
@@ -464,8 +458,8 @@ BOOST_AUTO_TEST_CASE(expected_swap_value)
 BOOST_AUTO_TEST_CASE(expected_swap_exception)
 {
   // From value constructor.
-  expected<int> e = make_expected_from_error<int>(MAKE_EXCEPTION_PTR(std::invalid_argument("e")));
-  expected<int> e2 = make_expected_from_error<int>(MAKE_EXCEPTION_PTR(std::invalid_argument("e2")));
+  expected<int> e = make_expected_from_error<int>(std::invalid_argument("e"));
+  expected<int> e2 = make_expected_from_error<int>(std::invalid_argument("e2"));
 
   e.swap(e2);
 
@@ -511,7 +505,7 @@ BOOST_AUTO_TEST_CASE(expected_then)
     if(b) 
       return expected<int>(5);
     else
-      return make_expected_from_error<int>(MAKE_EXCEPTION_PTR(test_exception()));
+      return make_expected_from_error<int>(test_exception());
   };
 
   auto add_five = [](int sum)
@@ -538,7 +532,7 @@ BOOST_AUTO_TEST_CASE(expected_void_then)
     if(b) 
       return expected<void>();
     else
-      return make_expected_from_error<void>(MAKE_EXCEPTION_PTR(test_exception()));
+      return make_expected_from_error<void>(test_exception());
   };
 
   auto launch_except = []()
@@ -571,7 +565,7 @@ BOOST_AUTO_TEST_CASE(expected_recover)
     if(b) 
       return expected<int>(5);
     else
-      return make_expected_from_error<int>(MAKE_EXCEPTION_PTR(test_exception()));
+      return make_expected_from_error<int>(test_exception());
   };
   
   auto then_launch = [](int) -> int
@@ -626,7 +620,7 @@ BOOST_AUTO_TEST_CASE(expected_void_recover)
     if(b) 
       return expected<void>();
     else
-      return make_expected_from_error<void>(MAKE_EXCEPTION_PTR(test_exception()));
+      return make_expected_from_error<void>(test_exception());
   };
 
   auto then_launch = []() -> void

@@ -471,7 +471,7 @@ template <typename T, typename E>
 
 } // namespace detail
 
-template <typename ValueType, typename ErrorType=boost::exception_ptr>
+template <typename ValueType, typename ErrorType=std::exception_ptr>
 class expected
 : detail::expected_base<ValueType, ErrorType>
 {
@@ -1228,7 +1228,7 @@ void swap(expected<T>& x, expected<T>& y) BOOST_NOEXCEPT_IF(BOOST_NOEXCEPT_EXPR(
 
 // Factories
 
-#if 0 && ! defined BOOST_NO_CXX11_VARIADIC_TEMPLATES && ! defined BOOST_NO_CXX11_RVALUE_REFERENCES
+#if ! defined BOOST_NO_CXX11_VARIADIC_TEMPLATES && ! defined BOOST_NO_CXX11_RVALUE_REFERENCES
   template<typename T, typename E, typename... Args>
   expected<T,E> make_expected(BOOST_FWD_REF(Args)... args)
   {
@@ -1288,13 +1288,14 @@ make_expected_from_call(F funct
   , REQUIRES( ! boost::is_same<typename boost::result_of<F()>::type, void>::value)
 ) BOOST_NOEXCEPT
 {
+  typedef typename boost::result_of<F()>::type result_type;
   try 
   {
-    return make_expected(funct());
+    return make_expected<result_type>(funct());
   } 
   catch (...) 
   {
-    return make_expected_from_error<typename boost::result_of<F()>::type>();
+    return make_expected_from_error<result_type>();
   }
 }
 
@@ -1311,7 +1312,7 @@ make_expected_from_call(F funct
   } 
   catch (...) 
   {
-    return expected<void>(exceptional);
+    return make_expected_from_error<void>();
   }
 }
 
