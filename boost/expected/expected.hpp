@@ -20,8 +20,6 @@
 #include <utility>
 #include <initializer_list>
 
-// define BOOST_EXPECTED_USE_STD_EXCEPTION_PTR to enable the use of the standard exception library.
-
 // TODO: We'd need to check if std::is_default_constructible is there too.
 #ifndef BOOST_NO_CXX11_FUNCTION_TEMPLATE_DEFAULT_ARGS
   #define BOOST_EXPECTED_USE_DEFAULT_CONSTRUCTOR 
@@ -107,83 +105,91 @@ template <class Error>
 class bad_expected_access : public std::logic_error
 {
   public:
-    typedef Error exceptional_type;
+    typedef Error error_type;
   private:
-    exceptional_type error_value;
+    error_type error_value;
   public:
     bad_expected_access(const Error& e)
     : std::logic_error("Found an error instead of the expected value.")
     , error_value(e)
     {}
 
-    exceptional_type& error() { return error_value; }
-    const exceptional_type& error() const { return error_value; }
+    error_type& error() { return error_value; }
+    const error_type& error() const { return error_value; }
+
+    // Add implicit/explicit conversion to error_type ?
 };
 
 // Traits classes
-template <typename ExceptionalType>
-struct exceptional_traits
+template <typename ErrorType, class Exception>
+struct expected_error_traits
 {
-  typedef ExceptionalType exceptional_type;
+  typedef ErrorType error_type;
+  typedef Exception exception_type;
 
   template <class E>
-  static exceptional_type make_exceptional(E const& e)
+  static error_type from_error(error_type const& e)
   {
-    return exceptional_type(e);
+    return error_type(e);
   }
   
-  static exceptional_type catch_exception()
+  static error_type catch_exception()
   {
     throw;
   }
   
-  static void bad_access(const exceptional_type &e)
+  static void bad_access(const error_type &e)
   {
-    boost::throw_exception(bad_expected_access<exceptional_type>(e)); 
+    throw Exception(e);
   }
+};
+
+template <typename ErrorType>
+struct expected_traits : expected_error_traits<ErrorType, bad_expected_access<ErrorType> >
+{
 };
 
 // Specialization for exception_ptr
 template <>
-struct exceptional_traits<boost::exception_ptr>
+struct expected_traits<boost::exception_ptr>
 {
-  typedef boost::exception_ptr exceptional_type;
+  typedef boost::exception_ptr error_type;
 
   template <class E>
-  static exceptional_type make_exceptional(E const& e)
+  static error_type make_exceptional(E const& e)
   {
     return boost::copy_exception(e);
   }
   
-  static exceptional_type catch_exception()
+  static error_type catch_exception()
   {
     return boost::current_exception();
   }
   
-  static void bad_access(const exceptional_type &e)
+  static void bad_access(const error_type &e)
   {
     boost::rethrow_exception(e);
   }
 };
 
-#ifdef BOOST_EXPECTED_USE_STD_EXCEPTION_PTR
+#if ! defined BOOST_NO_CXX11_HDR_EXCEPTION  && ! defined BOOST_NO_CXX11_RVALUE_REFERENCES
 template <>
-struct exceptional_traits<std::exception_ptr>
+struct expected_traits<std::exception_ptr>
 {
-  typedef std::exception_ptr exceptional_type;
+  typedef std::exception_ptr error_type;
 
   template <class E>
-  static exceptional_type make_exceptional(E const& e)
+  static error_type make_exceptional(E const& e)
   {
     return std::make_exception_ptr(e);
   }
   
-  static exceptional_type catch_exception()
+  static error_type catch_exception()
   {
     return std::current_exception();
   }
   
-  static void bad_access(const exceptional_type &e)
+  static void bad_access(const error_type &e)
   {
     std::rethrow_exception(e);
   }
@@ -199,7 +205,7 @@ BOOST_CONSTEXPR_OR_CONST emplace_tag emplace = {};
 template <class V, class E>
 class expected;
 
-#ifdef BOOST_EXPECTED_USE_STD_EXCEPTION_PTR
+#if ! defined BOOST_NO_CXX11_HDR_EXCEPTION  && ! defined BOOST_NO_CXX11_RVALUE_REFERENCES
   template <typename ValueType, typename ExceptionalType=std::exception_ptr>
 #else
   template <typename ValueType, typename ExceptionalType=boost::exception_ptr>
@@ -208,17 +214,17 @@ class expected;
   {
   public:
     typedef ValueType value_type;
-    typedef ExceptionalType exceptional_type;
-    typedef exceptional_traits<exceptional_type> traits_type;
+    typedef ExceptionalType error_type;
+    typedef expected_traits<error_type> traits_type;
 
   private:
-    typedef expected<value_type, exceptional_type> this_type;
+    typedef expected<value_type, error_type> this_type;
 
     // Static asserts.
     typedef boost::is_same<value_type, exceptional_tag> is_same_value_exceptional_tag;
     typedef boost::is_same<value_type, emplace_tag> is_same_value_emplace_tag;
-    typedef boost::is_same<exceptional_type, exceptional_tag> is_same_exceptional_exceptional_tag;
-    typedef boost::is_same<exceptional_type, emplace_tag> is_same_exceptional_emplace_tag;
+    typedef boost::is_same<error_type, exceptional_tag> is_same_exceptional_exceptional_tag;
+    typedef boost::is_same<error_type, emplace_tag> is_same_exceptional_emplace_tag;
     BOOST_STATIC_ASSERT_MSG( !is_same_value_exceptional_tag::value, "bad ValueType" );
     BOOST_STATIC_ASSERT_MSG( !is_same_value_emplace_tag::value, "bad ValueType" );
     BOOST_STATIC_ASSERT_MSG( !is_same_exceptional_exceptional_tag::value, "bad ExceptionalType" );
@@ -229,7 +235,7 @@ class expected;
 
   private:
     union {
-      exceptional_type error;
+      error_type error_;
       value_type value;
     };
     bool has_value;
@@ -265,7 +271,7 @@ class expected;
     expected(const expected& rhs) 
     BOOST_NOEXCEPT_IF(
       has_nothrow_copy_constructor<value_type>::value && 
-      has_nothrow_copy_constructor<exceptional_type>::value
+      has_nothrow_copy_constructor<error_type>::value
     )
     : has_value(rhs.has_value)
     {
@@ -275,14 +281,14 @@ class expected;
       }
       else
       {
-        ::new (&error) exceptional_type(rhs.error);
+        ::new (&error_) error_type(rhs.error_);
       }
     }
 
     expected(BOOST_RV_REF(expected) rhs)
     //BOOST_NOEXCEPT_IF(
     //  has_nothrow_move_constructor<value_type>::value && 
-    //  has_nothrow_move_constructor<exceptional_type>::value
+    //  has_nothrow_move_constructor<error_type>::value
     //)
     : has_value(rhs.has_value)
     {
@@ -292,22 +298,22 @@ class expected;
       }
       else
       {
-        ::new (&error) exceptional_type(boost::move(rhs.error));
+        ::new (&error_) error_type(boost::move(rhs.error_));
       }
     }
 
-    expected(exceptional_tag, exceptional_type const& e) 
+    expected(exceptional_tag, error_type const& e) 
     BOOST_NOEXCEPT_IF(
-      has_nothrow_copy_constructor<exceptional_type>::value
+      has_nothrow_copy_constructor<error_type>::value
     )
-    : error(e)
+    : error_(e)
     , has_value(false)
     {}
 
     // Requires  typeid(e) == typeid(E)
     template <class E>
     expected(exceptional_tag, E const& e)
-    : error(traits_type::make_exceptional(e))
+    : error_(traits_type::make_exceptional(e))
     , has_value(false)
     {}
 
@@ -332,14 +338,14 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_EXPECTED_EMPLACE_MAX_ARGS, EXPECTED_EMPLACE_CON
 #endif
 
     expected(exceptional_tag)
-    : error(traits_type::catch_exception())
+    : error_(traits_type::catch_exception())
     , has_value(false)
     {}
 
     ~expected()
     {
       if (valid()) value.~value_type();
-      else error.~exceptional_type();
+      else error_.~error_type();
     }
 
     // Assignments
@@ -401,9 +407,9 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_EXPECTED_EMPLACE_MAX_ARGS, EXPECTED_EMPLACE, ~)
         }
         else
         {
-          exceptional_type t = boost::move(rhs.error);
+          error_type t = boost::move(rhs.error_);
           new (&rhs.value) value_type(boost::move(value));
-          new (&error) exceptional_type(t);
+          new (&error_) error_type(t);
           boost::swap(has_value, rhs.has_value);
         }
       }
@@ -415,7 +421,7 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_EXPECTED_EMPLACE_MAX_ARGS, EXPECTED_EMPLACE, ~)
         }
         else
         {
-          boost::swap(error, rhs.error);
+          boost::swap(error_, rhs.error_);
         }
       }
     }
@@ -435,13 +441,13 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_EXPECTED_EMPLACE_MAX_ARGS, EXPECTED_EMPLACE, ~)
 
     const value_type& get() const
     {
-      if (!valid()) traits_type::bad_access(error);
+      if (!valid()) traits_type::bad_access(error_);
       return value;
     }
 
     value_type& get()
     {
-      if (!valid()) traits_type::bad_access(error);
+      if (!valid()) traits_type::bad_access(error_);
       return value;
     }
 
@@ -457,22 +463,22 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_EXPECTED_EMPLACE_MAX_ARGS, EXPECTED_EMPLACE, ~)
 
     BOOST_CONSTEXPR error_type const& error() const BOOST_NOEXCEPT
     {
-      return error;
+      return error_;
     }
 
     error_type& error() BOOST_NOEXCEPT
     {
-      return error;
+      return error_;
     }
 
     template <typename F>
     typename boost::enable_if<
       boost::is_same<typename result_of<F(value_type)>::type, void>,
-      expected<void, exceptional_type>
+      expected<void, error_type>
     >::type
     then(BOOST_RV_REF(F) f) const
     {
-      typedef expected<void, exceptional_type> result_type;
+      typedef expected<void, error_type> result_type;
       if(valid())
       {
         try
@@ -485,17 +491,17 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_EXPECTED_EMPLACE_MAX_ARGS, EXPECTED_EMPLACE, ~)
           return result_type(exceptional);
         }
       }
-      return result_type(exceptional, error);
+      return result_type(exceptional, error_);
     }
 
     template <typename F>
     typename boost::disable_if<
       boost::is_same<typename result_of<F(value_type)>::type, void>,
-      expected<typename result_of<F(value_type)>::type, exceptional_type>
+      expected<typename result_of<F(value_type)>::type, error_type>
     >::type
     then(BOOST_RV_REF(F) f) const
     {
-      typedef expected<typename result_of<F(value_type)>::type, exceptional_type> result_type;
+      typedef expected<typename result_of<F(value_type)>::type, error_type> result_type;
       if(valid())
       {
         try
@@ -507,12 +513,12 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_EXPECTED_EMPLACE_MAX_ARGS, EXPECTED_EMPLACE, ~)
           return result_type(exceptional);
         }
       }
-      return result_type(exceptional, error);
+      return result_type(exceptional, error_);
     }
 
     template <typename F>
     typename boost::enable_if<
-      boost::is_same<typename result_of<F(exceptional_type)>::type, value_type>,
+      boost::is_same<typename result_of<F(error_type)>::type, value_type>,
       this_type
     >::type
     recover(BOOST_RV_REF(F) f) const
@@ -521,7 +527,7 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_EXPECTED_EMPLACE_MAX_ARGS, EXPECTED_EMPLACE, ~)
       {
         try
         {
-          return this_type(f(error));
+          return this_type(f(error_));
         }
         catch(...)
         {
@@ -533,7 +539,7 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_EXPECTED_EMPLACE_MAX_ARGS, EXPECTED_EMPLACE, ~)
 
     template <typename F>
     typename boost::enable_if<
-      boost::is_same<typename result_of<F(exceptional_type)>::type, this_type>,
+      boost::is_same<typename result_of<F(error_type)>::type, this_type>,
       this_type
     >::type
     recover(BOOST_RV_REF(F) f) const
@@ -542,7 +548,7 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_EXPECTED_EMPLACE_MAX_ARGS, EXPECTED_EMPLACE, ~)
       {
         try
         {
-          return f(error);
+          return f(error_);
         }
         catch(...)
         {
@@ -558,17 +564,17 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_EXPECTED_EMPLACE_MAX_ARGS, EXPECTED_EMPLACE, ~)
   {
   public:
     typedef void value_type;
-    typedef ExceptionalType exceptional_type;
-    typedef exceptional_traits<exceptional_type> traits_type;
+    typedef ExceptionalType error_type;
+    typedef expected_traits<error_type> traits_type;
 
   private:
-    typedef expected<value_type, exceptional_type> this_type;
+    typedef expected<value_type, error_type> this_type;
 
     // C++03 movable support
     BOOST_COPYABLE_AND_MOVABLE(this_type)
 
   private:
-    exceptional_type error;
+    error_type error_;
     bool has_value;
 
   public:
@@ -579,13 +585,13 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_EXPECTED_EMPLACE_MAX_ARGS, EXPECTED_EMPLACE, ~)
 
     expected(const expected& rhs) 
     BOOST_NOEXCEPT_IF(
-      has_nothrow_copy_constructor<exceptional_type>::value
+      has_nothrow_copy_constructor<error_type>::value
     )
     : has_value(rhs.has_value)
     {
       if (!has_value)
       {
-        ::new (&error) exceptional_type(rhs.error);
+        ::new (&error_) error_type(rhs.error_);
       }
     }
 
@@ -594,22 +600,22 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_EXPECTED_EMPLACE_MAX_ARGS, EXPECTED_EMPLACE, ~)
     {
       if (!has_value)
       {
-        ::new (&error) exceptional_type(boost::move(rhs.error));
+        ::new (&error_) error_type(boost::move(rhs.error_));
       }
     }
 
-    expected(exceptional_tag, exceptional_type const& e) 
+    expected(exceptional_tag, error_type const& e) 
     BOOST_NOEXCEPT_IF(
-      has_nothrow_copy_constructor<exceptional_type>::value
+      has_nothrow_copy_constructor<error_type>::value
     )
-    : error(e)
+    : error_(e)
     , has_value(false)
     {}
 
     // Requires  typeid(e) == typeid(E)
     template <class E>
     expected(exceptional_tag, E const& e)
-    : error(traits_type::make_exceptional(e))
+    : error_(traits_type::make_exceptional(e))
     , has_value(false)
     {}
 
@@ -618,7 +624,7 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_EXPECTED_EMPLACE_MAX_ARGS, EXPECTED_EMPLACE, ~)
     {}
 
     expected(exceptional_tag)
-    : error(traits_type::catch_exception())
+    : error_(traits_type::catch_exception())
     , has_value(false)
     {}
 
@@ -642,7 +648,7 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_EXPECTED_EMPLACE_MAX_ARGS, EXPECTED_EMPLACE, ~)
       {
         if (!rhs.has_value)
         {
-          new (&error) exceptional_type(boost::move(rhs.error));
+          new (&error_) error_type(boost::move(rhs.error_));
           boost::swap(has_value, rhs.has_value);
         }
       }
@@ -654,7 +660,7 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_EXPECTED_EMPLACE_MAX_ARGS, EXPECTED_EMPLACE, ~)
         }
         else
         {
-          boost::swap(error, rhs.error);
+          boost::swap(error_, rhs.error_);
         }
       }
     }
@@ -674,7 +680,7 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_EXPECTED_EMPLACE_MAX_ARGS, EXPECTED_EMPLACE, ~)
 
     void get() const
     {
-      if (!valid()) traits_type::bad_access(error);
+      if (!valid()) traits_type::bad_access(error_);
     }
 
     template <typename F>
@@ -696,17 +702,17 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_EXPECTED_EMPLACE_MAX_ARGS, EXPECTED_EMPLACE, ~)
           return this_type(exceptional);
         }
       }
-      return this_type(exceptional, error);
+      return this_type(exceptional, error_);
     }
 
     template <typename F>
     typename boost::disable_if<
       boost::is_same<typename result_of<F()>::type, void>,
-      expected<typename result_of<F()>::type, exceptional_type>
+      expected<typename result_of<F()>::type, error_type>
     >::type
     then(BOOST_RV_REF(F) f) const
     {
-      typedef expected<typename result_of<F()>::type, exceptional_type> result_type;
+      typedef expected<typename result_of<F()>::type, error_type> result_type;
       if(valid())
       {
         try
@@ -718,12 +724,12 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_EXPECTED_EMPLACE_MAX_ARGS, EXPECTED_EMPLACE, ~)
           return result_type(exceptional);
         }
       }
-      return result_type(exceptional, error);
+      return result_type(exceptional, error_);
     }
 
     template <typename F>
     typename boost::enable_if<
-      boost::is_same<typename result_of<F(exceptional_type)>::type, value_type>,
+      boost::is_same<typename result_of<F(error_type)>::type, value_type>,
       this_type
     >::type
     recover(BOOST_RV_REF(F) f) const
@@ -732,7 +738,7 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_EXPECTED_EMPLACE_MAX_ARGS, EXPECTED_EMPLACE, ~)
       {
         try
         {
-          f(error);
+          f(error_);
         }
         catch(...)
         {
@@ -744,7 +750,7 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_EXPECTED_EMPLACE_MAX_ARGS, EXPECTED_EMPLACE, ~)
 
     template <typename F>
     typename boost::enable_if<
-      boost::is_same<typename result_of<F(exceptional_type)>::type, this_type>,
+      boost::is_same<typename result_of<F(error_type)>::type, this_type>,
       this_type
     >::type
     recover(BOOST_RV_REF(F) f) const
@@ -753,7 +759,7 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_EXPECTED_EMPLACE_MAX_ARGS, EXPECTED_EMPLACE, ~)
       {
         try
         {
-          return f(error);
+          return f(error_);
         }
         catch(...)
         {
