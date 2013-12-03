@@ -1,6 +1,7 @@
 //! \file test_expected.cpp
 
 // Copyright Pierre Talbot 2013.
+// Copyright Vicente J. Botet Escriba 2013.
 
 // Use, modification and distribution are subject to the
 // Boost Software License, Version 1.0.
@@ -15,6 +16,7 @@
 #define BOOST_TEST_MODULE "Expected Test Suite"
 #define BOOST_LIB_DIAGNOSTIC "on"// Show library file details.
 // Linking to lib file: libboost_unit_test_framework-vc100-mt-gd-1_47.lib (trunk at 12 Jun 11)
+#define BOOST_RESULT_OF_USE_DECLTYPE
 
 #include <boost/test/unit_test.hpp> // Enhanced for unit_test framework autolink
 #include <boost/test/included/unit_test.hpp>
@@ -71,6 +73,13 @@ class test_exception : public std::exception
 {
 };
 
+int throwing_fun(){ throw test_exception(); }
+int nothrowing_fun(){ return 4; }
+
+void void_throwing_fun(){ throw test_exception(); }
+void do_nothing_fun(){}
+
+
 BOOST_AUTO_TEST_SUITE(except_default_constructor)
 
 BOOST_AUTO_TEST_CASE(except_default_constructor)
@@ -80,7 +89,7 @@ BOOST_AUTO_TEST_CASE(except_default_constructor)
   BOOST_REQUIRE_NO_THROW(e.value());
   BOOST_CHECK(e.valid());
   BOOST_CHECK(! ! e);
-  BOOST_CHECK(bool(e));
+  BOOST_CHECK(static_cast<bool>(e));
 }
 
 BOOST_AUTO_TEST_CASE(except_default_constructor_constexpr)
@@ -192,7 +201,7 @@ BOOST_AUTO_TEST_CASE(expected_from_in_place)
 BOOST_AUTO_TEST_CASE(expected_from_exception_ptr)
 {
   // From exception_ptr constructor.
-  expected<int> e(exceptional, boost::copy_exception(test_exception()));
+  expected<int> e(exceptional, std::make_exception_ptr(test_exception()));
   BOOST_REQUIRE_THROW(e.value(), test_exception);
   BOOST_CHECK_EQUAL(e.valid(), false);
   BOOST_CHECK_EQUAL(static_cast<bool>(e), false);
@@ -265,6 +274,13 @@ BOOST_AUTO_TEST_CASE(except_valid_constexpr)
   BOOST_CONSTEXPR bool b = e.valid();
   BOOST_CHECK(b);
 }
+BOOST_AUTO_TEST_CASE(except_value_constexpr)
+{
+  // From value constructor.
+  BOOST_CONSTEXPR expected<int,int> e(1);
+  BOOST_CONSTEXPR int x = e.value();
+  BOOST_CHECK_EQUAL(x, 1);
+}
 
 BOOST_AUTO_TEST_SUITE_END()
 BOOST_AUTO_TEST_SUITE(except_expected_assignment)
@@ -317,7 +333,7 @@ BOOST_AUTO_TEST_CASE(expected_from_moved_expected)
   BOOST_CHECK(static_cast<bool>(e2));
 }
 
-BOOST_AUTO_TEST_CASE(expected_from_im_place)
+BOOST_AUTO_TEST_CASE(expected_from_in_place)
 {
   // From in_place2 constructor.
   expected<std::string> e(in_place2, "in_place2");
@@ -364,7 +380,7 @@ BOOST_AUTO_TEST_CASE(expected_from_in_place)
 BOOST_AUTO_TEST_CASE(expected_from_in_place_error)
 {
   // From in_place2 factory.
-  auto e = make_expected<std::string, std::error_condition>("in_place2");
+  auto e = expected<std::string, std::error_condition>("in_place2");
   BOOST_REQUIRE_NO_THROW(e.value());
   BOOST_CHECK_EQUAL(e.value(), "in_place2");
   BOOST_CHECK_EQUAL(*e, "in_place2");
@@ -429,12 +445,63 @@ BOOST_AUTO_TEST_CASE(expected_from_exception)
 BOOST_AUTO_TEST_CASE(expected_from_exception_ptr)
 {
   // From exception_ptr constructor.
-  auto e = make_expected_from_error<int>(boost::copy_exception(test_exception()));
+  auto e = make_expected_from_error<int>(std::make_exception_ptr(test_exception()));
   BOOST_CHECK_THROW(e.value(), test_exception);
   BOOST_CHECK_EQUAL(e.valid(), false);
   BOOST_CHECK_EQUAL(static_cast<bool>(e), false);
 }
 
+BOOST_AUTO_TEST_CASE(make_expected_from_call_fun)
+{
+  BOOST_CHECK_NO_THROW(make_expected_from_call(throwing_fun));
+  expected<int> e = make_expected_from_call(throwing_fun);
+  BOOST_CHECK_THROW(e.value(), std::exception);
+  BOOST_CHECK_EQUAL(e.valid(), false);
+  BOOST_CHECK_EQUAL(static_cast<bool>(e), false);
+
+  e = make_expected_from_call(nothrowing_fun);
+  BOOST_CHECK_NO_THROW(e.value());
+  BOOST_CHECK_EQUAL(e.value(), 4);
+  BOOST_CHECK_EQUAL(*e, 4);
+  BOOST_CHECK_EQUAL(e.valid(), true);
+  BOOST_CHECK_EQUAL(static_cast<bool>(e), true);
+
+#if 0
+  BOOST_CHECK_THROW(make_expected_from_call<std::error_condition>(throwing_fun), test_exception);
+
+  BOOST_CHECK_NO_THROW(make_expected_from_call<std::error_condition>(nothrowing_fun));
+  expected<int, std::error_condition> e2 = make_expected_from_call<std::error_condition>(nothrowing_fun);
+  BOOST_CHECK_NO_THROW(e2.value());
+  BOOST_CHECK_EQUAL(e2.value(), 4);
+  BOOST_CHECK_EQUAL(*e2, 4);
+  BOOST_CHECK_EQUAL(e2.valid(), true);
+  BOOST_CHECK_EQUAL(static_cast<bool>(e2), true);
+#endif
+}
+
+BOOST_AUTO_TEST_CASE(make_expected_from_call_void_fun)
+{
+#if 0
+  BOOST_CHECK_NO_THROW(make_expected_from_call(void_throwing_fun));
+  expected<void> e = make_expected_from_call(void_throwing_fun);
+  BOOST_CHECK_THROW(e.value(), std::exception);
+  BOOST_CHECK_EQUAL(e.valid(), false);
+  BOOST_CHECK_EQUAL(static_cast<bool>(e), false);
+
+  e = make_expected_from_call(do_nothing_fun);
+  BOOST_CHECK_NO_THROW(e.value());
+  BOOST_CHECK_EQUAL(e.valid(), true);
+  BOOST_CHECK_EQUAL(static_cast<bool>(e), true);
+
+  BOOST_CHECK_THROW(make_expected_from_call<std::error_condition>(void_throwing_fun), test_exception);
+
+  BOOST_CHECK_NO_THROW(make_expected_from_call<std::error_condition>(do_nothing_fun));
+  expected<void, std::error_condition> e2 = make_expected_from_call<std::error_condition>(do_nothing_fun);
+  BOOST_CHECK_NO_THROW(e2.value());
+  BOOST_CHECK_EQUAL(e2.valid(), true);
+  BOOST_CHECK_EQUAL(static_cast<bool>(e2), true);
+#endif
+}
 BOOST_AUTO_TEST_SUITE_END()
 
 BOOST_AUTO_TEST_SUITE(error_expected_modifier)
@@ -494,5 +561,169 @@ BOOST_AUTO_TEST_CASE(expected_swap_function_value)
 }
 
 BOOST_AUTO_TEST_SUITE_END()
+////////////////////////////////////
+BOOST_AUTO_TEST_SUITE(expected_next)
 
+BOOST_AUTO_TEST_CASE(expected_next)
+{
+  auto fun = [](bool b)
+  {
+    if(b)
+      return expected<int>(5);
+    else
+      return make_expected_from_error<int>(std::make_exception_ptr(test_exception()));
+  };
 
+  auto add_five = [](int sum) -> int
+  {
+    return sum + 5;
+  };
+
+  auto launch_except = [](int sum) -> int
+  {
+    throw test_exception();
+  };
+
+  expected<int> e = fun(true).next(add_five);
+  BOOST_CHECK_NO_THROW(e.value());
+  BOOST_CHECK_EQUAL(*e, 10);
+
+  e = fun(true).next(add_five).next(add_five);
+  BOOST_CHECK_NO_THROW(e.value());
+  BOOST_CHECK_EQUAL(*e, 15);
+
+  e = fun(false).next(add_five).next(add_five);
+  BOOST_CHECK_THROW(e.value(), test_exception);
+
+  BOOST_CHECK_THROW(fun(true).next(launch_except), test_exception);
+
+}
+
+BOOST_AUTO_TEST_CASE(expected_void_next)
+{
+  auto fun = [](bool b)
+  {
+    if(b)
+      return expected<void>();
+    else
+      return make_expected_from_error<void>(std::make_exception_ptr(test_exception()));
+  };
+
+  auto launch_except = []()
+  {
+    throw test_exception();
+  };
+
+  auto do_nothing = [](){};
+
+  expected<void> e = fun(true).next(do_nothing);
+  BOOST_CHECK_NO_THROW(e.value());
+
+  e = fun(false).next(do_nothing);
+  BOOST_CHECK_THROW(e.value(), test_exception);
+
+  BOOST_CHECK_THROW(fun(true).next(launch_except), test_exception);
+
+}
+
+BOOST_AUTO_TEST_SUITE_END()
+
+BOOST_AUTO_TEST_SUITE(expected_recover)
+
+BOOST_AUTO_TEST_CASE(expected_recover)
+{
+  auto fun = [](bool b)
+  {
+    if(b)
+      return expected<int>(5);
+    else
+      return make_expected_from_error<int>(std::make_exception_ptr(test_exception()));
+  };
+
+  auto add_five = [](int sum) -> int
+  {
+    return sum + 5;
+  };
+
+  auto recover_error = [](std::exception_ptr p)
+  {
+    return make_expected(0);
+  };
+
+  auto recover_error_silent_failure = [](std::exception_ptr p)
+  {
+    return make_expected_from_error<int>(p);
+  };
+
+  auto recover_error_failure = [](std::exception_ptr p) -> expected<int>
+  {
+    return make_expected_from_error<int>(test_exception());
+  };
+
+  auto recover_error_throws = [](std::exception_ptr p) -> expected<int>
+  {
+    throw test_exception();
+  };
+
+  BOOST_CHECK_EQUAL(fun(false).recover(recover_error).valid(), true);
+  BOOST_CHECK_EQUAL(fun(false).recover(recover_error).value(), 0);
+  BOOST_CHECK_EQUAL(fun(true).recover(recover_error).value(), 5);
+  BOOST_CHECK_EQUAL(fun(false).recover(recover_error_silent_failure).valid(), false);
+  BOOST_CHECK_EQUAL(fun(false).recover(recover_error_failure).valid(), false);
+
+  BOOST_CHECK_EQUAL(fun(true).next(add_five).value(), 10);
+  BOOST_CHECK_EQUAL(fun(true).next(add_five).recover(recover_error).value(), 10);
+  BOOST_CHECK_EQUAL(fun(true).next(add_five).recover(recover_error_silent_failure).value(), 10);
+  BOOST_CHECK_EQUAL(fun(true).next(add_five).recover(recover_error_failure).value(), 10);
+
+  BOOST_CHECK_EQUAL(fun(false).recover(recover_error).next(add_five).value(), 5);
+  BOOST_CHECK_EQUAL(fun(false).recover(recover_error).next(add_five).next(add_five).value(), 10);
+  BOOST_CHECK_EQUAL(fun(false).recover(recover_error_failure).next(add_five).valid(), false);
+  BOOST_CHECK_EQUAL(fun(false).next(add_five).recover(recover_error_failure).next(add_five).valid(), false);
+  BOOST_CHECK_EQUAL(fun(false).next(add_five).recover(recover_error_silent_failure).next(add_five).valid(), false);
+
+  BOOST_CHECK_THROW(fun(false).recover(recover_error_throws), test_exception);
+
+}
+
+BOOST_AUTO_TEST_CASE(expected_void_recover)
+{
+  auto fun = [](bool b)
+  {
+    if(b)
+      return expected<void>();
+    else
+      return make_expected_from_error<void>(std::make_exception_ptr(test_exception()));
+  };
+
+  auto do_nothing = [](){};
+
+  auto recover_error = [](std::exception_ptr p)
+  {
+    return expected<void>();
+  };
+
+  auto recover_error_silent_failure = [](std::exception_ptr p)
+  {
+    return make_expected_from_error<void>(p);
+  };
+
+  auto recover_error_failure = [](std::exception_ptr p) -> expected<void>
+  {
+    throw test_exception();
+  };
+
+  // The recover doesn't alter the expected if it's valid.
+  BOOST_CHECK_EQUAL(fun(true).recover(recover_error_failure).valid(), true);
+
+  // Simple recover tests.
+  BOOST_CHECK_EQUAL(fun(false).recover(recover_error).valid(), true);
+  BOOST_CHECK_THROW(fun(false).recover(recover_error_failure), test_exception);
+  BOOST_CHECK_EQUAL(fun(false).recover(recover_error_silent_failure).valid(), false);
+
+  // With a then between.
+  BOOST_CHECK_THROW(fun(false).next(do_nothing).recover(recover_error_failure), test_exception);
+
+}
+
+BOOST_AUTO_TEST_SUITE_END()
