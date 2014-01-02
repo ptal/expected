@@ -1,0 +1,71 @@
+# check/libs/checks/test/jamfile.v2
+
+#  Tests using Unit Test Library
+
+# Copyright Pierre Talbot 2013.
+
+# From Copyright 2005: Eric Niebler
+# Distributed under the Boost Software License, Version 1.0.
+# (See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+
+import testing ;  # Bring in rules for testing
+import feature ;
+
+feature.feature iterator_debugging
+  : on off
+  : composite propagated optional
+  ;
+
+feature.compose <iterator_debugging>off
+  : <define>_HAS_ITERATOR_DEBUGGING=0
+  ;
+  
+if ! $(BOOST_ROOT)
+{
+    BOOST_ROOT = [ modules.peek : BOOST_ROOT ] ;
+}
+
+
+# Create an alias for the boost unit test framework. You don't need this
+# if you're using minimal or lightweight test.
+use-project /boost/test : $(BOOST_ROOT)/libs/test/build ;
+alias boost_unit_test : /boost/test//boost_unit_test_framework/<link>static ;
+#  alias boost_unit_test : /boost/test//boost_unit_test_framework/<link>shared ;
+	
+project expected
+    : requirements
+      <include>$(BOOST_ROOT)
+      <include>. # .cpp files in expected/test.
+      <include>../../.. # expected .hpp files.
+      <library>$(BOOST_ROOT/boost/test//boost_unit_test_framework
+      
+      <link>static
+      <toolset>gcc:<cxxflags>-std=c++11
+      <toolset>msvc:<asynch-exceptions>on # Needed for Boost.Test
+      <toolset>msvc:<warnings>all
+      <toolset>msvc:<define>_SCL_SECURE_NO_WARNINGS
+      <toolset>msvc:<define>_SCL_SECURE_NO_DEPRECATE
+      <toolset>msvc:<define>_CRT_SECURE_NO_DEPRECATE
+      <toolset>msvc:<define>_CRT_SECURE_NO_WARNINGS
+
+      # Warning suppression:
+      #<toolset>msvc:<cxxflags>/wd4996 # 'putenv': The POSIX name for this item is deprecated.
+      #<toolset>msvc:<cxxflags>/wd4512 # assignment operator could not be generated.
+      #<toolset>msvc:<cxxflags>/wd4610 #  object 'class' can never be instantiated - user-defined constructor required.
+      #<toolset>msvc:<cxxflags>/wd4510 # The compiler cannot generate a default constructor for the specified class and no user-defined constructor #was created. You will not be able to create objects of this type.
+      #<toolset>msvc:<cxxflags>/wd4224 # nonstandard extension used : formal parameter 'arg' was previously defined as a type.
+      #<toolset>msvc:<cxxflags>/wd4127 # expression is constant.
+      #<toolset>msvc:<cxxflags>/wd4701 # needed for lexical cast - temporary.
+      <toolset>msvc:<cxxflags>/wd4100 # unreferenced formal parameter.
+
+      <toolset>msvc:<iterator_debugging>off
+      <toolset>intel-win:<iterator_debugging>off
+    ;
+
+test-suite "Expected"
+    : 
+      #[ run test_expected.cpp  boost_unit_test ]
+      [ run safe_divide.cpp ]
+      #[ run num_get.cpp ]
+      #[ run num_get_2.cpp ]
+    ;

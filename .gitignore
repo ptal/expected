@@ -8,3 +8,7 @@ libs/expected/test/bin/*
 libs/expected/.DS_Store
 
 libs/expected/test/getInt.cpp
+
+.project
+
+libs/expected/test/cpp11/bin/*
