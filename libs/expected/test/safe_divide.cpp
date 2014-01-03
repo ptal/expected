@@ -45,7 +45,7 @@ boost::expected<int> safe_divide(int i, int j)
 }
 
 #ifdef expect
-boost::expected<int> ex_safe3_f(int i, int j, int k) ensured
+boost::expected<int> ex_safe3_f(int i, int j, int k)
 {
   return expect safe_divide(i,k) + expect safe_divide(j,k);
 }
@@ -97,7 +97,7 @@ boost::expected<int> msafe_f(int i, int j, int k)
 boost::expected<int> safe2_f(int i, int j, int k)
 {
   auto q1 = safe_divide(i, k);
-return q1.then([j,k](int q1)
+  return q1.then([j,k](int q1)
     {
       auto q2 = safe_divide(j,k);
       return q2.then([q1](int q2)
