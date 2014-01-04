@@ -11,14 +11,14 @@
 import testing ;  # Bring in rules for testing
 import feature ;
 
-feature.feature iterator_debugging
-  : on off
-  : composite propagated optional
-  ;
+#feature.feature iterator_debugging
+#  : on off
+#  : composite propagated optional
+#  ;
 
-feature.compose <iterator_debugging>off
-  : <define>_HAS_ITERATOR_DEBUGGING=0
-  ;
+#feature.compose <iterator_debugging>off
+#  : <define>_HAS_ITERATOR_DEBUGGING=0
+#  ;
   
 if ! $(BOOST_ROOT)
 {
@@ -32,7 +32,7 @@ use-project /boost/test : $(BOOST_ROOT)/libs/test/build ;
 alias boost_unit_test : /boost/test//boost_unit_test_framework/<link>static ;
 #  alias boost_unit_test : /boost/test//boost_unit_test_framework/<link>shared ;
 	
-project expected
+project expected_cpp11
     : requirements
       <include>$(BOOST_ROOT)
       <include>. # .cpp files in expected/test.
@@ -65,6 +65,4 @@ project expected
 test-suite "Expected"
     : 
       [ run test_expected.cpp  boost_unit_test ]
-#      [ run num_get.cpp ]
-#      [ run num_get_2.cpp ]
     ;

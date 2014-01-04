@@ -211,7 +211,7 @@ BOOST_AUTO_TEST_CASE(expected_from_error)
   // From exceptional constructor.
   expected<int, ERROR_CONDITION_NS::error_condition> e(exceptional, ERROR_CONDITION_NS::make_error_condition(ERROR_CONDITION_NS::errc::invalid_argument));
   auto error_from_except_check = [](const bad_expected_access<ERROR_CONDITION_NS::error_condition>& except)
-  { 
+  {
     return ERROR_CONDITION_NS::errc(except.error().value()) == ERROR_CONDITION_NS::errc::invalid_argument;
   };
   BOOST_REQUIRE_EXCEPTION(e.value(), bad_expected_access<ERROR_CONDITION_NS::error_condition>, error_from_except_check);
@@ -335,8 +335,8 @@ BOOST_AUTO_TEST_CASE(expected_from_emplace)
 BOOST_AUTO_TEST_CASE(expected_from_emplace_error)
 {
   // From emplace factory.
-  boost::expected<std::string, ERROR_CONDITION_NS::error_condition> e = 
-    make_expected<std::string, ERROR_CONDITION_NS::error_condition>("emplace");
+  boost::expected<std::string, ERROR_CONDITION_NS::error_condition> e =
+    expected<std::string, ERROR_CONDITION_NS::error_condition>("emplace");
   BOOST_REQUIRE_NO_THROW(e.value());
   BOOST_CHECK_EQUAL(e.value(), "emplace");
   BOOST_CHECK_EQUAL(*e, "emplace");
@@ -368,7 +368,7 @@ BOOST_AUTO_TEST_CASE(expected_from_exception_catch)
 
 #ifdef EXPECTED_CPP11_TESTS
 BOOST_AUTO_TEST_CASE(expected_from_error_catch_exception)
-{ 
+{
   // From catch block
   try
   {
@@ -501,8 +501,8 @@ BOOST_AUTO_TEST_SUITE(expected_then)
 BOOST_AUTO_TEST_CASE(expected_then)
 {
   auto fun = [](bool b)
-  { 
-    if(b) 
+  {
+    if(b)
       return expected<int>(5);
     else
       return make_expected_from_error<int>(test_exception());
@@ -528,8 +528,8 @@ BOOST_AUTO_TEST_CASE(expected_then)
 BOOST_AUTO_TEST_CASE(expected_void_then)
 {
   auto fun = [](bool b)
-  { 
-    if(b) 
+  {
+    if(b)
       return expected<void>();
     else
       return make_expected_from_error<void>(test_exception());
@@ -548,8 +548,10 @@ BOOST_AUTO_TEST_CASE(expected_void_then)
   e = fun(false).then(do_nothing);
   BOOST_CHECK_THROW(e.value(), test_exception);
 
-  e = fun(true).then(launch_except);
-  BOOST_CHECK_THROW(e.value(), std::exception);
+  BOOST_CHECK_THROW(fun(true).then(launch_except), test_exception);
+
+  //e = fun(true).then(launch_except);
+  //BOOST_CHECK_THROW(e.value(), std::exception);
 }
 #endif
 
@@ -561,13 +563,13 @@ BOOST_AUTO_TEST_SUITE(expected_recover)
 BOOST_AUTO_TEST_CASE(expected_recover)
 {
   auto fun = [](bool b)
-  { 
-    if(b) 
+  {
+    if(b)
       return expected<int>(5);
     else
       return make_expected_from_error<int>(test_exception());
   };
-  
+
   auto then_launch = [](int) -> int
   {
     throw test_exception();
@@ -596,7 +598,7 @@ BOOST_AUTO_TEST_CASE(expected_recover)
   BOOST_CHECK_EQUAL(fun(false).recover(recover_error).value(), 0);
   BOOST_CHECK_EQUAL(fun(true).recover(recover_error).value(), 5);
   BOOST_CHECK_EQUAL(fun(false).recover(recover_error_silent_failure).valid(), false);
-  BOOST_CHECK_EQUAL(fun(false).recover(recover_error_failure).valid(), false);
+  BOOST_CHECK_THROW(fun(false).recover(recover_error_failure).valid(), test_exception);
 
   BOOST_CHECK_EQUAL(fun(true).then(add_five).recover(recover_error).value(), 10);
   BOOST_CHECK_EQUAL(fun(true).then(add_five).recover(recover_error_silent_failure).value(), 10);
@@ -604,20 +606,20 @@ BOOST_AUTO_TEST_CASE(expected_recover)
 
   BOOST_CHECK_EQUAL(fun(false).recover(recover_error).then(add_five).value(), 5);
   BOOST_CHECK_EQUAL(fun(false).recover(recover_error).then(add_five).then(add_five).value(), 10);
-  BOOST_CHECK_EQUAL(fun(false).recover(recover_error_failure).then(add_five).valid(), false);
-  BOOST_CHECK_EQUAL(fun(false).then(add_five).recover(recover_error_failure).then(add_five).valid(), false);
+  BOOST_CHECK_THROW(fun(false).recover(recover_error_failure).then(add_five).valid(), test_exception);
+  BOOST_CHECK_THROW(fun(false).then(add_five).recover(recover_error_failure).then(add_five).valid(), test_exception);
   BOOST_CHECK_EQUAL(fun(false).then(add_five).recover(recover_error_silent_failure).then(add_five).valid(), false);
 
-  BOOST_CHECK_EQUAL(fun(true).then(then_launch).recover(recover_error).value(), 0);
-  BOOST_CHECK_EQUAL(fun(true).then(then_launch).recover(recover_error).then(add_five).value(), 5);
-  BOOST_CHECK_EQUAL(fun(true).then(then_launch).recover(recover_error_failure).valid(), false);
+  BOOST_CHECK_THROW(fun(true).then(then_launch).recover(recover_error).value(), test_exception);
+  BOOST_CHECK_THROW(fun(true).then(then_launch).recover(recover_error).then(add_five).value(), test_exception);
+  BOOST_CHECK_THROW(fun(true).then(then_launch).recover(recover_error_failure).valid(), test_exception);
 }
 
 BOOST_AUTO_TEST_CASE(expected_void_recover)
 {
   auto fun = [](bool b)
-  { 
-    if(b) 
+  {
+    if(b)
       return expected<void>();
     else
       return make_expected_from_error<void>(test_exception());
@@ -650,11 +652,11 @@ BOOST_AUTO_TEST_CASE(expected_void_recover)
 
   // Simple recover tests.
   BOOST_CHECK_EQUAL(fun(false).recover(recover_error).valid(), true);
-  BOOST_CHECK_EQUAL(fun(false).recover(recover_error_failure).valid(), false);
+  BOOST_CHECK_THROW(fun(false).recover(recover_error_failure).valid(), test_exception);
   BOOST_CHECK_EQUAL(fun(false).recover(recover_error_silent_failure).valid(), false);
 
   // With a then between.
-  BOOST_CHECK_EQUAL(fun(false).then(do_nothing).recover(recover_error_failure).valid(), false);
+  BOOST_CHECK_THROW(fun(false).then(do_nothing).recover(recover_error_failure).valid(), test_exception);
 
   BOOST_CHECK_NO_THROW(fun(false).then(then_launch).recover(recover_error).value());
 }
