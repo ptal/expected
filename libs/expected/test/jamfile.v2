@@ -64,8 +64,8 @@ project expected
 
 test-suite "Expected"
     : 
-      #[ run test_expected.cpp  boost_unit_test ]
+      [ run test_expected.cpp  boost_unit_test ]
       [ run safe_divide.cpp ]
-      #[ run num_get.cpp ]
-      #[ run num_get_2.cpp ]
+      [ run num_get.cpp ]
+      [ run num_get_2.cpp ]
     ;

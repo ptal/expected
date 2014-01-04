@@ -478,7 +478,7 @@ template <typename ErrorType=std::exception_ptr>
 struct exceptionals {
   ErrorType error_;
 
-  exceptionals(ErrorType e):error_(e) {};
+  explicit exceptionals(ErrorType e):error_(e) {};
 };
 
 template <class E>
@@ -490,8 +490,8 @@ exceptionals<E> make_error(E ex)
 template <>
 struct exceptionals<std::exception_ptr> {
   std::exception_ptr error_;
-  exceptionals(std::exception_ptr e) : error_(e) {}
-  template <class E> exceptionals(E e) : error_(std::make_exception_ptr(e)) {}
+  explicit exceptionals(std::exception_ptr e) : error_(e) {}
+  template <class E> explicit exceptionals(E e) : error_(std::make_exception_ptr(e)) {}
 };
 
 template <class E>
@@ -827,7 +827,7 @@ public:
   }
   BOOST_CONSTEXPR exceptionals<error_type> get_exceptional() const BOOST_NOEXCEPT
   {
-    return contained_err();
+    return exceptionals<error_type>(contained_err());
   }
 
 
@@ -893,17 +893,17 @@ public:
     typedef expected<void, error_type> result_type;
     if(valid())
     {
-      try
-      {
+      //try
+      //{
         f(value());
         return result_type();
-      }
-      catch(...)
-      {
-        return result_type(exceptional);
-      }
+        //}
+        //catch(...)
+        //{
+        //return result_type(exceptional);
+        //}
     }
-    return result_type(exceptional, error());
+    return result_type(get_exceptional());
   }
 
   template <typename F>
@@ -916,16 +916,16 @@ public:
     typedef expected<typename result_of<F(value_type)>::type, error_type> result_type;
     if(valid())
     {
-      try
-      {
+      //try
+      //{
         return result_type(f(value()));
-      }
-      catch(...)
-      {
-        return result_type(exceptional);
-      }
+        //}
+        //catch(...)
+        //{
+        //return result_type(exceptional);
+        //}
     }
-    return *this;
+    return result_type(get_exceptional());
   }
 
   template <typename F>
@@ -1187,28 +1187,29 @@ public:
   }
   BOOST_CONSTEXPR exceptionals<error_type> get_exceptional() const BOOST_NOEXCEPT
   {
-    return contained_err();
+    return exceptionals<error_type>(contained_err());
   }
 
   // Utilities
 
   template <typename F>
-  this_type then(BOOST_RV_REF(F) f,
+  expected<void, error_type> then(BOOST_RV_REF(F) f,
     REQUIRES(boost::is_same<typename result_of<F()>::type, void>::value)) const
   {
+    typedef expected<void, error_type> result_type;
     if(valid())
     {
-      try
-      {
+      //try
+      //{
         f();
-        return this_type();
-      }
-      catch(...)
-      {
-        return this_type(exceptional);
-      }
+        return result_type();
+        //}
+        //catch(...)
+        //{
+        //return this_type(exceptional);
+        //}
     }
-    return this_type(exceptional, contained_err());
+    return result_type(get_exceptional());
   }
 
   template <typename F>
@@ -1219,16 +1220,16 @@ public:
     typedef expected<typename result_of<F()>::type, error_type> result_type;
     if(valid())
     {
-      try
-      {
+      //try
+      //{
         return result_type(f());
-      }
-      catch(...)
-      {
-        return result_type(exceptional);
-      }
+        //}
+        //catch(...)
+        //{
+        //return result_type(exceptional);
+        //}
     }
-    return result_type(exceptional, contained_err());
+    return result_type(get_exceptional());
   }
 
   template <typename F>
@@ -1237,34 +1238,35 @@ public:
   {
     if(!valid())
     {
-      try
-      {
-        f(contained_err());
-      }
-      catch(...)
-      {
-        return this_type(exceptional);
-      }
+      //try
+      //{
+        return this_type(f(contained_err()));
+        //}
+        //catch(...)
+        //{
+        //return this_type(exceptional);
+        //}
     }
-    return this_type();
+    return *this;
   }
 
   template <typename F>
   this_type recover(BOOST_RV_REF(F) f,
-    REQUIRES(boost::is_same<typename result_of<F(error_type)>::type, this_type>::value)) const
+      REQUIRES(! boost::is_same<typename result_of<F(error_type)>::type, value_type>::value)) const
   {
+    //typedef typename result_of<F(error_type)>::type result_type;
     if(!valid())
     {
-      try
-      {
-        return f(contained_err());
-      }
-      catch(...)
-      {
-        return this_type(exceptional);
-      }
+      //try
+      //{
+      return f(contained_err());
+      //}
+      //catch(...)
+      //{
+      //return this_type(exceptional);
+      //}
     }
-    return this_type();
+    return *this;
   }
 };
 
@@ -1339,8 +1341,13 @@ void swap(expected<T>& x, expected<T>& y) BOOST_NOEXCEPT_IF(BOOST_NOEXCEPT_EXPR(
 }
 
 // Factories
+template<typename T>
+expected<T> make_expected(T&& v )
+{
+  return expected<T>(v);
+}
 
-#if ! defined BOOST_NO_CXX11_VARIADIC_TEMPLATES && ! defined BOOST_NO_CXX11_RVALUE_REFERENCES
+#if 0 && ! defined BOOST_NO_CXX11_VARIADIC_TEMPLATES && ! defined BOOST_NO_CXX11_RVALUE_REFERENCES
   template<typename T, typename E, typename... Args>
   expected<T,E> make_expected(BOOST_FWD_REF(Args)... args)
   {
