@@ -76,6 +76,9 @@ struct monad_traits<expected<T, E> >
   static error_type error(monad_type m) {
     return m.error();
   }
+  static exceptionals<error_type> get_exceptional(monad_type m) {
+    return m.get_exceptional();
+  }
 
   template <class F>
   struct result_type {
@@ -102,7 +105,7 @@ pair_expected<I,T,E> make_pair_expected(I i, T v) {
 
 template <class T, class I, typename E  >
 pair_expected<I,T,E> make_pair_expected_from_error(I i, E e) {
-  return std::make_pair(i, boost::expected<T,E>(boost::exceptional, e));
+  return std::make_pair(i, boost::expected<T,E>(boost::make_error(e)));
 }
 
 
@@ -128,6 +131,9 @@ struct monad_traits<pair_expected<I,T,E> >
   static error_type error(monad_type m) {
     return m.second.error();
   }
+  static exceptionals<error_type> get_exceptional(monad_type m) {
+    return m.second.get_exceptional();
+  }
 
   template <class F>
   struct result_type {
@@ -142,7 +148,7 @@ struct monad_traits<pair_expected<I,T,E> >
     if (valid(m)) {
       return f(get(m));
     }
-    return make_pair(m.first, expected_type(exceptional, error(m)));
+    return make_pair(m.first, expected_type(get_exceptional(m)));
   }
 
 };
@@ -183,6 +189,9 @@ struct monad_wrapper<pair_expected<I,T,E> >
   error_type error() const {
     return m.second.error();
   }
+  exceptionals<error_type> get_exceptional() const {
+    return m.second.get_exceptional();
+  }
 
   template <class F>
   struct result_type {
@@ -197,7 +206,7 @@ struct monad_wrapper<pair_expected<I,T,E> >
     if (valid()) {
       return f(value());
     }
-    return make_pair(m.first, expected_type(exceptional, error()));
+    return make_pair(m.first, expected_type(get_exceptional()));
   }
 
 //  template <class F>

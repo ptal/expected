@@ -60,6 +60,7 @@ public:
     using namespace boost;
     using namespace std;
     typedef typename get_result_type<Num>::type result_type;
+    typedef std::pair<iter_type, std::ios_base::iostate> exceptional_type;
 
     ios_base::iostate err = std::ios_base::goodbit;
     Num v;
@@ -67,7 +68,7 @@ public:
 
     InputIterator it = std::use_facet<std::num_get<char_type, iter_type> >(ios.getloc()).get(s, e, ios, err, v);
     if (err & (std::ios_base::badbit | std::ios_base::failbit))
-      return result_type(boost::exceptional, make_pair(it, err));
+      return boost::make_error(make_pair(it, err));
     return result_type(make_pair(it, v));
   }
 
@@ -141,11 +142,11 @@ public:
     typedef typename get_result_type<Num>::type result_type;
 
     auto  f = std::use_facet< ::NumGet<char_type, iter_type> >(ios.getloc()).template get<Num>(s, e, ios);
-    if (! f) return result_type(boost::exceptional, f.error());
+    if (! f) return f.get_exceptional();
     auto  m = matchedString("..", f->first, e);
-    if (! m) return result_type(boost::exceptional, m.error());
+    if (! m) return m.get_exceptional();
     auto l = std::use_facet< ::NumGet<char_type, iter_type> >(ios.getloc()).template get<Num>(*m, e, ios);
-    if (! l) return result_type(boost::exceptional, l.error());
+    if (! l) return l.get_exceptional();
 
     return result_type(make_pair(l->first, make_pair(f->second, l->second)));
   }
