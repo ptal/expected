@@ -254,7 +254,7 @@ BOOST_AUTO_TEST_CASE(expected_from_value)
 BOOST_AUTO_TEST_CASE(expected_from_error)
 {
   // From exceptional constructor.
-  expected<int, std::error_condition> e(exceptionals<std::error_condition>(std::make_error_condition(std::errc::invalid_argument)));
+  expected<int, std::error_condition> e(exceptional<std::error_condition>(std::make_error_condition(std::errc::invalid_argument)));
   auto error_from_except_check = [](const bad_expected_access<std::error_condition>& except)
   {
     return std::errc(except.error().value()) == std::errc::invalid_argument;

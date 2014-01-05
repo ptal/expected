@@ -76,7 +76,7 @@ struct monad_traits<expected<T, E> >
   static error_type error(monad_type m) {
     return m.error();
   }
-  static exceptionals<error_type> get_exceptional(monad_type m) {
+  static exceptional<error_type> get_exceptional(monad_type m) {
     return m.get_exceptional();
   }
 
@@ -131,7 +131,7 @@ struct monad_traits<pair_expected<I,T,E> >
   static error_type error(monad_type m) {
     return m.second.error();
   }
-  static exceptionals<error_type> get_exceptional(monad_type m) {
+  static exceptional<error_type> get_exceptional(monad_type m) {
     return m.second.get_exceptional();
   }
 
@@ -189,7 +189,7 @@ struct monad_wrapper<pair_expected<I,T,E> >
   error_type error() const {
     return m.second.error();
   }
-  exceptionals<error_type> get_exceptional() const {
+  exceptional<error_type> get_exceptional() const {
     return m.second.get_exceptional();
   }
 

@@ -209,7 +209,7 @@ BOOST_AUTO_TEST_CASE(expected_from_value)
 BOOST_AUTO_TEST_CASE(expected_from_error)
 {
   // From exceptional constructor.
-  expected<int, ERROR_CONDITION_NS::error_condition> e(exceptionals<ERROR_CONDITION_NS::error_condition>(ERROR_CONDITION_NS::make_error_condition(ERROR_CONDITION_NS::errc::invalid_argument)));
+  expected<int, ERROR_CONDITION_NS::error_condition> e(exceptional<ERROR_CONDITION_NS::error_condition>(ERROR_CONDITION_NS::make_error_condition(ERROR_CONDITION_NS::errc::invalid_argument)));
   auto error_from_except_check = [](const bad_expected_access<ERROR_CONDITION_NS::error_condition>& except)
   {
     return ERROR_CONDITION_NS::errc(except.error().value()) == ERROR_CONDITION_NS::errc::invalid_argument;
