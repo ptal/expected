@@ -219,7 +219,7 @@ struct exceptional<std::exception_ptr> {
 };
 
 template <class E>
-exceptional<std::exception_ptr> make_exceptional(E&& ex) {
+exceptional<std::exception_ptr> make_exceptional(BOOST_FWD_REF(E) ex) {
   return exceptional<std::exception_ptr>(std::forward<E>(ex));
 }
 
@@ -284,7 +284,7 @@ union trivial_expected_storage
   {}
 
   template <class... Args>
-  BOOST_CONSTEXPR trivial_expected_storage(Args&&... args)
+  BOOST_CONSTEXPR trivial_expected_storage(BOOST_FWD_REF(Args)... args)
   : val(constexpr_forward<Args>(args)...)
   {}
 
@@ -328,7 +328,7 @@ union no_trivial_expected_storage
   {}
 
   template <class... Args>
-  BOOST_CONSTEXPR no_trivial_expected_storage(Args&&... args) //BOOST_NOEXCEPT_IF()
+  BOOST_CONSTEXPR no_trivial_expected_storage(BOOST_FWD_REF(Args)... args) //BOOST_NOEXCEPT_IF()
   : val(constexpr_forward<Args>(args)...)
   {}
 
@@ -378,7 +378,7 @@ struct trivial_expected_base
   : has_value(true), storage(v)
   {}
 
-  BOOST_CONSTEXPR trivial_expected_base(value_type&& v)
+  BOOST_CONSTEXPR trivial_expected_base(BOOST_FWD_REF(value_type) v)
   : has_value(true), storage(constexpr_move(v))
   {}
 
@@ -388,13 +388,13 @@ struct trivial_expected_base
 
   template <class... Args>
   explicit BOOST_CONSTEXPR
-  trivial_expected_base(in_place_t, Args&&... args)
+  trivial_expected_base(in_place_t, BOOST_FWD_REF(Args)... args)
   : has_value(true), storage(constexpr_forward<Args>(args)...)
   {}
 
   template <class U, class... Args>
   explicit BOOST_CONSTEXPR
-  trivial_expected_base(in_place_t, std::initializer_list<U> il, Args&&... args)
+  trivial_expected_base(in_place_t, std::initializer_list<U> il, BOOST_FWD_REF(Args)... args)
   : has_value(true), storage(il, constexpr_forward<Args>(args)...)
   {}
 
@@ -445,7 +445,7 @@ struct no_trivial_expected_base
   : has_value(true), storage(v)
   {}
 
-  BOOST_CONSTEXPR no_trivial_expected_base(value_type&& v)
+  BOOST_CONSTEXPR no_trivial_expected_base(BOOST_FWD_REF(value_type) v)
   : has_value(true), storage(constexpr_move(v))
   {}
 
@@ -455,13 +455,13 @@ struct no_trivial_expected_base
 
   template <class... Args>
   explicit BOOST_CONSTEXPR
-  no_trivial_expected_base(in_place_t, Args&&... args)
+  no_trivial_expected_base(in_place_t, BOOST_FWD_REF(Args)... args)
   : has_value(true), storage(constexpr_forward<Args>(args)...)
   {}
 
   template <class U, class... Args>
   explicit BOOST_CONSTEXPR
-  no_trivial_expected_base(in_place_t, std::initializer_list<U> il, Args&&... args)
+  no_trivial_expected_base(in_place_t, std::initializer_list<U> il, BOOST_FWD_REF(Args)... args)
   : has_value(true), storage(il, constexpr_forward<Args>(args)...)
   {}
 
@@ -642,7 +642,7 @@ public:
     , T_REQUIRES(std::is_constructible<value_type, Args&...>::value)
 #endif
     >
-  BOOST_CONSTEXPR explicit expected(in_place_t, Args&&... args)
+  BOOST_CONSTEXPR explicit expected(in_place_t, BOOST_FWD_REF(Args)... args)
   : base_type(in_place_t{}, boost::forward<Args>(args)...)
   {}
 
@@ -651,7 +651,7 @@ public:
     , T_REQUIRES(std::is_constructible<value_type, std::initializer_list<U> >::value)
 #endif
     >
-  BOOST_CONSTEXPR explicit expected(in_place_t, std::initializer_list<U> il, Args&&... args)
+  BOOST_CONSTEXPR explicit expected(in_place_t, std::initializer_list<U> il, BOOST_FWD_REF(Args)... args)
   : base_type(in_place_t{}, il, constexpr_forward<Args>(args)...)
   {}
 
@@ -698,7 +698,7 @@ public:
     , T_REQUIRES(std::is_constructible<value_type, Args&...>::value)
 #endif
     >
-  expected& emplace(Args&&... args)
+  expected& emplace(BOOST_FWD_REF(Args)... args)
     {
       // Why emplace doesn't work (instead of in_place_t()) ?
       this_type(in_place_t(), boost::forward<Args>(args)...).swap(*this);
@@ -710,7 +710,7 @@ public:
       //, T_REQUIRES(std::is_constructible<value_type, Args&...>::value)
 #endif
       >
-    expected& emplace(std::initializer_list<U> il, Args&&... args)
+    expected& emplace(std::initializer_list<U> il, BOOST_FWD_REF(Args)... args)
     {
       // Why emplace doesn't work (instead of in_place_t()) ?
       this_type(in_place_t(), il, boost::forward<Args>(args)...).swap(*this);
@@ -813,7 +813,7 @@ public:
 #if ! defined BOOST_EXPECTED_NO_CXX11_RVALUE_REFERENCE_FOR_THIS
 
   template <class V>
-  BOOST_CONSTEXPR value_type value_or(V&& v) const&
+  BOOST_CONSTEXPR value_type value_or(BOOST_FWD_REF(V) v) const&
   {
     return *this
       ? **this
@@ -821,7 +821,7 @@ public:
   }
 
   template <class V>
-  BOOST_CONSTEXPR value_type value_or(V&& v) const &&
+  BOOST_CONSTEXPR value_type value_or(BOOST_FWD_REF(V) v) const &&
   {
     return *this
       ? std::move(const_cast<expected<value_type, error_type>&>(*this).contained_val())
@@ -847,7 +847,7 @@ public:
 # else
 
   template <class V>
-  BOOST_CONSTEXPR value_type value_or(V&& v) const {
+  BOOST_CONSTEXPR value_type value_or(BOOST_FWD_REF(V) v) const {
     return *this
       ? **this
       : static_cast<value_type>(constexpr_forward<V>(v));
@@ -1295,22 +1295,22 @@ void swap(expected<T>& x, expected<T>& y) BOOST_NOEXCEPT_IF(BOOST_NOEXCEPT_EXPR(
 
 // Factories
 template<typename T>
-expected<T> make_expected(T&& v )
+expected<T> make_expected(BOOST_FWD_REF(T) v )
 {
-  return expected<T>(v);
+  return expected<T>(std::forward<T>(v));
 }
 
-#if 0 && ! defined BOOST_NO_CXX11_VARIADIC_TEMPLATES && ! defined BOOST_NO_CXX11_RVALUE_REFERENCES
-  template<typename T, typename E, typename... Args>
-  expected<T,E> make_expected(BOOST_FWD_REF(Args)... args)
+#if ! defined BOOST_NO_CXX11_VARIADIC_TEMPLATES && ! defined BOOST_NO_CXX11_RVALUE_REFERENCES
+  template<typename T, typename E, typename Arg0, typename Arg1, typename... Args>
+  expected<T,E> make_expected(BOOST_FWD_REF(Arg0) arg0, BOOST_FWD_REF(Arg1) arg1, BOOST_FWD_REF(Args)... args)
   {
-    return expected<T,E>(in_place2, boost::forward<Args>(args)...);
+    return expected<T,E>(in_place2, boost::forward<Arg0>(arg0), boost::forward<Arg1>(arg1), boost::forward<Args>(args)...);
   }
 
-  template<typename T, typename... Args>
-  expected<T> make_expected(BOOST_FWD_REF(Args)... args)
+  template<typename T, typename Arg0, typename Arg1, typename... Args>
+  expected<T> make_expected(BOOST_FWD_REF(Arg0) arg0, BOOST_FWD_REF(Arg0) arg1, BOOST_FWD_REF(Args)... args)
   {
-    return expected<T>(in_place2, boost::forward<Args>(args)...);
+    return expected<T>(in_place2, boost::forward<Arg0>(arg0), boost::forward<Arg1>(arg1), boost::forward<Args>(args)...);
   }
 #endif
 
