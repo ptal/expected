@@ -205,7 +205,7 @@ struct exceptional {
 };
 
 template <class E>
-exceptional<E> make_error(E ex)
+inline exceptional<E> make_error(E ex)
 {
  return exceptional<E>(ex);
 }
@@ -219,16 +219,16 @@ struct exceptional<std::exception_ptr> {
 };
 
 template <class E>
-exceptional<std::exception_ptr> make_exceptional(BOOST_FWD_REF(E) ex) {
+inline exceptional<std::exception_ptr> make_exceptional(BOOST_FWD_REF(E) ex) {
   return exceptional<std::exception_ptr>(std::forward<E>(ex));
 }
 
-exceptional<std::exception_ptr> make_exceptional(std::exception_ptr ex)
+inline exceptional<std::exception_ptr> make_exceptional(std::exception_ptr ex)
 {
   return exceptional<std::exception_ptr>(ex);
 }
 
-exceptional<std::exception_ptr> make_exceptional()
+inline exceptional<std::exception_ptr> make_exceptional()
 {
   return exceptional<std::exception_ptr>();
 }
@@ -1295,39 +1295,39 @@ void swap(expected<T>& x, expected<T>& y) BOOST_NOEXCEPT_IF(BOOST_NOEXCEPT_EXPR(
 
 // Factories
 template<typename T>
-expected<T> make_expected(BOOST_FWD_REF(T) v )
+inline expected<T> make_expected(BOOST_FWD_REF(T) v )
 {
   return expected<T>(std::forward<T>(v));
 }
 
 #if ! defined BOOST_NO_CXX11_VARIADIC_TEMPLATES && ! defined BOOST_NO_CXX11_RVALUE_REFERENCES
   template<typename T, typename E, typename Arg0, typename Arg1, typename... Args>
-  expected<T,E> make_expected(BOOST_FWD_REF(Arg0) arg0, BOOST_FWD_REF(Arg1) arg1, BOOST_FWD_REF(Args)... args)
+  inline expected<T,E> make_expected(BOOST_FWD_REF(Arg0) arg0, BOOST_FWD_REF(Arg1) arg1, BOOST_FWD_REF(Args)... args)
   {
     return expected<T,E>(in_place2, boost::forward<Arg0>(arg0), boost::forward<Arg1>(arg1), boost::forward<Args>(args)...);
   }
 
   template<typename T, typename Arg0, typename Arg1, typename... Args>
-  expected<T> make_expected(BOOST_FWD_REF(Arg0) arg0, BOOST_FWD_REF(Arg0) arg1, BOOST_FWD_REF(Args)... args)
+  inline expected<T> make_expected(BOOST_FWD_REF(Arg0) arg0, BOOST_FWD_REF(Arg0) arg1, BOOST_FWD_REF(Args)... args)
   {
     return expected<T>(in_place2, boost::forward<Arg0>(arg0), boost::forward<Arg1>(arg1), boost::forward<Args>(args)...);
   }
 #endif
 
 template <typename T>
-expected<T> make_expected_from_error() BOOST_NOEXCEPT
+inline expected<T> make_expected_from_error() BOOST_NOEXCEPT
 {
   return expected<T>(exceptional<>());
 }
 
 template <typename T, typename E>
-expected<T, E> make_expected_from_error()
+inline expected<T, E> make_expected_from_error()
 {
   return expected<T, E>(exceptional<E>());
 }
 
 template <typename T, typename U, typename E>
-expected<T,U> make_expected_from_error(E const& e
+inline expected<T,U> make_expected_from_error(E const& e
     , REQUIRES(! boost::is_same<U, E>::value)
 )
 {
@@ -1337,7 +1337,7 @@ expected<T,U> make_expected_from_error(E const& e
 // TODO fix these signatures.
 // Requires  typeid(e) == typeid(E)
 template <typename T, typename E>
-expected<T> make_expected_from_error(E const& e
+inline expected<T> make_expected_from_error(E const& e
   , REQUIRES(boost::is_base_of<std::exception, E>::value
           || boost::is_base_of<boost::exception, E>::value)
 ) BOOST_NOEXCEPT
@@ -1346,7 +1346,7 @@ expected<T> make_expected_from_error(E const& e
 }
 
 template <typename T, typename E>
-expected<T,E> make_expected_from_error(E const& e
+inline expected<T,E> make_expected_from_error(E const& e
       , REQUIRES(! boost::is_base_of<std::exception, E>::value
               && ! boost::is_base_of<boost::exception, E>::value)
 )
@@ -1356,7 +1356,7 @@ expected<T,E> make_expected_from_error(E const& e
 
 template <typename F>
 expected<typename boost::result_of<F()>::type>
-make_expected_from_call(F funct
+inline make_expected_from_call(F funct
   , REQUIRES( ! boost::is_same<typename boost::result_of<F()>::type, void>::value)
 ) BOOST_NOEXCEPT
 {
@@ -1372,7 +1372,7 @@ make_expected_from_call(F funct
 }
 
 template <typename F>
-expected<void>
+inline expected<void>
 make_expected_from_call(F funct
   , REQUIRES( boost::is_same<typename boost::result_of<F()>::type, void>::value)
 ) BOOST_NOEXCEPT
