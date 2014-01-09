@@ -1334,10 +1334,8 @@ inline expected<T,U> make_expected_from_error(E const& e
   return expected<T, U>(exceptional<U>(e));
 }
 
-// TODO fix these signatures.
-// Requires  typeid(e) == typeid(E)
 template <typename T, typename E>
-inline expected<T> make_expected_from_error(E const& e
+inline expected<T> make_expected_from_error(E e
   , REQUIRES(boost::is_base_of<std::exception, E>::value
           || boost::is_base_of<boost::exception, E>::value)
 ) BOOST_NOEXCEPT
@@ -1346,7 +1344,7 @@ inline expected<T> make_expected_from_error(E const& e
 }
 
 template <typename T, typename E>
-inline expected<T,E> make_expected_from_error(E const& e
+inline expected<T,E> make_expected_from_error(E e
       , REQUIRES(! boost::is_base_of<std::exception, E>::value
               && ! boost::is_base_of<boost::exception, E>::value)
 )
