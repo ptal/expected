@@ -405,20 +405,20 @@ BOOST_AUTO_TEST_CASE(expected_from_exception_catch)
   }
 }
 
-BOOST_AUTO_TEST_CASE(expected_from_error_catch_exception)
-{
-  // From catch block
-  try
-  {
-    throw test_exception();
-  }
-  catch(...)
-  {
-    auto throw_lambda = [](){ return make_expected_from_error<int,std::error_condition>();};
-
-    //BOOST_CHECK_THROW(throw_lambda(), test_exception);
-  }
-}
+//BOOST_AUTO_TEST_CASE(expected_from_error_catch_exception)
+//{
+//  // From catch block
+//  try
+//  {
+//    throw test_exception();
+//  }
+//  catch(...)
+//  {
+//    auto throw_lambda = [](){ return make_expected_from_error<int,std::error_condition>();};
+//
+//    //BOOST_CHECK_THROW(throw_lambda(), test_exception);
+//  }
+//}
 
 BOOST_AUTO_TEST_CASE(expected_from_error)
 {

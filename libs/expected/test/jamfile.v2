@@ -69,4 +69,6 @@ test-suite "Expected"
       [ run safe_divide.cpp ]
       [ run num_get.cpp ]
       [ run num_get_2.cpp ]
+      [ run num_get_3.cpp ]
+      [ run get_interval.cpp ]
     ;

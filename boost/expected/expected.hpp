@@ -133,10 +133,10 @@ struct expected_error_traits
     return error_type(e);
   }
 
-  static error_type catch_exception()
-  {
-    throw;
-  }
+//  static error_type catch_exception()
+//  {
+//    throw;
+//  }
 
   static void bad_access(const error_type &e)
   {
@@ -161,10 +161,10 @@ struct expected_traits<boost::exception_ptr>
     return boost::copy_exception(e);
   }
 
-  static error_type catch_exception()
-  {
-    return boost::current_exception();
-  }
+//  static error_type catch_exception()
+//  {
+//    return boost::current_exception();
+//  }
 
   static void bad_access(const error_type &e)
   {
@@ -184,10 +184,10 @@ struct expected_traits<std::exception_ptr>
     return std::make_exception_ptr(e);
   }
 
-  static error_type catch_exception()
-  {
-    return std::current_exception();
-  }
+//  static error_type catch_exception()
+//  {
+//    return std::current_exception();
+//  }
 
   static void bad_access(const error_type &e)
   {
@@ -210,6 +210,13 @@ inline exceptional<E> make_error(E ex)
  return exceptional<E>(ex);
 }
 
+template <class E>
+inline exceptional<E> make_unexpected_error(E ex)
+{
+ return exceptional<E>(ex);
+}
+
+
 template <>
 struct exceptional<std::exception_ptr> {
   std::exception_ptr error_;
@@ -223,7 +230,16 @@ inline exceptional<std::exception_ptr> make_exceptional(BOOST_FWD_REF(E) ex) {
   return exceptional<std::exception_ptr>(std::forward<E>(ex));
 }
 
+template <class E>
+inline exceptional<std::exception_ptr> make_unexpected(BOOST_FWD_REF(E) ex) {
+  return exceptional<std::exception_ptr>(std::forward<E>(ex));
+}
+
 inline exceptional<std::exception_ptr> make_exceptional(std::exception_ptr ex)
+{
+  return exceptional<std::exception_ptr>(ex);
+}
+inline exceptional<std::exception_ptr> make_unexpected(std::exception_ptr ex)
 {
   return exceptional<std::exception_ptr>(ex);
 }
@@ -233,6 +249,10 @@ inline exceptional<std::exception_ptr> make_exceptional()
   return exceptional<std::exception_ptr>();
 }
 
+inline exceptional<std::exception_ptr> make_unexpected()
+{
+  return exceptional<std::exception_ptr>();
+}
 
 struct in_place_t {};
 BOOST_CONSTEXPR_OR_CONST in_place_t in_place2 = {};
@@ -1298,6 +1318,12 @@ template<typename T>
 inline expected<T> make_expected(BOOST_FWD_REF(T) v )
 {
   return expected<T>(std::forward<T>(v));
+}
+
+template<typename E, typename T>
+inline expected<T, E> make_expected_error(BOOST_FWD_REF(T) v )
+{
+  return expected<T, E>(std::forward<T>(v));
 }
 
 #if ! defined BOOST_NO_CXX11_VARIADIC_TEMPLATES && ! defined BOOST_NO_CXX11_RVALUE_REFERENCES
