@@ -938,7 +938,7 @@ public:
     {
         return f(value());
     }
-    return *this;
+    return result_type(get_exceptional());
   }
 
   template <typename F>
@@ -968,7 +968,7 @@ public:
     {
         return f(error());
     }
-    return this_type(value());
+    return *this;
   }
 
   template <typename Ex, typename F>

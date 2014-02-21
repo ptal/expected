@@ -110,6 +110,26 @@ boost::expected<std::pair<Num,Num>, std::ios_base::iostate> get_interval2(ios_ra
 }
 #endif
 
+
+template <class Num, class CharT=char, class InputIterator = std::istreambuf_iterator<CharT> >
+boost::expected<std::pair<Num,Num>, std::ios_base::iostate> get_interval3(ios_range<CharT, InputIterator>& r)
+{
+  return get_num<Num>(r)
+   .then( [&r](Num f)
+  {
+    return matchedString("..", r).then([f]() { return f; });
+  }
+  ).then( [&r](Num f)
+  {
+    return get_num<Num>(r).then([f](Num l) { return std::make_pair(f,l); });
+  }
+  );
+
+}
+
+
+
+
 int main()
 {
   {
@@ -127,6 +147,18 @@ int main()
     std::stringstream is("1..3");
     ios_range<> r(is);
     auto x = get_interval2<long>(r);
+    if (!x.valid()) {
+      std::cout << x.error() << std::endl;
+      return 1;
+    }
+
+    std::cout << x.value().first << ".." << x.value().second << std::endl;
+  }
+
+  {
+    std::stringstream is("1..3");
+    ios_range<> r(is);
+    auto x = get_interval3<long>(r);
     if (!x.valid()) {
       std::cout << x.error() << std::endl;
       return 1;
