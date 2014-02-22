@@ -159,7 +159,7 @@ BOOST_AUTO_TEST_CASE(expected_from_in_place_value)
 BOOST_AUTO_TEST_CASE(expected_from_exception)
 {
   // From exceptional constructor.
-  expected<int> e(make_exceptional(test_exception()));
+  expected<int> e(make_unexpected(test_exception()));
   BOOST_REQUIRE_THROW(e.value(), test_exception);
   BOOST_CHECK_EQUAL(e.valid(), false);
   BOOST_CHECK_EQUAL(static_cast<bool>(e), false);
@@ -180,7 +180,7 @@ BOOST_AUTO_TEST_CASE(expected_from_copy_value)
 BOOST_AUTO_TEST_CASE(expected_from_copy_exception)
 {
   // From exceptional constructor.
-  expected<int> ef(make_exceptional(test_exception()));
+  expected<int> ef(make_unexpected(test_exception()));
   expected<int> e(ef);
   BOOST_REQUIRE_THROW(e.value(), test_exception);
   BOOST_CHECK_EQUAL(e.valid(), false);
@@ -201,7 +201,7 @@ BOOST_AUTO_TEST_CASE(expected_from_in_place)
 BOOST_AUTO_TEST_CASE(expected_from_exception_ptr)
 {
   // From exception_ptr constructor.
-  expected<int> e(make_exceptional(std::make_exception_ptr(test_exception())));
+  expected<int> e(make_unexpected(std::make_exception_ptr(test_exception())));
   BOOST_REQUIRE_THROW(e.value(), test_exception);
   BOOST_CHECK_EQUAL(e.valid(), false);
   BOOST_CHECK_EQUAL(static_cast<bool>(e), false);
@@ -228,7 +228,7 @@ BOOST_AUTO_TEST_CASE(expected_from_catch_block)
   }
   catch(...)
   {
-    expected<int> e(make_exceptional());
+    expected<int> e(make_unexpected(std::current_exception()));
 
     BOOST_REQUIRE_THROW(e.value(), std::exception);
     BOOST_CHECK_EQUAL(e.valid(), false);
@@ -397,7 +397,8 @@ BOOST_AUTO_TEST_CASE(expected_from_exception_catch)
   }
   catch(...)
   {
-    expected<int> e = make_expected_from_error<int>();
+    //expected<int> e = make_expected_from_error<int>();
+    expected<int> e = make_unexpected(std::current_exception());
 
     BOOST_REQUIRE_THROW(e.value(), std::exception);
     BOOST_CHECK_EQUAL(e.valid(), false);
@@ -526,8 +527,8 @@ BOOST_AUTO_TEST_CASE(expected_swap_value)
 BOOST_AUTO_TEST_CASE(expected_swap_exception)
 {
   // From value constructor.
-  expected<int> e = make_expected_from_error<int>(std::invalid_argument("e"));
-  expected<int> e2 = make_expected_from_error<int>(std::invalid_argument("e2"));
+  expected<int> e = make_unexpected(std::invalid_argument("e"));
+  expected<int> e2 = make_unexpected(std::invalid_argument("e2"));
 
   e.swap(e2);
 

@@ -39,7 +39,7 @@ int f(int i, int j, int k)
 boost::expected<int> safe_divide(int i, int j)
 {
   if (j == 0)
-    return make_exceptional(DivideByZero());
+    return make_unexpected(DivideByZero());
   else
     return i / j;
 }
@@ -155,7 +155,7 @@ recover([](std::exception_ptr ex) -> boost::expected<int>
       }
       catch(DivideByZero& e)
       {
-        return make_exceptional(e);
+        return make_unexpected(e);
       }
       catch(NotDivisible& e)
       {
@@ -163,7 +163,7 @@ recover([](std::exception_ptr ex) -> boost::expected<int>
       }
       catch (...)
       {
-        return make_exceptional(std::current_exception());
+        return make_unexpected(std::current_exception());
       }
     });
 }

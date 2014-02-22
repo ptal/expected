@@ -203,21 +203,6 @@ struct exceptional<std::exception_ptr> {
   template <class E> explicit exceptional(E e) : error_(std::make_exception_ptr(e)) {}
 };
 
-template <class E>
-inline exceptional<std::exception_ptr> make_exceptional(BOOST_FWD_REF(E) ex) {
-  return exceptional<std::exception_ptr>(std::forward<E>(ex));
-}
-
-inline exceptional<std::exception_ptr> make_exceptional(std::exception_ptr ex)
-{
-  return exceptional<std::exception_ptr>(ex);
-}
-
-inline exceptional<std::exception_ptr> make_exceptional()
-{
-  return exceptional<std::exception_ptr>();
-}
-
 struct in_place_t {};
 BOOST_CONSTEXPR_OR_CONST in_place_t in_place2 = {};
 
