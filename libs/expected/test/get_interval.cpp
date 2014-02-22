@@ -7,7 +7,7 @@
 //(See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-
+#define BOOST_RESULT_OF_USE_DECLTYPE
 #include <boost/expected/expected.hpp>
 #include <iostream>
 #include <streambuf>
@@ -20,7 +20,6 @@ auto BOOST_JOIN(expected,V) = EXPR; \
 if (! BOOST_JOIN(expected,V).valid()) return BOOST_JOIN(expected,V).get_exceptional(); \
 auto V =BOOST_JOIN(expected,V).value()
 
-
 #define expect_void(V, EXPR) \
 auto V = EXPR; \
 if (! V.valid()) return V.get_exceptional(); \
@@ -30,8 +29,8 @@ struct ios_range {
   InputIterator begin;
   InputIterator end;
   std::ios_base& ios;
-  ios_range(InputIterator f, InputIterator e, std::ios_base& ios)
-  : begin(f), end(e), ios(ios) {}
+//  ios_range(InputIterator f, InputIterator e, std::ios_base& ios)
+//  : begin(f), end(e), ios(ios) {}
   ios_range(std::basic_stringstream<CharT>& is)
   : begin(is), end(), ios(is) {}
 };
@@ -60,11 +59,11 @@ template <class CharT=char, class InputIterator = std::istreambuf_iterator<CharT
 boost::expected<void, std::ios_base::iostate>
 matchedString(std::string str, ios_range<CharT, InputIterator>& r) {
   if (*r.begin != str[0]) {
-      return boost::make_unexpected_error(std::ios_base::goodbit);
+      return boost::make_unexpected_error(std::ios_base::failbit);
   }
   ++r.begin;
   if (*r.begin != str[1]) {
-      return boost::make_unexpected_error(std::ios_base::goodbit);
+      return boost::make_unexpected_error(std::ios_base::failbit);
   }
   ++r.begin;
   return boost::expected<void, std::ios_base::iostate>();
@@ -116,19 +115,76 @@ boost::expected<std::pair<Num,Num>, std::ios_base::iostate> get_interval3(ios_ra
 {
   return get_num<Num>(r)
    .then( [&r](Num f)
-  {
-    return matchedString("..", r).then([f]() { return f; });
-  }
+    {
+      return matchedString("..", r).then([f]() { return f; });
+    }
   ).then( [&r](Num f)
-  {
-    return get_num<Num>(r).then([f](Num l) { return std::make_pair(f,l); });
-  }
+    {
+      return get_num<Num>(r).then([f](Num l) { return std::make_pair(f,l); });
+    }
   );
-
 }
 
+#if 0
+
+template <class Num, class CharT=char, class InputIterator = std::istreambuf_iterator<CharT> >
+boost::expected<std::pair<Num,Num>, std::ios_base::iostate> get_interval3(ios_range<CharT, InputIterator>& r)
+{
+  return get_num<Num>(r)
+    | [&r](Num f) { return matchedString("..", r) | [f]() { return f; }; }
+    | [&r](Num f) { return get_num<Num>(r) |[f](Num l) { return std::make_pair(f,l); }; }
+    ;
+}
+
+#endif
+
+template <class T>
+struct identity_t {
+  T value;
+  identity_t(T v) : value(v) {}
+  T operator()() { return value; }
+};
+
+template <class T>
+identity_t<T> identity(T v) { return identity_t<T>(v); }
 
 
+template <class T>
+struct lpair_t {
+  T l;
+  lpair_t(T v) : l(v) {}
+  template <class U>
+  std::pair<T,U> operator()(U r) { return std::make_pair(l, r); }
+};
+
+template <class T>
+lpair_t<T> lpair(T v) { return lpair_t<T>(v); }
+
+template <class Num, class CharT=char, class InputIterator = std::istreambuf_iterator<CharT> >
+boost::expected<std::pair<Num,Num>, std::ios_base::iostate> get_interval4(ios_range<CharT, InputIterator>& r)
+{
+  return get_num<Num>(r)
+     .recover([](std::ios_base::iostate st) {
+          std::cout << __FILE__ << "[" << __LINE__ << "] " << st << std::endl;
+          return boost::make_unexpected_error(st);
+        }
+    ).then( [&r](Num f) { return matchedString("..", r).then( identity(f) ); }
+    ).then( [&r](Num f) { return get_num<Num>(r).then( lpair(f) ); }
+    );
+}
+
+#if 0
+
+template <class Num, class CharT=char, class InputIterator = std::istreambuf_iterator<CharT> >
+boost::expected<std::pair<Num,Num>, std::ios_base::iostate> get_interval4(ios_range<CharT, InputIterator>& r)
+{
+  return get_num<Num>(r)
+    | [&r](Num f) { return matchedString("..", r) | identity(f) ; }
+    | [&r](Num f) { return get_num<Num>(r) | lpair(f); }
+    ;
+}
+
+#endif
 
 int main()
 {
@@ -159,6 +215,18 @@ int main()
     std::stringstream is("1..3");
     ios_range<> r(is);
     auto x = get_interval3<long>(r);
+    if (!x.valid()) {
+      std::cout << x.error() << std::endl;
+      return 1;
+    }
+
+    std::cout << x.value().first << ".." << x.value().second << std::endl;
+  }
+
+  {
+    std::stringstream is("1..3");
+    ios_range<> r(is);
+    auto x = get_interval4<long>(r);
     if (!x.valid()) {
       std::cout << x.error() << std::endl;
       return 1;

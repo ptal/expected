@@ -971,6 +971,17 @@ public:
     return *this;
   }
 
+  template <typename F>
+  this_type recover(BOOST_RV_REF(F) f,
+    REQUIRES(boost::is_same<typename result_of<F(error_type)>::type, exceptional<error_type> >::value)) const
+  {
+    if(!valid())
+    {
+        return f(error());
+    }
+    return *this;
+  }
+
   template <typename Ex, typename F>
   this_type catch_exception(BOOST_RV_REF(F) f,
     REQUIRES(
