@@ -133,11 +133,6 @@ struct expected_error_traits
     return error_type(e);
   }
 
-//  static error_type catch_exception()
-//  {
-//    throw;
-//  }
-
   static void bad_access(const error_type &e)
   {
     throw Exception(e);
@@ -161,11 +156,6 @@ struct expected_traits<boost::exception_ptr>
     return boost::copy_exception(e);
   }
 
-//  static error_type catch_exception()
-//  {
-//    return boost::current_exception();
-//  }
-
   static void bad_access(const error_type &e)
   {
     boost::rethrow_exception(e);
@@ -184,11 +174,6 @@ struct expected_traits<std::exception_ptr>
     return std::make_exception_ptr(e);
   }
 
-//  static error_type catch_exception()
-//  {
-//    return std::current_exception();
-//  }
-
   static void bad_access(const error_type &e)
   {
     std::rethrow_exception(e);
@@ -205,17 +190,10 @@ struct exceptional {
 };
 
 template <class E>
-inline exceptional<E> make_error(E ex)
+inline exceptional<E> make_unexpected(E ex)
 {
  return exceptional<E>(ex);
 }
-
-template <class E>
-inline exceptional<E> make_unexpected_error(E ex)
-{
- return exceptional<E>(ex);
-}
-
 
 template <>
 struct exceptional<std::exception_ptr> {
@@ -230,26 +208,12 @@ inline exceptional<std::exception_ptr> make_exceptional(BOOST_FWD_REF(E) ex) {
   return exceptional<std::exception_ptr>(std::forward<E>(ex));
 }
 
-template <class E>
-inline exceptional<std::exception_ptr> make_unexpected(BOOST_FWD_REF(E) ex) {
-  return exceptional<std::exception_ptr>(std::forward<E>(ex));
-}
-
 inline exceptional<std::exception_ptr> make_exceptional(std::exception_ptr ex)
-{
-  return exceptional<std::exception_ptr>(ex);
-}
-inline exceptional<std::exception_ptr> make_unexpected(std::exception_ptr ex)
 {
   return exceptional<std::exception_ptr>(ex);
 }
 
 inline exceptional<std::exception_ptr> make_exceptional()
-{
-  return exceptional<std::exception_ptr>();
-}
-
-inline exceptional<std::exception_ptr> make_unexpected()
 {
   return exceptional<std::exception_ptr>();
 }
@@ -290,6 +254,7 @@ union trivial_expected_storage
 {
   typedef T value_type;
   typedef E error_type;
+  typedef expected_traits<error_type> traits_type;
 
   error_type err;
   value_type val;
@@ -301,6 +266,11 @@ union trivial_expected_storage
 
   BOOST_CONSTEXPR trivial_expected_storage(exceptional<error_type> const& e)
   : err(e.error_)
+  {}
+
+  template <class Err>
+  BOOST_CONSTEXPR trivial_expected_storage(exceptional<Err> const& e)
+  : err(traits_type::from_error(e.error_))
   {}
 
   template <class... Args>
@@ -315,6 +285,7 @@ template <typename E>
 union trivial_expected_storage<void, E>
 {
   typedef E error_type;
+  typedef expected_traits<error_type> traits_type;
 
   error_type err;
   unsigned char dummy;
@@ -327,6 +298,11 @@ union trivial_expected_storage<void, E>
   : err(e.error_)
   {}
 
+  template <class Err>
+  BOOST_CONSTEXPR trivial_expected_storage(exceptional<Err> const& e)
+  : err(traits_type::from_error(e.error_))
+  {}
+
   ~trivial_expected_storage() = default;
 };
 
@@ -335,6 +311,7 @@ union no_trivial_expected_storage
 {
   typedef T value_type;
   typedef E error_type;
+  typedef expected_traits<error_type> traits_type;
 
   error_type err;
   value_type val;
@@ -345,6 +322,11 @@ union no_trivial_expected_storage
 
   BOOST_CONSTEXPR no_trivial_expected_storage(exceptional<error_type> const& e)
   : err(e.error_)
+  {}
+
+  template <class Err>
+  BOOST_CONSTEXPR no_trivial_expected_storage(exceptional<Err> const& e)
+  : err(traits_type::from_error(e.error_))
   {}
 
   template <class... Args>
@@ -359,6 +341,7 @@ template <typename E>
 union no_trivial_expected_storage<void, E>
 {
   typedef E error_type;
+  typedef expected_traits<error_type> traits_type;
 
   error_type err;
   unsigned char dummy;
@@ -371,7 +354,12 @@ union no_trivial_expected_storage<void, E>
   : err(e.error_)
   {}
 
- ~no_trivial_expected_storage() {};
+  template <class Err>
+  BOOST_CONSTEXPR no_trivial_expected_storage(exceptional<Err> const& e)
+  : err(traits_type::from_error(e.error_))
+  {}
+
+  ~no_trivial_expected_storage() {};
 };
 
 BOOST_CONSTEXPR struct only_set_valid_t{} only_set_valid{};
@@ -403,6 +391,11 @@ struct trivial_expected_base
   {}
 
   BOOST_CONSTEXPR trivial_expected_base(exceptional<error_type> const& e)
+  : has_value(false), storage(e)
+  {}
+
+  template <class Err>
+  BOOST_CONSTEXPR trivial_expected_base(exceptional<Err> const& e)
   : has_value(false), storage(e)
   {}
 
@@ -439,6 +432,10 @@ struct trivial_expected_base<void, E>
   BOOST_CONSTEXPR trivial_expected_base(exceptional<error_type> const& e)
   : has_value(false), storage(e)
   {}
+  template <class Err>
+  BOOST_CONSTEXPR trivial_expected_base(exceptional<Err> const& e)
+  : has_value(false), storage(e)
+  {}
 
    ~trivial_expected_base() = default;
 };
@@ -470,6 +467,11 @@ struct no_trivial_expected_base
   {}
 
   BOOST_CONSTEXPR no_trivial_expected_base(exceptional<error_type> const& e)
+  : has_value(false), storage(e)
+  {}
+
+  template <class Err>
+  BOOST_CONSTEXPR no_trivial_expected_base(exceptional<Err> const& e)
   : has_value(false), storage(e)
   {}
 
@@ -508,6 +510,11 @@ struct no_trivial_expected_base<void, E> {
 
 
   BOOST_CONSTEXPR no_trivial_expected_base(exceptional<error_type> const& e)
+  : has_value(false), storage(e)
+  {}
+
+  template <class Err>
+  BOOST_CONSTEXPR no_trivial_expected_base(exceptional<Err> const& e)
   : has_value(false), storage(e)
   {}
 
@@ -655,6 +662,17 @@ public:
   )
   : base_type(e)
   {}
+
+  template <class Err>
+  expected(exceptional<Err> const& e
+//    , REQUIRES(std::is_copy_constructible<error_type>::value)
+  )
+//  BOOST_NOEXCEPT_IF(
+//    has_nothrow_copy_constructor<error_type>::value
+//  )
+  : base_type(e)
+  {}
+
 
 #if ! defined BOOST_NO_CXX11_VARIADIC_TEMPLATES
   template <class... Args
@@ -1097,6 +1115,16 @@ public:
   : base_type(e)
   {}
 
+  template <class Err>
+  expected(exceptional<Err> const& e
+//    , REQUIRES(std::is_copy_constructible<error_type>::value)
+  )
+//  BOOST_NOEXCEPT_IF(
+//    has_nothrow_copy_constructor<error_type>::value
+//  )
+  : base_type(e)
+  {}
+
   ~expected() = default;
 
   // Assignments
@@ -1386,7 +1414,7 @@ inline expected<T,E> make_expected_from_error(E e
               && ! boost::is_base_of<boost::exception, E>::value)
 )
 {
-  return expected<T, E>(make_error(e));
+  return expected<T, E>(make_unexpected(e));
 }
 
 template <typename F>

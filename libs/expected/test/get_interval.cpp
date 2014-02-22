@@ -18,7 +18,7 @@
 #define expect(V, EXPR) \
 auto BOOST_JOIN(expected,V) = EXPR; \
 if (! BOOST_JOIN(expected,V).valid()) return BOOST_JOIN(expected,V).get_exceptional(); \
-auto V =BOOST_JOIN(expected,V).value()
+auto V = BOOST_JOIN(expected,V).value()
 
 #define expect_void(V, EXPR) \
 auto V = EXPR; \
@@ -49,7 +49,7 @@ boost::expected<Num, std::ios_base::iostate> get_num(ios_range<CharT, InputItera
   Num v;
   r.begin = std::use_facet<std::num_get<CharT, InputIterator> >(r.ios.getloc()).get(r.begin, r.end, r.ios, err, v);
   if (err & (std::ios_base::badbit | std::ios_base::failbit)) {
-    return boost::make_unexpected_error(err);
+    return boost::make_unexpected(err);
   }
   return v;
 }
@@ -59,11 +59,11 @@ template <class CharT=char, class InputIterator = std::istreambuf_iterator<CharT
 boost::expected<void, std::ios_base::iostate>
 matchedString(std::string str, ios_range<CharT, InputIterator>& r) {
   if (*r.begin != str[0]) {
-      return boost::make_unexpected_error(std::ios_base::failbit);
+      return boost::make_unexpected(std::ios_base::failbit);
   }
   ++r.begin;
   if (*r.begin != str[1]) {
-      return boost::make_unexpected_error(std::ios_base::failbit);
+      return boost::make_unexpected(std::ios_base::failbit);
   }
   ++r.begin;
   return boost::expected<void, std::ios_base::iostate>();
@@ -166,7 +166,7 @@ boost::expected<std::pair<Num,Num>, std::ios_base::iostate> get_interval4(ios_ra
   return get_num<Num>(r)
      .recover([](std::ios_base::iostate st) {
           std::cout << __FILE__ << "[" << __LINE__ << "] " << st << std::endl;
-          return boost::make_unexpected_error(st);
+          return boost::make_unexpected(st);
         }
     ).then( [&r](Num f) { return matchedString("..", r).then( identity(f) ); }
     ).then( [&r](Num f) { return get_num<Num>(r).then( lpair(f) ); }

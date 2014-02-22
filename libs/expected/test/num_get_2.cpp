@@ -105,7 +105,7 @@ pair_expected<I,T,E> make_pair_expected(I i, T v) {
 
 template <class T, class I, typename E  >
 pair_expected<I,T,E> make_pair_expected_from_error(I i, E e) {
-  return std::make_pair(i, boost::expected<T,E>(boost::make_error(e)));
+  return std::make_pair(i, boost::expected<T,E>(boost::make_unexpected(e)));
 }
 
 

@@ -86,7 +86,7 @@ public:
 
     r.begin = std::use_facet<std::num_get<char_type, iter_type> >(r.ios.getloc()).get(r.begin, r.end, r.ios, err, v);
     if (err & (std::ios_base::badbit | std::ios_base::failbit)) {
-      return boost::make_unexpected_error(err);
+      return boost::make_unexpected(err);
     }
     //return expected_type<Num>(v);
     return v;
@@ -106,11 +106,11 @@ template <class CharT=char, class InputIterator = std::istreambuf_iterator<CharT
 boost::expected<void, std::ios_base::iostate>
 matchedString(std::string str, ios_range<CharT, InputIterator>& r) {
   if (*r.begin != str[0]) {
-      return boost::make_unexpected_error(std::ios_base::goodbit);
+      return boost::make_unexpected(std::ios_base::goodbit);
   }
   ++r.begin;
   if (*r.begin != str[1]) {
-      return boost::make_unexpected_error(std::ios_base::goodbit);
+      return boost::make_unexpected(std::ios_base::goodbit);
   }
   ++r.begin;
   return boost::expected<void, std::ios_base::iostate>();

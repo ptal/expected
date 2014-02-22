@@ -68,7 +68,7 @@ public:
 
     InputIterator it = std::use_facet<std::num_get<char_type, iter_type> >(ios.getloc()).get(s, e, ios, err, v);
     if (err & (std::ios_base::badbit | std::ios_base::failbit))
-      return boost::make_error(make_pair(it, err));
+      return boost::make_unexpected(make_pair(it, err));
     return result_type(make_pair(it, v));
   }
 
