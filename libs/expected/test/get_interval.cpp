@@ -17,12 +17,12 @@
 
 #define expect(V, EXPR) \
 auto BOOST_JOIN(expected,V) = EXPR; \
-if (! BOOST_JOIN(expected,V).valid()) return BOOST_JOIN(expected,V).get_exceptional(); \
+if (! BOOST_JOIN(expected,V).valid()) return BOOST_JOIN(expected,V).get_unexpected(); \
 auto V = BOOST_JOIN(expected,V).value()
 
 #define expect_void(V, EXPR) \
 auto V = EXPR; \
-if (! V.valid()) return V.get_exceptional(); \
+if (! V.valid()) return V.get_unexpected(); \
 
 template <class CharT=char, class InputIterator = std::istreambuf_iterator<CharT> >
 struct ios_range {
@@ -78,13 +78,13 @@ matchedString(std::string str, ios_range<CharT, InputIterator>& r) {
 template <class Num, class CharT=char, class InputIterator = std::istreambuf_iterator<CharT> >
 boost::expected<std::pair<Num,Num>, std::ios_base::iostate> get_interval(ios_range<CharT, InputIterator>& r) {
   auto  f = get_num<Num>(r);
-  if (! f.valid()) return f.get_exceptional();
+  if (! f.valid()) return f.get_unexpected();
 
   auto  m = matchedString("..", r);
-  if (! m.valid()) return m.get_exceptional();
+  if (! m.valid()) return m.get_unexpected();
 
   auto  l = get_num<Num>(r);
-  if (! l.valid()) return l.get_exceptional();
+  if (! l.valid()) return l.get_unexpected();
 
   return std::make_pair(f.value(), l.value());
 }

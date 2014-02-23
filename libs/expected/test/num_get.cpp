@@ -142,11 +142,11 @@ public:
     typedef typename get_result_type<Num>::type result_type;
 
     auto  f = std::use_facet< ::NumGet<char_type, iter_type> >(ios.getloc()).template get<Num>(s, e, ios);
-    if (! f) return f.get_exceptional();
+    if (! f) return f.get_unexpected();
     auto  m = matchedString("..", f->first, e);
-    if (! m) return m.get_exceptional();
+    if (! m) return m.get_unexpected();
     auto l = std::use_facet< ::NumGet<char_type, iter_type> >(ios.getloc()).template get<Num>(*m, e, ios);
-    if (! l) return l.get_exceptional();
+    if (! l) return l.get_unexpected();
 
     return result_type(make_pair(l->first, make_pair(f->second, l->second)));
   }

@@ -17,13 +17,13 @@
 
 #define expect(V, EXPR) \
 auto BOOST_JOIN(expected,V) = EXPR; \
-if (! BOOST_JOIN(expected,V).valid()) return BOOST_JOIN(expected,V).get_exceptional(); \
+if (! BOOST_JOIN(expected,V).valid()) return BOOST_JOIN(expected,V).get_unexpected(); \
 auto V =BOOST_JOIN(expected,V).value()
 
 
 #define expect_void(V, EXPR) \
 auto V = EXPR; \
-if (! V.valid()) return V.get_exceptional(); \
+if (! V.valid()) return V.get_unexpected(); \
 
 template <class CharT=char, class InputIterator = std::istreambuf_iterator<CharT> >
 struct ios_range {
@@ -164,14 +164,14 @@ public:
   {
     //auto  f = std::use_facet< ::NumGet<char_type, iter_type> >(ios.getloc()).template get<Num>(r);
     auto  f = ::NumGet<char_type, iter_type>().template get<Num>(r);
-    if (! f.valid()) return f.get_exceptional();
+    if (! f.valid()) return f.get_unexpected();
 
     auto  m = matchedString("..", r);
-    if (! m.valid()) return m.get_exceptional();
+    if (! m.valid()) return m.get_unexpected();
 
     //auto l = std::use_facet< ::NumGet<char_type, iter_type> >(ios.getloc()).template get<Num>(r);
     auto l = ::NumGet<char_type, iter_type>().template get<Num>(r);
-    if (! l.valid()) return l.get_exceptional();
+    if (! l.valid()) return l.get_unexpected();
 
     //return expected_type<Num>(std::make_pair(f.value(), l.value()));
     return std::make_pair(f.value(), l.value());

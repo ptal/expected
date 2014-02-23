@@ -30,7 +30,12 @@ int safe_divide(int i, int j)
   else return i/j;
 }
 
-int f(int i, int j, int k)
+int f1(int i, int j, int k)
+{
+  return i + safe_divide(j,k);
+}
+
+int f2(int i, int j, int k)
 {
   return safe_divide(i,k) + safe_divide(j,k);
 }
@@ -45,12 +50,22 @@ boost::expected<int> safe_divide(int i, int j)
 }
 
 #ifdef expect
-boost::expected<int> ex_safe3_f(int i, int j, int k)
+boost::expected<int> ex_f1(int i, int j, int k)
+{
+  return i + expect safe_divide(j,k);
+}
+boost::expected<int> ex_f1(int i, int j, int k)
+{
+  auto q = expect safe_divide(j,k);
+  return i + q;
+}
+
+boost::expected<int> ex_f2(int i, int j, int k)
 {
   return expect safe_divide(i,k) + expect safe_divide(j,k);
 }
 
-boost::expected<int> ex_safe3_f(int i, int j, int k) ensured
+boost::expected<int> ex_f2(int i, int j, int k) ensured
 {
   auto s1 = expect safe_divide(i,k);
   auto s2 = expect safe_divide(j,k);
@@ -58,43 +73,41 @@ boost::expected<int> ex_safe3_f(int i, int j, int k) ensured
 }
 #endif
 
-boost::expected<int> safe_f(int i, int j, int k)
+boost::expected<int> ex_f1(int i, int j, int k)
+{
+  auto eq = safe_divide(j, k);
+  if (!eq.valid()) return eq.get_unexpected();
+  auto q = *eq;
+
+  return 1 + q;
+}
+
+boost::expected<int> ex_f2(int i, int j, int k)
 {
   auto eq1 = safe_divide(i, k);
-  if (!eq1.valid()) return eq1.get_exceptional();
-  auto q1 = eq1.value();
+  if (!eq1.valid()) return eq1.get_unexpected();
+  auto q1 = *eq1;
 
   auto eq2 = safe_divide(j, k);
-  if (!eq2.valid()) return eq2.get_exceptional();
-  auto q2 = eq2.value();
+  if (!eq2.valid()) return eq2.get_unexpected();
+  auto q2 = *eq2;
 
   return q1 + q2;
 }
 
 #define EXPECT(V, EXPR) \
 auto BOOST_JOIN(expected,V) = EXPR; \
-if (! BOOST_JOIN(expected,V).valid()) return BOOST_JOIN(expected,V).get_exceptional(); \
-auto V =BOOST_JOIN(expected,V).value()
+if (! BOOST_JOIN(expected,V).valid()) return BOOST_JOIN(expected,V).get_unexpected(); \
+auto V =*BOOST_JOIN(expected,V)
 
-boost::expected<int> msafe_f(int i, int j, int k)
+boost::expected<int> mex_f2(int i, int j, int k)
 {
   EXPECT(q1, safe_divide(i,k));
   EXPECT(q2, safe_divide(j,k));
   return q1 + q2;
 }
 
-//boost::expected<int> safe_f(int i, int j, int k) {
-//  auto eq1 = safe_divide(i,k);
-//  if (! eq1.valid()) return eq1.get_exceptional();
-//  auto q1 = eq1.value();
-//  auto eq2 = safe_divide(j,k);
-//  if (! eq2.valid()) return eq2.get_exceptional();
-//  auto q2 = eq2.value();
-//  return q1 + q2;
-//}
-
-
-boost::expected<int> safe2_f(int i, int j, int k)
+boost::expected<int> then_f2(int i, int j, int k)
 {
   auto q1 = safe_divide(i, k);
   return q1.then([j,k](int q1)
@@ -121,7 +134,7 @@ expected<T> operator+(expected<T> i, expected<T> j)
 //  });
 //}
 
-boost::expected<int> safe3_f(int i, int j, int k)
+boost::expected<int> cex_f2(int i, int j, int k)
 {
   return safe_divide(i, k) + safe_divide(j, k);
 }
@@ -177,13 +190,23 @@ catch_exception<NotDivisible>([](NotDivisible& e) -> expected<int>
     });
 }
 
+boost::expected<int> divide3(int i, int j)
+{
+return safe_divide(i,j).
+catch_exception<NotDivisible>([](NotDivisible& e)
+    {
+      return make_expected(e.i / e.j);
+    });
+}
+
 int main()
 {
   auto r = safe_divide(1, 0);
-  auto r1 = safe_f(1, 2, 0);
-  auto mr1 = msafe_f(1, 2, 0);
-  auto r2 = safe2_f(1, 2, 0);
-  auto r3 = safe3_f(1, 2, 0);
+  auto r1 = ex_f1(1, 2, 0);
+  auto r2 = ex_f2(1, 2, 0);
+  auto mr2 = mex_f2(1, 2, 0);
+  auto tr2 = then_f2(1, 2, 0);
+  auto r3 = cex_f2(1, 2, 0);
   auto a = divide(1, 0);
   auto a2 = divide2(1, 0);
   return 0;
