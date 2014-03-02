@@ -7,8 +7,7 @@
 #ifndef BOOST_EXPECTED_HPP
 #define BOOST_EXPECTED_HPP
 
-#include <stdexcept>
-
+#include <boost/expected/unexpected.hpp>
 #include <boost/config.hpp>
 #include <boost/exception_ptr.hpp>
 #include <boost/throw_exception.hpp>
@@ -17,6 +16,7 @@
 #include <boost/utility/enable_if.hpp>
 #include <boost/utility/result_of.hpp>
 #include <boost/utility/swap.hpp>
+#include <stdexcept>
 #include <utility>
 #include <initializer_list>
 
@@ -180,28 +180,6 @@ struct expected_traits<std::exception_ptr>
   }
 };
 #endif
-
-template <typename ErrorType=std::exception_ptr>
-struct unexpected {
-  ErrorType error_;
-
-  unexpected(): error_() {};
-  explicit unexpected(ErrorType e):error_(e) {};
-};
-
-template <class E>
-inline unexpected<E> make_unexpected(E ex)
-{
- return unexpected<E>(ex);
-}
-
-template <>
-struct unexpected<std::exception_ptr> {
-  std::exception_ptr error_;
-  unexpected() : error_(std::current_exception()) {}
-  explicit unexpected(std::exception_ptr e) : error_(e) {}
-  template <class E> explicit unexpected(E e) : error_(std::make_exception_ptr(e)) {}
-};
 
 struct in_place_t {};
 BOOST_CONSTEXPR_OR_CONST in_place_t in_place2 = {};
