@@ -1459,6 +1459,11 @@ inline expected<T> make_expected(BOOST_FWD_REF(T) v )
   return expected<T>(std::forward<T>(v));
 }
 
+inline expected<void> make_expected()
+{
+  return expected<void>();
+}
+
 template<typename E, typename T>
 inline expected<T, E> make_expected_error(BOOST_FWD_REF(T) v )
 {
@@ -1649,7 +1654,7 @@ namespace detail
 }
 
 template <class F>
-inline binder_holder<detail::if_valued_binder<F> > valued(F f)
+inline binder_holder<detail::if_valued_binder<F> > if_valued(F f)
 {
   return binder_holder<detail::if_valued_binder<F> >(f);
 }
@@ -1722,7 +1727,7 @@ namespace detail
 }
 
 template <class F>
-inline binder_holder<detail::if_unexpected_binder<F> > unexpect(F f)
+inline binder_holder<detail::if_unexpected_binder<F> > if_unexpected(F f)
 {
   return binder_holder<detail::if_unexpected_binder<F> >(f);
 }
