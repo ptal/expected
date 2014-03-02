@@ -515,15 +515,15 @@ BOOST_AUTO_TEST_CASE(expected_then)
     return sum + 5;
   };
 
-  expected<int> e = fun(true).then(add_five);
+  expected<int> e = fun(true).next(add_five);
   BOOST_CHECK_NO_THROW(e.value());
   BOOST_CHECK_EQUAL(*e, 10);
 
-  e = fun(true).then(add_five).then(add_five);
+  e = fun(true).next(add_five).next(add_five);
   BOOST_CHECK_NO_THROW(e.value());
   BOOST_CHECK_EQUAL(*e, 15);
 
-  e = fun(false).then(add_five).then(add_five);
+  e = fun(false).next(add_five).next(add_five);
   BOOST_CHECK_THROW(e.value(), test_exception);
 }
 
@@ -544,15 +544,15 @@ BOOST_AUTO_TEST_CASE(expected_void_then)
 
   auto do_nothing = [](){};
 
-  expected<void> e = fun(true).then(do_nothing);
+  expected<void> e = fun(true).next(do_nothing);
   BOOST_CHECK_NO_THROW(e.value());
 
-  e = fun(false).then(do_nothing);
+  e = fun(false).next(do_nothing);
   BOOST_CHECK_THROW(e.value(), test_exception);
 
-  BOOST_CHECK_THROW(fun(true).then(launch_except), test_exception);
+  BOOST_CHECK_THROW(fun(true).next(launch_except), test_exception);
 
-  //e = fun(true).then(launch_except);
+  //e = fun(true).next(launch_except);
   //BOOST_CHECK_THROW(e.value(), std::exception);
 }
 #endif
@@ -602,19 +602,19 @@ BOOST_AUTO_TEST_CASE(expected_recover)
   BOOST_CHECK_EQUAL(fun(false).recover(recover_error_silent_failure).valid(), false);
   BOOST_CHECK_THROW(fun(false).recover(recover_error_failure).valid(), test_exception);
 
-  BOOST_CHECK_EQUAL(fun(true).then(add_five).recover(recover_error).value(), 10);
-  BOOST_CHECK_EQUAL(fun(true).then(add_five).recover(recover_error_silent_failure).value(), 10);
-  BOOST_CHECK_EQUAL(fun(true).then(add_five).recover(recover_error_failure).value(), 10);
+  BOOST_CHECK_EQUAL(fun(true).next(add_five).recover(recover_error).value(), 10);
+  BOOST_CHECK_EQUAL(fun(true).next(add_five).recover(recover_error_silent_failure).value(), 10);
+  BOOST_CHECK_EQUAL(fun(true).next(add_five).recover(recover_error_failure).value(), 10);
 
-  BOOST_CHECK_EQUAL(fun(false).recover(recover_error).then(add_five).value(), 5);
-  BOOST_CHECK_EQUAL(fun(false).recover(recover_error).then(add_five).then(add_five).value(), 10);
-  BOOST_CHECK_THROW(fun(false).recover(recover_error_failure).then(add_five).valid(), test_exception);
-  BOOST_CHECK_THROW(fun(false).then(add_five).recover(recover_error_failure).then(add_five).valid(), test_exception);
-  BOOST_CHECK_EQUAL(fun(false).then(add_five).recover(recover_error_silent_failure).then(add_five).valid(), false);
+  BOOST_CHECK_EQUAL(fun(false).recover(recover_error).next(add_five).value(), 5);
+  BOOST_CHECK_EQUAL(fun(false).recover(recover_error).next(add_five).next(add_five).value(), 10);
+  BOOST_CHECK_THROW(fun(false).recover(recover_error_failure).next(add_five).valid(), test_exception);
+  BOOST_CHECK_THROW(fun(false).next(add_five).recover(recover_error_failure).next(add_five).valid(), test_exception);
+  BOOST_CHECK_EQUAL(fun(false).next(add_five).recover(recover_error_silent_failure).next(add_five).valid(), false);
 
-  BOOST_CHECK_THROW(fun(true).then(then_launch).recover(recover_error).value(), test_exception);
-  BOOST_CHECK_THROW(fun(true).then(then_launch).recover(recover_error).then(add_five).value(), test_exception);
-  BOOST_CHECK_THROW(fun(true).then(then_launch).recover(recover_error_failure).valid(), test_exception);
+  BOOST_CHECK_THROW(fun(true).next(then_launch).recover(recover_error).value(), test_exception);
+  BOOST_CHECK_THROW(fun(true).next(then_launch).recover(recover_error).next(add_five).value(), test_exception);
+  BOOST_CHECK_THROW(fun(true).next(then_launch).recover(recover_error_failure).valid(), test_exception);
 }
 
 BOOST_AUTO_TEST_CASE(expected_void_recover)
@@ -657,10 +657,10 @@ BOOST_AUTO_TEST_CASE(expected_void_recover)
   BOOST_CHECK_THROW(fun(false).recover(recover_error_failure).valid(), test_exception);
   BOOST_CHECK_EQUAL(fun(false).recover(recover_error_silent_failure).valid(), false);
 
-  // With a then between.
-  BOOST_CHECK_THROW(fun(false).then(do_nothing).recover(recover_error_failure).valid(), test_exception);
+  // With a next between.
+  BOOST_CHECK_THROW(fun(false).next(do_nothing).recover(recover_error_failure).valid(), test_exception);
 
-  BOOST_CHECK_NO_THROW(fun(false).then(then_launch).recover(recover_error).value());
+  BOOST_CHECK_NO_THROW(fun(false).next(then_launch).recover(recover_error).value());
 }
 #endif
 

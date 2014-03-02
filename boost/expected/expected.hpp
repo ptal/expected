@@ -521,6 +521,30 @@ template <typename T, typename E>
 template <typename ValueType, typename ErrorType=std::exception_ptr>
 class expected;
 
+
+
+template <class H>
+class binder_holder {
+public:
+  typedef H holder_type;
+  typedef typename H::funct_type funct_type;
+  template <class E>
+  struct bind {
+    typedef typename H::template bind<E>::type type;
+  };
+
+  explicit binder_holder(funct_type f): fct_(f) {};
+
+  template <class E>
+  typename H::template bind<E>::type operator()(E const&) {
+     return typename H::template bind<E>::type(fct_);
+  }
+private:
+  funct_type fct_;
+};
+
+
+
 template <typename T>
 struct is_expected : false_type {};
 template <typename T, typename E>
@@ -580,6 +604,12 @@ private:
   BOOST_COPYABLE_AND_MOVABLE(this_type)
 
 public:
+
+  template <class T>
+  struct bind {
+    typedef expected<T, error_type> type;
+  };
+
   // Constructors/Destructors/Assignments
 
   BOOST_CONSTEXPR expected(const value_type& v
@@ -888,7 +918,7 @@ public:
 
   template <typename F>
   expected<void, error_type>
-  then(BOOST_RV_REF(F) f,
+  next(BOOST_RV_REF(F) f,
     REQUIRES(boost::is_same<typename result_of<F(value_type)>::type, void>::value)) const
   {
     typedef expected<void, error_type> result_type;
@@ -902,7 +932,7 @@ public:
 
   template <typename F>
   expected<typename result_of<F(value_type)>::type, error_type>
-  then(BOOST_RV_REF(F) f,
+  next(BOOST_RV_REF(F) f,
     REQUIRES(!boost::is_same<typename result_of<F(value_type)>::type, void>::value
         && !boost::is_expected<typename result_of<F(value_type)>::type>::value
         )) const
@@ -917,7 +947,7 @@ public:
 
   template <typename F>
   typename result_of<F(value_type)>::type
-  then(BOOST_RV_REF(F) f,
+  next(BOOST_RV_REF(F) f,
     REQUIRES(!boost::is_same<typename result_of<F(value_type)>::type, void>::value
         && boost::is_expected<typename result_of<F(value_type)>::type>::value
         )
@@ -929,6 +959,70 @@ public:
         return f(value());
     }
     return get_unexpected();
+  }
+
+  template <typename F>
+  expected<void, error_type>
+  then(BOOST_RV_REF(F) f,
+    REQUIRES(boost::is_same<typename result_of<F(expected)>::type, void>::value)) const
+  {
+    typedef expected<void, error_type> result_type;
+    f(boost::move(*this));
+    return result_type();
+  }
+
+  template <typename F>
+  expected<typename result_of<F(expected)>::type, error_type>
+  then(BOOST_RV_REF(F) f,
+    REQUIRES(!boost::is_same<typename result_of<F(expected)>::type, void>::value
+        && !boost::is_expected<typename result_of<F(expected)>::type>::value
+        )) const
+  {
+    typedef expected<typename result_of<F(value_type)>::type, error_type> result_type;
+    return result_type(f(boost::move(*this)));
+  }
+
+  template <typename F>
+  typename result_of<F(expected)>::type
+  then(BOOST_RV_REF(F) f,
+    REQUIRES(!boost::is_same<typename result_of<F(expected)>::type, void>::value
+        && boost::is_expected<typename result_of<F(expected)>::type>::value
+        )
+    ) const
+  {
+    return f(boost::move(*this));
+  }
+
+  template <typename H>
+  expected<void, error_type>
+  then(BOOST_RV_REF(binder_holder<H>) f,
+    REQUIRES(boost::is_same<typename result_of<typename H::template bind<expected>::type(expected)>::type, void>::value)) const
+  {
+    typedef expected<void, error_type> result_type;
+    f(*this)(boost::move(*this));
+    return result_type();
+  }
+
+  template <typename H>
+  expected<typename result_of<typename H::template bind<expected>::type(expected)>::type, error_type>
+  then(BOOST_RV_REF(binder_holder<H>) f,
+    REQUIRES(!boost::is_same<typename result_of<typename H::template bind<expected>::type(expected)>::type, void>::value
+        && !boost::is_expected<typename result_of<typename H::template bind<expected>::type(expected)>::type>::value
+        )) const
+  {
+    typedef expected<typename result_of<typename H::template bind<expected>::type(value_type)>::type, error_type> result_type;
+    return result_type(f(*this)(boost::move(*this)));
+  }
+
+  template <typename H>
+  typename result_of<typename H::template bind<expected>::type(expected)>::type
+  then(BOOST_RV_REF(binder_holder<H>) f,
+    REQUIRES(!boost::is_same<typename result_of<typename H::template bind<expected>::type(expected)>::type, void>::value
+        && boost::is_expected<typename result_of<typename H::template bind<expected>::type(expected)>::type>::value
+        )
+    ) const
+  {
+    return f(*this)(boost::move(*this));
   }
 
   template <typename F>
@@ -1032,6 +1126,11 @@ private:
   BOOST_COPYABLE_AND_MOVABLE(this_type)
 
 public:
+
+  template <class T>
+  struct bind {
+    typedef expected<T, error_type> type;
+  };
 
   // Constructors/Destructors/Assignments
 
@@ -1170,7 +1269,7 @@ public:
   // Utilities
 
   template <typename F>
-  expected<void, error_type> then(BOOST_RV_REF(F) f,
+  expected<void, error_type> next(BOOST_RV_REF(F) f,
     REQUIRES(boost::is_same<typename result_of<F()>::type, void>::value)) const
   {
     typedef expected<void, error_type> result_type;
@@ -1184,7 +1283,7 @@ public:
 
   template <typename F>
   expected<typename result_of<F()>::type, error_type>
-  then(BOOST_RV_REF(F) f,
+  next(BOOST_RV_REF(F) f,
     REQUIRES(!boost::is_same<typename result_of<F()>::type, void>::value)) const
   {
     typedef expected<typename result_of<F()>::type, error_type> result_type;
@@ -1194,6 +1293,71 @@ public:
     }
     return get_unexpected();
   }
+
+  template <typename F>
+  expected<void, error_type>
+  then(BOOST_RV_REF(F) f,
+    REQUIRES(boost::is_same<typename result_of<F(expected)>::type, void>::value)) const
+  {
+    typedef expected<void, error_type> result_type;
+    f(boost::move(*this));
+    return result_type();
+  }
+
+  template <typename F>
+  expected<typename result_of<F(expected)>::type, error_type>
+  then(BOOST_RV_REF(F) f,
+    REQUIRES(!boost::is_same<typename result_of<F(expected)>::type, void>::value
+        && !boost::is_expected<typename result_of<F(expected)>::type>::value
+        )) const
+  {
+    typedef expected<typename result_of<F(expected)>::type, error_type> result_type;
+    return result_type(f(boost::move(*this)));
+  }
+
+  template <typename F>
+  typename result_of<F(expected)>::type
+  then(BOOST_RV_REF(F) f,
+    REQUIRES(!boost::is_same<typename result_of<F(expected)>::type, void>::value
+        && boost::is_expected<typename result_of<F(expected)>::type>::value
+        )
+    ) const
+  {
+    return f(boost::move(*this));
+  }
+
+  template <typename H>
+  expected<void, error_type>
+  then(BOOST_RV_REF(binder_holder<H>) f,
+    REQUIRES(boost::is_same<typename result_of<typename H::template bind<expected>::type(expected)>::type, void>::value)) const
+  {
+    typedef expected<void, error_type> result_type;
+    f(*this)(boost::move(*this));
+    return result_type();
+  }
+
+  template <typename H>
+  expected<typename result_of<typename H::template bind<expected>::type(expected)>::type, error_type>
+  then(BOOST_RV_REF(binder_holder<H>) f,
+    REQUIRES(!boost::is_same<typename result_of<typename H::template bind<expected>::type(expected)>::type, void>::value
+        && !boost::is_expected<typename result_of<typename H::template bind<expected>::type(expected)>::type>::value
+        )) const
+  {
+    typedef expected<typename result_of<typename H::template bind<expected>::type(expected)>::type, error_type> result_type;
+    return result_type(f(*this)(boost::move(*this)));
+  }
+
+  template <typename H>
+  typename result_of<typename H::template bind<expected>::type(expected)>::type
+  then(BOOST_RV_REF(binder_holder<H>) f,
+    REQUIRES(!boost::is_same<typename result_of<typename H::template bind<expected>::type(expected)>::type, void>::value
+        && boost::is_expected<typename result_of<typename H::template bind<expected>::type(expected)>::type>::value
+        )
+    ) const
+  {
+    return f(*this)(boost::move(*this));
+  }
+
 
   template <typename F>
   this_type recover(BOOST_RV_REF(F) f,
@@ -1387,11 +1551,189 @@ make_expected_from_call(F funct
   }
 }
 
+namespace detail
+{
+
+  template <class E, class F, class V>
+  class if_valued
+  {
+    F fct_;
+  public:
+    explicit if_valued(F f): fct_(f)
+    {};
+
+    typedef typename E::value_type value_type;
+    typedef typename E::template bind<typename result_of<F(value_type)>::type>::type result_type;
+
+    result_type operator()(E e)
+    {
+      if (e.valid())
+      {
+        return result_type(fct_(*e));
+      }
+      else
+      {
+        return result_type(e.get_unexpected());
+      }
+    }
+  };
+
+  template <class E, class F, class R>
+  class if_valued2
+  {
+    F fct_;
+  public:
+    explicit if_valued2(F f): fct_(f)
+    {};
+
+    typedef void value_type;
+    typedef typename E::template bind<R>::type result_type;
+
+    result_type operator()(E e)
+    {
+      if (e.valid())
+      {
+        return result_type(fct_());
+      }
+      else
+      {
+        return result_type(e.get_unexpected());
+      }
+    }
+  };
+
+  template <class E, class F>
+  class if_valued2<E,F,void>
+  {
+    F fct_;
+  public:
+    explicit if_valued2(F f): fct_(f)
+    {};
+
+    typedef void value_type;
+    typedef typename E::template bind<void>::type result_type;
+
+    result_type operator()(E e)
+    {
+      if (e.valid())
+      {
+        fct_();
+        return result_type();
+      }
+      else
+      {
+        return result_type(e.get_unexpected());
+      }
+    }
+  };
+
+  template <class E, class F>
+  struct if_valued<E,F,void> : if_valued2<E,F,typename result_of<F()>::type>
+  {
+
+    explicit if_valued(F f): if_valued2<E,F,typename result_of<F()>::type>(f)
+    {};
+
+  };
+
+  template <class F>
+  struct if_valued_binder
+  {
+    typedef F funct_type;
+    template <class E>
+    struct bind
+    {
+      typedef if_valued<E, funct_type, typename E::value_type> type;
+    };
+  };
+}
+
+template <class F>
+inline binder_holder<detail::if_valued_binder<F> > valued(F f)
+{
+  return binder_holder<detail::if_valued_binder<F> >(f);
+}
+
+namespace detail
+{
+
+  template <class F>
+  class ident_t
+  {
+    F fct_;
+  public:
+
+    explicit ident_t(F f): fct_(f)
+    {};
+
+    typedef typename result_of<F()>::type result_type;
+
+    template <class G>
+    result_type operator()(G e)
+    {
+      return fct_();
+    }
+  };
+}
+
+template <class F>
+inline detail::ident_t<F> ident(F f)
+{
+  return detail::ident_t<F>(f);
+}
+
+namespace detail
+{
+
+  template <class E, class F, class V>
+  class if_unexpected
+  {
+    F fct_;
+  public:
+    typedef F funct_type;
+    typedef E result_type;
+
+    explicit if_unexpected(funct_type f): fct_(f)
+    {};
+
+    E operator()(E e)
+    {
+      if (! e.valid())
+      {
+        return result_type(fct_(e.error()));
+      }
+      else
+      {
+        return boost::move(e);
+      }
+    }
+  };
+
+  template <class F>
+  struct if_unexpected_binder
+  {
+    typedef F funct_type;
+    template <class E>
+    struct bind
+    {
+      typedef if_unexpected<E, funct_type, typename E::value_type> type;
+    };
+  };
+}
+
+template <class F>
+inline binder_holder<detail::if_unexpected_binder<F> > unexpect(F f)
+{
+  return binder_holder<detail::if_unexpected_binder<F> >(f);
+}
 } // namespace boost
 
 #if defined BOOST_NO_CXX11_VARIADIC_TEMPLATES
   #undef MAKE_BOOST_FWD_REF_ARG
   #undef MAKE_BOOST_FWD_PARAM
 #endif
+
+
+
 
 #endif // BOOST_EXPECTED_HPP

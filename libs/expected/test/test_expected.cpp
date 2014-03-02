@@ -585,18 +585,18 @@ BOOST_AUTO_TEST_CASE(expected_next)
     throw test_exception();
   };
 
-  expected<int> e = fun(true).then(add_five);
+  expected<int> e = fun(true).next(add_five);
   BOOST_CHECK_NO_THROW(e.value());
   BOOST_CHECK_EQUAL(*e, 10);
 
-  e = fun(true).then(add_five).then(add_five);
+  e = fun(true).next(add_five).next(add_five);
   BOOST_CHECK_NO_THROW(e.value());
   BOOST_CHECK_EQUAL(*e, 15);
 
-  e = fun(false).then(add_five).then(add_five);
+  e = fun(false).next(add_five).next(add_five);
   BOOST_CHECK_THROW(e.value(), test_exception);
 
-  BOOST_CHECK_THROW(fun(true).then(launch_except), test_exception);
+  BOOST_CHECK_THROW(fun(true).next(launch_except), test_exception);
 
 }
 
@@ -617,13 +617,104 @@ BOOST_AUTO_TEST_CASE(expected_void_next)
 
   auto do_nothing = [](){};
 
-  expected<void> e = fun(true).then(do_nothing);
+  expected<void> e = fun(true).next(do_nothing);
   BOOST_CHECK_NO_THROW(e.value());
 
-  e = fun(false).then(do_nothing);
+  e = fun(false).next(do_nothing);
   BOOST_CHECK_THROW(e.value(), test_exception);
 
-  BOOST_CHECK_THROW(fun(true).then(launch_except), test_exception);
+  BOOST_CHECK_THROW(fun(true).next(launch_except), test_exception);
+
+}
+
+BOOST_AUTO_TEST_SUITE_END()
+
+
+////////////////////////////////////
+BOOST_AUTO_TEST_SUITE(expected_then)
+
+BOOST_AUTO_TEST_CASE(expected_non_void_then_valued)
+{
+  auto fun = [](bool b) -> expected<int>
+  {
+    if(b)
+      return expected<int>(5);
+    else
+      return make_expected_from_error<int>(std::make_exception_ptr(test_exception()));
+  };
+
+  auto add_five = [](int sum) -> int
+  {
+    return sum + 5;
+  };
+  auto six = []() -> int
+  {
+    return 6;
+  };
+
+  auto pair = [](int a) -> bool
+  {
+    return (a%2)==0;
+  };
+
+  auto launch_except = [](int sum) -> int
+  {
+    throw test_exception();
+  };
+
+  expected<int> e = fun(true).then(valued(add_five));
+  BOOST_CHECK_NO_THROW(e.value());
+  BOOST_CHECK_EQUAL(*e, 10);
+
+  e = fun(true).then(valued(ident(six)));
+  BOOST_CHECK_NO_THROW(e.value());
+  BOOST_CHECK_EQUAL(*e, 6);
+
+  e = fun(false).then(unexpect(ident(six)));
+  BOOST_CHECK_NO_THROW(e.value());
+  BOOST_CHECK_EQUAL(*e, 6);
+
+  expected<bool> e1 = fun(true).then(valued(pair));
+  BOOST_CHECK_NO_THROW(e1.value());
+  BOOST_CHECK_EQUAL(*e1, false);
+
+
+
+  e = fun(true).then(valued(add_five)).then(valued(add_five));
+  BOOST_CHECK_NO_THROW(e.value());
+  BOOST_CHECK_EQUAL(*e, 15);
+
+  e = fun(false).then(valued(add_five)).then(valued(add_five));
+  BOOST_CHECK_THROW(e.value(), test_exception);
+
+  BOOST_CHECK_THROW(fun(true).then(valued(launch_except)), test_exception);
+
+}
+
+BOOST_AUTO_TEST_CASE(expected_void_then_valued)
+{
+  auto fun = [](bool b)
+  {
+    if(b)
+      return expected<void>();
+    else
+      return make_expected_from_error<void>(std::make_exception_ptr(test_exception()));
+  };
+
+  auto launch_except = []()
+  {
+    throw test_exception();
+  };
+
+  auto do_nothing = [](){};
+
+  expected<void> e = fun(true).then(valued(do_nothing));
+  BOOST_CHECK_NO_THROW(e.value());
+
+  e = fun(false).then(valued(do_nothing));
+  BOOST_CHECK_THROW(e.value(), test_exception);
+
+  BOOST_CHECK_THROW(fun(true).then(valued(launch_except)), test_exception);
 
 }
 
@@ -672,16 +763,16 @@ BOOST_AUTO_TEST_CASE(expected_recover)
   BOOST_CHECK_EQUAL(fun(false).recover(recover_error_silent_failure).valid(), false);
   BOOST_CHECK_EQUAL(fun(false).recover(recover_error_failure).valid(), false);
 
-  BOOST_CHECK_EQUAL(fun(true).then(add_five).value(), 10);
-  BOOST_CHECK_EQUAL(fun(true).then(add_five).recover(recover_error).value(), 10);
-  BOOST_CHECK_EQUAL(fun(true).then(add_five).recover(recover_error_silent_failure).value(), 10);
-  BOOST_CHECK_EQUAL(fun(true).then(add_five).recover(recover_error_failure).value(), 10);
+  BOOST_CHECK_EQUAL(fun(true).next(add_five).value(), 10);
+  BOOST_CHECK_EQUAL(fun(true).next(add_five).recover(recover_error).value(), 10);
+  BOOST_CHECK_EQUAL(fun(true).next(add_five).recover(recover_error_silent_failure).value(), 10);
+  BOOST_CHECK_EQUAL(fun(true).next(add_five).recover(recover_error_failure).value(), 10);
 
-  BOOST_CHECK_EQUAL(fun(false).recover(recover_error).then(add_five).value(), 5);
-  BOOST_CHECK_EQUAL(fun(false).recover(recover_error).then(add_five).then(add_five).value(), 10);
-  BOOST_CHECK_EQUAL(fun(false).recover(recover_error_failure).then(add_five).valid(), false);
-  BOOST_CHECK_EQUAL(fun(false).then(add_five).recover(recover_error_failure).then(add_five).valid(), false);
-  BOOST_CHECK_EQUAL(fun(false).then(add_five).recover(recover_error_silent_failure).then(add_five).valid(), false);
+  BOOST_CHECK_EQUAL(fun(false).recover(recover_error).next(add_five).value(), 5);
+  BOOST_CHECK_EQUAL(fun(false).recover(recover_error).next(add_five).next(add_five).value(), 10);
+  BOOST_CHECK_EQUAL(fun(false).recover(recover_error_failure).next(add_five).valid(), false);
+  BOOST_CHECK_EQUAL(fun(false).next(add_five).recover(recover_error_failure).next(add_five).valid(), false);
+  BOOST_CHECK_EQUAL(fun(false).next(add_five).recover(recover_error_silent_failure).next(add_five).valid(), false);
 
   BOOST_CHECK_THROW(fun(false).recover(recover_error_throws), test_exception);
 
@@ -722,8 +813,8 @@ BOOST_AUTO_TEST_CASE(expected_void_recover)
   BOOST_CHECK_THROW(fun(false).recover(recover_error_failure), test_exception);
   BOOST_CHECK_EQUAL(fun(false).recover(recover_error_silent_failure).valid(), false);
 
-  // With a then between.
-  BOOST_CHECK_THROW(fun(false).then(do_nothing).recover(recover_error_failure), test_exception);
+  // With a next between.
+  BOOST_CHECK_THROW(fun(false).next(do_nothing).recover(recover_error_failure), test_exception);
 
 }
 
