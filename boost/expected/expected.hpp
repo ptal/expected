@@ -502,7 +502,7 @@ class expected;
 
 
 template <class H>
-class binder_holder {
+class adaptor_holder {
 public:
   typedef H holder_type;
   typedef typename H::funct_type funct_type;
@@ -511,7 +511,7 @@ public:
     typedef typename H::template bind<E>::type type;
   };
 
-  explicit binder_holder(funct_type f): fct_(f) {};
+  explicit adaptor_holder(funct_type f): fct_(f) {};
 
   template <class E>
   typename H::template bind<E>::type operator()(E const&) {
@@ -973,7 +973,7 @@ public:
 
   template <typename H>
   expected<void, error_type>
-  then(BOOST_RV_REF(binder_holder<H>) f,
+  then(BOOST_RV_REF(adaptor_holder<H>) f,
     REQUIRES(boost::is_same<typename result_of<typename H::template bind<expected>::type(expected)>::type, void>::value)) const
   {
     typedef expected<void, error_type> result_type;
@@ -983,7 +983,7 @@ public:
 
   template <typename H>
   expected<typename result_of<typename H::template bind<expected>::type(expected)>::type, error_type>
-  then(BOOST_RV_REF(binder_holder<H>) f,
+  then(BOOST_RV_REF(adaptor_holder<H>) f,
     REQUIRES(!boost::is_same<typename result_of<typename H::template bind<expected>::type(expected)>::type, void>::value
         && !boost::is_expected<typename result_of<typename H::template bind<expected>::type(expected)>::type>::value
         )) const
@@ -994,7 +994,7 @@ public:
 
   template <typename H>
   typename result_of<typename H::template bind<expected>::type(expected)>::type
-  then(BOOST_RV_REF(binder_holder<H>) f,
+  then(BOOST_RV_REF(adaptor_holder<H>) f,
     REQUIRES(!boost::is_same<typename result_of<typename H::template bind<expected>::type(expected)>::type, void>::value
         && boost::is_expected<typename result_of<typename H::template bind<expected>::type(expected)>::type>::value
         )
@@ -1306,7 +1306,7 @@ public:
 
   template <typename H>
   expected<void, error_type>
-  then(BOOST_RV_REF(binder_holder<H>) f,
+  then(BOOST_RV_REF(adaptor_holder<H>) f,
     REQUIRES(boost::is_same<typename result_of<typename H::template bind<expected>::type(expected)>::type, void>::value)) const
   {
     typedef expected<void, error_type> result_type;
@@ -1316,7 +1316,7 @@ public:
 
   template <typename H>
   expected<typename result_of<typename H::template bind<expected>::type(expected)>::type, error_type>
-  then(BOOST_RV_REF(binder_holder<H>) f,
+  then(BOOST_RV_REF(adaptor_holder<H>) f,
     REQUIRES(!boost::is_same<typename result_of<typename H::template bind<expected>::type(expected)>::type, void>::value
         && !boost::is_expected<typename result_of<typename H::template bind<expected>::type(expected)>::type>::value
         )) const
@@ -1327,7 +1327,7 @@ public:
 
   template <typename H>
   typename result_of<typename H::template bind<expected>::type(expected)>::type
-  then(BOOST_RV_REF(binder_holder<H>) f,
+  then(BOOST_RV_REF(adaptor_holder<H>) f,
     REQUIRES(!boost::is_same<typename result_of<typename H::template bind<expected>::type(expected)>::type, void>::value
         && boost::is_expected<typename result_of<typename H::template bind<expected>::type(expected)>::type>::value
         )
@@ -1620,7 +1620,7 @@ namespace detail
   };
 
   template <class F>
-  struct if_valued_binder
+  struct if_valued_adaptor
   {
     typedef F funct_type;
     template <class E>
@@ -1632,9 +1632,9 @@ namespace detail
 }
 
 template <class F>
-inline binder_holder<detail::if_valued_binder<F> > if_valued(F f)
+inline adaptor_holder<detail::if_valued_adaptor<F> > if_valued(F f)
 {
-  return binder_holder<detail::if_valued_binder<F> >(f);
+  return adaptor_holder<detail::if_valued_adaptor<F> >(f);
 }
 
 namespace detail
@@ -1693,7 +1693,7 @@ namespace detail
   };
 
   template <class F>
-  struct if_unexpected_binder
+  struct if_unexpected_adaptor
   {
     typedef F funct_type;
     template <class E>
@@ -1705,9 +1705,9 @@ namespace detail
 }
 
 template <class F>
-inline binder_holder<detail::if_unexpected_binder<F> > if_unexpected(F f)
+inline adaptor_holder<detail::if_unexpected_adaptor<F> > if_unexpected(F f)
 {
-  return binder_holder<detail::if_unexpected_binder<F> >(f);
+  return adaptor_holder<detail::if_unexpected_adaptor<F> >(f);
 }
 } // namespace boost
 
