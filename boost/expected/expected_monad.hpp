@@ -18,6 +18,29 @@ namespace boost
   namespace monads
   {
 
+    template <class T>
+    struct unexpected_type;
+
+    template <class T>
+    using unexpected_type_t = typename unexpected_type<T>::type;
+
+    template <class T, class E>
+    struct unexpected_type<expected<T,E> > {
+      using type = unexpected<E>;
+    };
+
+    template <class T, class E>
+    unexpected<E> get_unexpected(expected<T, E> const& e) { return e.get_unexpected(); }
+
+#if 0
+    template <class T>
+    struct unexpected_type<optional<T> > {
+      using type = nullopt_t;
+    };
+    template <class T>
+    nullopt_t get_unexpected(optional<T> const& ) { return nullopt; }
+#endif
+
     template <class X, class E>
     struct functor_traits<expected<X, E>>
     {
@@ -34,15 +57,15 @@ namespace boost
       }
 
       template< class M >
-      static constexpr E error( const M& m )
+      static constexpr unexpected_type_t<M> the_unexpected( const M& m )
       {
-        return m.error();
+        return get_unexpected(m);
       }
 
       template< class M1, class ...Ms >
-      static constexpr E error( const M1& m1, const Ms& ...ms )
+      static constexpr unexpected_type_t<M1> the_unexpected( const M1& m1, const Ms& ...ms )
       {
-        return (bool)m1 ? error( ms... ) : m1.error();
+        return (bool)m1 ? the_unexpected( ms... ) : get_unexpected(m1) ;
       }
 
       template <class F, class M0, class ...M,
@@ -52,7 +75,7 @@ namespace boost
         typedef typename bind<decay_t<M0>, FR>::type expected_type;
         return each( std::forward<M0>(m0), std::forward<M>(m)... )
         ? expected_type( std::forward<F>(f)( *std::forward<M0>(m0), *std::forward<M>(m)... ) )
-        : make_unexpected(error( std::forward<M0>(m0), std::forward<M>(m)... ))
+        : the_unexpected( std::forward<M0>(m0), std::forward<M>(m)... )
         ;
       }
     };
@@ -94,14 +117,14 @@ namespace boost
           f(*m);
           return result_type();
         }
-        return m.get_unexpected();
+        return get_unexpected(m);
       }
 
       template <class M, class F, class FR = decltype( std::declval<F>()( *std::declval<M>() ) )>
       static auto
       when_valued(M&& m, F&& f,
           REQUIRES((! boost::is_same<FR, void>::value
-              &&     ! boost::is_expected<FR>::value)
+              &&    ! boost::is_expected<FR>::value)
       )) -> typename bind<decay_t<M>, FR>::type
       {
         typedef typename bind<decay_t<M>, FR>::type result_type;
@@ -109,7 +132,7 @@ namespace boost
         {
             return result_type(f(*m));
         }
-        return m.get_unexpected();
+        return get_unexpected(m);
       }
 
       template <class M, class F, class FR = decltype( std::declval<F>()( *std::declval<M>() ) )>
@@ -122,7 +145,7 @@ namespace boost
         {
             return f(*m);
         }
-        return m.get_unexpected();
+        return get_unexpected(m);
       }
 #endif
     };
