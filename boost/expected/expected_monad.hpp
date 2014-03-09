@@ -17,6 +17,23 @@ namespace boost
 {
   namespace monads
   {
+    namespace category
+    {
+      struct expected_like {};
+    }
+
+    template <class T, class E>
+    struct functor_category<expected<T,E>> {
+      typedef category::expected_like type;
+    };
+    template <class T, class E>
+    struct monad_category<expected<T,E>> {
+      typedef category::expected_like type;
+    };
+    template <class T, class E>
+    struct monad_error_category<expected<T,E>> {
+      typedef category::expected_like type;
+    };
 
     template <class T>
     struct unexpected_type;
@@ -42,7 +59,7 @@ namespace boost
 #endif
 
     template <class X, class E>
-    struct functor_traits<expected<X, E>>
+    struct functor_traits<category::expected_like>
     {
       template< class M >
       static constexpr bool each( const M& m )
