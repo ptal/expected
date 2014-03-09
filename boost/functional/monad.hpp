@@ -20,6 +20,30 @@ namespace boost
   {
 
     template <class M>
+    struct functor_category {
+      typedef M type;
+    };
+
+    template <class M>
+    using functor_category_t = typename functor_category<M>::type;
+
+    template <class M, class T>
+    struct bind
+    {
+      typedef typename M::template bind<T>::type type;
+    };
+
+    template <class Mo>
+    struct functor_traits {
+
+      template <class F, class M0, class ...M, class FR = decltype( std::declval<F>()(*std::declval<M0>(), *std::declval<M>()...) )>
+      static auto
+      when_all_valued(F&& f, M0&& m0, M&& ...ms) -> typename bind<decay_t<M0>, FR>::type
+      {
+        return M0::when_all_valued(std::forward<F>(f), std::forward<M0>(m0), std::forward<M>(ms)...);
+      }
+    };
+    template <class M>
     struct monad_category {
       typedef M type;
     };
@@ -30,23 +54,17 @@ namespace boost
     template <class Mo>
     struct monad_traits {
 
-      template <class M, class T>
-      struct bind
-      {
-        typedef typename M::template bind<T>::type type;
-      };
+//      template <class M>
+//      struct value_type
+//      {
+//        typedef typename M::value_type type;
+//      };
 
-      template <class M>
-      struct value_type
-      {
-        typedef typename M::value_type type;
-      };
-
-      template <class M, class F>
-      struct when_ready_result
-      {
-        typedef typename bind<M, typename std::result_of<F(M)>::type>::type type;
-      };
+//      template <class M, class F>
+//      struct when_ready_result
+//      {
+//        typedef typename bind<M, typename std::result_of<F(M)>::type>::type type;
+//      };
 
 //      template <class M, class F>
 //      struct when_valued_result
@@ -54,23 +72,32 @@ namespace boost
 //        typedef typename bind<M, typename std::result_of<F(typename value_type<M>::type)>::type>::type type;
 //      };
 //
-//      template <class M, class T>
-//      static M make(T&& v)
-//      {
-//        return M(std::forward<T>(v));
-//      }
-//
-//      template <class M, class F>
-//      static typename when_ready_result<M, F>::type when_ready(M&& m, F&& f)
-//      {
-//        m.when_ready(std::forward<F>(f));
-//      }
-//
-//      template <class M, class F>
-//      static typename when_valued_result<M, F>::type when_valued(M&& m, F&& f)
-//      {
-//        m.when_valued(std::forward<F>(f));
-//      }
+      template <class M, class T>
+      static M make(T&& v)
+      {
+        return M(std::forward<T>(v));
+      }
+
+      template <class M, class F>
+      static auto
+      when_ready(M&& m, F&& f) -> decltype(m.then(std::forward<F>(f)))
+      {
+        m.when_ready(std::forward<F>(f));
+      }
+
+      template <class M, class F>
+      static auto
+      when_valued(M&& m, F&& f) -> decltype(m.next(std::forward<F>(f)))
+      {
+        return m.when_valued(std::forward<F>(f));
+      }
+
+      template <class F, class M0, class ...M, class FR = decltype( std::declval<F>()(*std::declval<M0>(), *std::declval<M>()...) )>
+      static auto
+      when_all_valued(F&& f, M0&& m0, M&& ...ms) -> typename bind<decay_t<M0>, FR>::type
+      {
+        return M0::when_all_valued(std::forward<F>(f), std::forward<M0>(m0), std::forward<M>(ms)...);
+      }
     };
 
     template <class M, class T, class Traits = monad_traits<monad_category_t<decay_t<M>> > >
@@ -86,7 +113,6 @@ namespace boost
     }
 
     template <class M, class F, class Traits = monad_traits<monad_category_t<decay_t<M> > > >
-    //typename Traits::template when_ready_result<decay_t<M>, F>::type
     auto
     when_ready(M&& m, F&& f) -> decltype(Traits::when_ready(std::forward<M>(m), std::forward<F>(f)))
     {
@@ -100,7 +126,7 @@ namespace boost
       return Traits::when_valued(std::forward<M>(m), std::forward<F>(f));
     }
 
-    template <class F, class M0, class ...M, class Traits = monad_traits<monad_category_t<decay_t<M0> > > >
+    template <class F, class M0, class ...M, class Traits = functor_traits<functor_category_t<decay_t<M0> > > >
     auto
     when_all_valued(F&& f, M0&& m0, M&& ...m)
     -> decltype(Traits::when_all_valued(std::forward<F>(f), std::forward<M0>(m0), std::forward<M>(m)...))

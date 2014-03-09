@@ -19,33 +19,42 @@ namespace boost
   namespace monads
   {
 
+    template <class X, class E>
+    struct functor_traits<expected<X,E>> {
+      template< class M >
+      static constexpr bool each( const M& m ) {
+          return (bool)m;
+      }
+
+      template< class M1, class ...Ms >
+      static constexpr bool each( const M1& m1, const Ms& ...ms ) {
+          return (bool)m1 && each( ms... );
+      }
+
+      template< class M >
+      static constexpr E error( const M& m ) {
+          return m.error();
+      }
+
+      template< class M1, class ...Ms >
+      static constexpr E error( const M1& m1, const Ms& ...ms ) {
+          return (bool)m1 ? error( ms... ) : m1.error();
+      }
+
+      template <class F, class M0, class ...M, class FR = decltype( std::declval<F>()(*std::declval<M0>(), *std::declval<M>()...) )>
+      static auto
+      when_all_valued(F&& f, M0&& m0, M&& ...m) -> typename bind<decay_t<M0>, FR>::type
+      {
+        typedef typename bind<decay_t<M0>, FR>::type expected_type;
+        return each( std::forward<M0>(m0), std::forward<M>(m)... )
+               ? expected_type( std::forward<F>(f)( *std::forward<M0>(m0), *std::forward<M>(m)... ) )
+               : make_unexpected(error( std::forward<M0>(m0), std::forward<M>(m)... ))
+               ;
+      }
+    };
 
     template <class X, class E>
     struct monad_traits<expected<X,E>> {
-
-      template <class M, class T>
-      struct bind
-      {
-        typedef typename M::template bind<T>::type type;
-      };
-
-      template <class M>
-      struct value_type
-      {
-        typedef typename M::value_type type;
-      };
-//
-//      template <class M, class F>
-//      struct when_ready_result
-//      {
-//        typedef typename bind<M, typename std::result_of<F(M)>::type>::type type;
-//      };
-//
-//      template <class M, class F>
-//      struct when_valued_result
-//      {
-//        typedef typename bind<M, typename std::result_of<F(typename value_type<M>::type)>::type>::type type;
-//      };
 
       template <class M, class T>
       static M make(T&& v)
@@ -65,27 +74,6 @@ namespace boost
       when_valued(M&& m, F&& f) -> decltype(m.next(std::forward<F>(f)))
       {
         return m.next(std::forward<F>(f));
-      }
-
-      template< class M >
-      static constexpr bool each( const M& m ) {
-          return (bool)m;
-      }
-
-      template< class M1, class ...Ms >
-      static constexpr bool each( const M1& m1, const Ms& ...ms ) {
-          return (bool)m1 && each( ms... );
-      }
-
-      template <class F, class M0, class ...M, class FR = decltype( std::declval<F>()(*std::declval<M0>(), *std::declval<M>()...) )>
-      static auto
-      when_all_valued(F&& f, M0&& m0, M&& ...m) -> typename bind<decay_t<M0>, FR>::type
-      {
-        typedef typename bind<decay_t<M0>, FR>::type expected_type;
-        return each( forward<M0>(m0), forward<M>(m)... )
-               ? expected_type( forward<F>(f)( *forward<M0>(m0), *forward<M>(m)... ) )
-               : make_unexpected(exception_ptr())
-               ;
       }
 
     };
