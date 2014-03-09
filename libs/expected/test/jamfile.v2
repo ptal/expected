@@ -72,3 +72,8 @@ test-suite "Expected"
       [ run num_get_3.cpp ]
       [ run get_interval.cpp ]
     ;
+
+test-suite Monads
+    : 
+      [ run safe_divide_monad.cpp ]
+    ;

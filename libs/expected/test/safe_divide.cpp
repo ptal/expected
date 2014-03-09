@@ -23,23 +23,26 @@ struct NotDivisible: public std::exception
   int i, j;
 };
 
-#ifdef exception_based
-int safe_divide(int i, int j)
+namespace exception_based
 {
-  if (j==0) throw (DivideByZero());
-  else return i/j;
-}
+  int safe_divide(int i, int j)
+  {
+    if (j == 0)
+      throw (DivideByZero());
+    else
+      return i / j;
+  }
 
-int f1(int i, int j, int k)
-{
-  return i + safe_divide(j,k);
-}
+  int f1(int i, int j, int k)
+  {
+    return i + safe_divide(j, k);
+  }
 
-int f2(int i, int j, int k)
-{
-  return safe_divide(i,k) + safe_divide(j,k);
+  int f2(int i, int j, int k)
+  {
+    return safe_divide(i, k) + safe_divide(j, k);
+  }
 }
-#endif
 
 boost::expected<int> safe_divide(int i, int j)
 {
@@ -139,23 +142,24 @@ boost::expected<int> cex_f2(int i, int j, int k)
   return safe_divide(i, k) + safe_divide(j, k);
 }
 
-#ifdef exception_based
-T divide(T i, T j)
+namespace exception_based
 {
-  try
+  int divide(int i, int j)
   {
-    return safe_divide(i,j)
-  }
-  catch(NotDivisible& ex)
-  {
-    return ex.i/ex.j;
-  }
-  catch(...)
-  {
-    throw;
+    try
+    {
+      return safe_divide(i, j);
+    }
+    catch (NotDivisible& ex)
+    {
+      return ex.i / ex.j;
+    }
+    catch (...)
+    {
+      throw;
+    }
   }
 }
-#endif
 
 boost::expected<int> divide(int i, int j)
 {

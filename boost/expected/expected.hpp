@@ -1223,7 +1223,7 @@ public:
     return unexpected<error_type>(contained_err());
   }
 
-  // Utilities
+  // next factory
 
   template <typename F>
   expected<void, error_type> next(BOOST_RV_REF(F) f,
@@ -1261,6 +1261,7 @@ public:
     return result_type();
   }
 
+  // then factory
   template <typename F>
   expected<typename result_of<F(expected)>::type, error_type>
   then(BOOST_RV_REF(F) f,
@@ -1315,6 +1316,7 @@ public:
     return f(*this)(boost::move(*this));
   }
 
+  // recover factory
 
   template <typename F>
   this_type recover(BOOST_RV_REF(F) f,
