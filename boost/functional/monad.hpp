@@ -20,6 +20,23 @@ namespace boost
   {
 
     template <class M>
+    struct is_monad : std::false_type {};
+
+    template <class T>
+    struct unexpected_traits;
+
+    template <class T>
+    using unexpected_type_t = typename unexpected_traits<T>::type;
+
+    template <class M>
+    static constexpr unexpected_type_t<decay_t<M>>
+    get_unexpected(M const& e)
+    {
+      return unexpected_traits<decay_t<M>>::get_unexpected(e);
+    }
+
+
+    template <class M>
     struct functor_category {
       typedef M type;
     };
@@ -170,7 +187,10 @@ namespace boost
         return *this;
       }
 
-      operator M() const
+      operator M()
+      { return std::move(m);}
+
+      M release()
       { return std::move(m);}
 
       template <class F, class R = decltype(make_monad(monads::when_ready(std::declval<M>(), std::declval<F>())))>
