@@ -8,6 +8,10 @@
 
 #include <boost/expected/expected.hpp>
 #include <boost/functional/monad.hpp>
+#include <boost/utility/enable_if.hpp>
+
+#define REQUIRES(...) typename ::boost::enable_if_c<__VA_ARGS__, void*>::type = 0
+#define T_REQUIRES(...) typename = typename ::boost::enable_if_c<(__VA_ARGS__)>::type
 
 namespace boost
 {
@@ -70,13 +74,57 @@ namespace boost
         m.then(std::forward<F>(f));
       }
 
+#ifdef FORWARD_TO_EXPECTED
       template <class M, class F>
       static auto
       when_valued(M&& m, F&& f) -> decltype(m.next(std::forward<F>(f)))
       {
         return m.next(std::forward<F>(f));
       }
+#else
+      template <class M, class F, class FR = decltype( std::declval<F>()( *std::declval<M>() ) )>
+      static auto
+      when_valued(M&& m, F&& f,
+          REQUIRES(boost::is_same<FR, void>::value)
+      ) -> typename bind<decay_t<M>, FR>::type
+      {
+        typedef typename bind<decay_t<M>, FR>::type result_type;
+        if(m.valid())
+        {
+          f(*m);
+          return result_type();
+        }
+        return m.get_unexpected();
+      }
 
+      template <class M, class F, class FR = decltype( std::declval<F>()( *std::declval<M>() ) )>
+      static auto
+      when_valued(M&& m, F&& f,
+          REQUIRES((! boost::is_same<FR, void>::value
+              &&     ! boost::is_expected<FR>::value)
+      )) -> typename bind<decay_t<M>, FR>::type
+      {
+        typedef typename bind<decay_t<M>, FR>::type result_type;
+        if(m.valid())
+        {
+            return result_type(f(*m));
+        }
+        return m.get_unexpected();
+      }
+
+      template <class M, class F, class FR = decltype( std::declval<F>()( *std::declval<M>() ) )>
+      static auto
+      when_valued(M&& m, F&& f,
+          REQUIRES( boost::is_expected<FR>::value )
+      ) -> FR
+      {
+        if(m.valid())
+        {
+            return f(*m);
+        }
+        return m.get_unexpected();
+      }
+#endif
     };
 
     template <class X, class E>
@@ -91,5 +139,8 @@ namespace boost
     };
   }
 }
+
+#undef REQUIRES
+#undef T_REQUIRES
 
 #endif // BOOST_EXPECTED_MONAD_HPP
