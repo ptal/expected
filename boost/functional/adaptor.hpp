@@ -3,8 +3,8 @@
 // http://www.boost.org/LICENSE_1_0.txt)
 // (C) Copyright 2014 Vicente J. Botet Escriba
 
-#ifndef BOOST_EXPECTED_ADAPTOR_HPP
-#define BOOST_EXPECTED_ADAPTOR_HPP
+#ifndef BOOST_FUNCTIONAL_ADAPTOR_HPP
+#define BOOST_FUNCTIONAL_ADAPTOR_HPP
 
 #include <boost/move/move.hpp>
 #include <boost/utility/result_of.hpp>
@@ -234,4 +234,4 @@ namespace boost
   }
 } // namespace boost
 
-#endif // BOOST_EXPECTED_ADAPTOR_HPP
+#endif // BOOST_FUNCTIONAL_ADAPTOR_HPP
