@@ -97,24 +97,18 @@ namespace boost
 
       template <class M, class F>
       static auto
-      when_ready(M&& m, F&& f) -> decltype(m.then(std::forward<F>(f)))
+      when_ready(M&& m, F&& f) -> decltype(m.when_ready(std::forward<F>(f)))
       {
         m.when_ready(std::forward<F>(f));
       }
 
       template <class M, class F>
       static auto
-      when_valued(M&& m, F&& f) -> decltype(m.next(std::forward<F>(f)))
+      when_valued(M&& m, F&& f) -> decltype(m.when_valued(std::forward<F>(f)))
       {
         return m.when_valued(std::forward<F>(f));
       }
 
-      template <class F, class M0, class ...M, class FR = decltype( std::declval<F>()(*std::declval<M0>(), *std::declval<M>()...) )>
-      static auto
-      when_all_valued(F&& f, M0&& m0, M&& ...ms) -> typename bind<decay_t<M0>, FR>::type
-      {
-        return M0::when_all_valued(std::forward<F>(f), std::forward<M0>(m0), std::forward<M>(ms)...);
-      }
     };
 
     template <class M, class T, class Traits = monad_traits<monad_category_t<decay_t<M>> > >
