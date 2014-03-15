@@ -158,7 +158,7 @@ BOOST_AUTO_TEST_CASE(expected_from_in_place_value)
 
 BOOST_AUTO_TEST_CASE(expected_from_exception)
 {
-  // From unexpected constructor.
+  // From unexpected_type constructor.
   expected<int> e(make_unexpected(test_exception()));
   BOOST_REQUIRE_THROW(e.value(), test_exception);
   BOOST_CHECK_EQUAL(e.valid(), false);
@@ -179,7 +179,7 @@ BOOST_AUTO_TEST_CASE(expected_from_copy_value)
 
 BOOST_AUTO_TEST_CASE(expected_from_copy_exception)
 {
-  // From unexpected constructor.
+  // From unexpected_type constructor.
   expected<int> ef(make_unexpected(test_exception()));
   expected<int> e(ef);
   BOOST_REQUIRE_THROW(e.value(), test_exception);
@@ -253,8 +253,8 @@ BOOST_AUTO_TEST_CASE(expected_from_value)
 
 BOOST_AUTO_TEST_CASE(expected_from_error)
 {
-  // From unexpected constructor.
-  expected<int, std::error_condition> e(unexpected<std::error_condition>(std::make_error_condition(std::errc::invalid_argument)));
+  // From unexpected_type constructor.
+  expected<int, std::error_condition> e(unexpected_type<std::error_condition>(std::make_error_condition(std::errc::invalid_argument)));
   auto error_from_except_check = [](const bad_expected_access<std::error_condition>& except)
   {
     return std::errc(except.error().value()) == std::errc::invalid_argument;
@@ -423,7 +423,7 @@ BOOST_AUTO_TEST_CASE(expected_from_exception_catch)
 
 BOOST_AUTO_TEST_CASE(expected_from_error)
 {
-  // From unexpected constructor.
+  // From unexpected_type constructor.
   auto e = make_expected_from_error<int>(std::make_error_condition(std::errc::invalid_argument));
   auto error_from_except_check = [](const bad_expected_access<std::error_condition>& except)
   {
@@ -436,7 +436,7 @@ BOOST_AUTO_TEST_CASE(expected_from_error)
 
 BOOST_AUTO_TEST_CASE(expected_from_exception)
 {
-  // From unexpected constructor.
+  // From unexpected_type constructor.
   auto e = make_expected_from_error<int>(test_exception());
   BOOST_CHECK_THROW(e.value(), test_exception);
   BOOST_CHECK_EQUAL(e.valid(), false);

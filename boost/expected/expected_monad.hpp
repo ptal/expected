@@ -32,8 +32,8 @@ namespace boost
 
     template <class T, class E>
     struct unexpected_traits<expected<T,E> > {
-      using type = unexpected<E>;
-      static constexpr unexpected<E> get_unexpected(expected<T, E> const& e) { return e.get_unexpected(); }
+      using type = unexpected_type<E>;
+      static constexpr unexpected_type<E> get_unexpected(expected<T, E> const& e) { return e.get_unexpected(); }
     };
 
 

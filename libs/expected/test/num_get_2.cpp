@@ -59,7 +59,7 @@ namespace boost
       {
         return m.second.error();
       }
-      static unexpected<error_type> get_unexpected(monad_type m)
+      static unexpected_type<error_type> get_unexpected(monad_type m)
       {
         return m.second.get_unexpected();
       }

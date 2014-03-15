@@ -94,7 +94,7 @@ BOOST_AUTO_TEST_CASE(expected_from_value)
 
 BOOST_AUTO_TEST_CASE(expected_from_exception)
 {
-  // From unexpected constructor.
+  // From unexpected_type constructor.
   expected<int> e(make_unexpected(test_exception()));
   BOOST_REQUIRE_THROW(e.value(), test_exception);
   BOOST_CHECK_EQUAL(e.valid(), false);
@@ -119,7 +119,7 @@ BOOST_AUTO_TEST_CASE(expected_from_copy_value)
 
 BOOST_AUTO_TEST_CASE(expected_from_copy_exception)
 {
-  // From unexpected constructor.
+  // From unexpected_type constructor.
   expected<int> ef(make_unexpected(test_exception()));
   expected<int> e(ef);
   BOOST_REQUIRE_THROW(e.value(), test_exception);
@@ -208,8 +208,8 @@ BOOST_AUTO_TEST_CASE(expected_from_value)
 #ifdef EXPECTED_CPP11_TESTS
 BOOST_AUTO_TEST_CASE(expected_from_error)
 {
-  // From unexpected constructor.
-  expected<int, ERROR_CONDITION_NS::error_condition> e(unexpected<ERROR_CONDITION_NS::error_condition>(ERROR_CONDITION_NS::make_error_condition(ERROR_CONDITION_NS::errc::invalid_argument)));
+  // From unexpected_type constructor.
+  expected<int, ERROR_CONDITION_NS::error_condition> e(unexpected_type<ERROR_CONDITION_NS::error_condition>(ERROR_CONDITION_NS::make_error_condition(ERROR_CONDITION_NS::errc::invalid_argument)));
   auto error_from_except_check = [](const bad_expected_access<ERROR_CONDITION_NS::error_condition>& except)
   {
     return ERROR_CONDITION_NS::errc(except.error().value()) == ERROR_CONDITION_NS::errc::invalid_argument;
