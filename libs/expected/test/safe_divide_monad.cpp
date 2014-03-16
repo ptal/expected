@@ -60,7 +60,7 @@ namespace optional_based
   optional<int> safe_divide(int i, int j)
   {
     if (j == 0)
-      return none;
+      return none; // todo: try to make use of a generic make error
     else
       return i / j;
   }
@@ -96,8 +96,8 @@ namespace expected_based
   expected<int> ex_f1(int i, int j, int k)
   {
     auto eq = safe_divide(j, k);
-    if (!eq.valid()) return eq.get_unexpected();
-    auto q = *eq;
+    if (! monads::has_value(eq)) return monads::get_unexpected(eq);
+    auto q = monads::value_pre_has_value(eq);
 
     return 1 + q;
   }
@@ -105,12 +105,12 @@ namespace expected_based
   expected<int> ex_f2(int i, int j, int k)
   {
     auto eq1 = safe_divide(i, k);
-    if (!eq1.valid()) return eq1.get_unexpected();
-    auto q1 = *eq1;
+    if (! monads::has_value(eq1)) return monads::get_unexpected(eq1);
+    auto q1 = monads::value_pre_has_value(eq1);
 
     auto eq2 = safe_divide(j, k);
-    if (!eq2.valid()) return eq2.get_unexpected();
-    auto q2 = *eq2;
+    if (! monads::has_value(eq2)) return monads::get_unexpected(eq2);
+    auto q2 = monads::value_pre_has_value(eq2);
 
     return q1 + q2;
   }
@@ -120,8 +120,8 @@ namespace optional_based
   optional<int> ex_f1(int i, int j, int k)
   {
     auto eq = safe_divide(j, k);
-    if (!eq) return get_unexpected(eq);
-    auto q = *eq;
+    if (! monads::has_value(eq)) return monads::get_unexpected(eq);
+    auto q = monads::value_pre_has_value(eq);
 
     return 1 + q;
   }
@@ -129,20 +129,20 @@ namespace optional_based
   optional<int> ex_f2(int i, int j, int k)
   {
     auto eq1 = safe_divide(i, k);
-    if (!eq1) return get_unexpected(eq1);
-    auto q1 = *eq1;
+    if (!eq1) return monads::get_unexpected(eq1);
+    auto q1 = monads::value_pre_has_value(eq1);
 
     auto eq2 = safe_divide(j, k);
-    if (!eq2) return get_unexpected(eq2);
-    auto q2 = *eq2;
+    if (!eq2) return monads::get_unexpected(eq2);
+    auto q2 = monads::value_pre_has_value(eq2);
 
     return q1 + q2;
   }
 }
 #define EXPECT(V, EXPR) \
 auto BOOST_JOIN(expected,V) = EXPR; \
-if (! BOOST_JOIN(expected,V)) return get_unexpected(BOOST_JOIN(expected,V)); \
-auto V =*BOOST_JOIN(expected,V)
+if (! boost::monads::has_value(BOOST_JOIN(expected,V))) return boost::monads::get_unexpected(BOOST_JOIN(expected,V)); \
+auto V = boost::monads::value_pre_has_value(BOOST_JOIN(expected,V))
 
 namespace expected_based
 {
@@ -242,9 +242,9 @@ namespace expected_based
 
   expected<int> operator-(expected<int> i, expected<int> j)
   {
-    return  i.next([j](int i)
+    return  when_valued(i, [j](int i)
       {
-        return j.next([i](int j)
+        return when_valued(j, [i](int j)
             {
               return i-j;
             });

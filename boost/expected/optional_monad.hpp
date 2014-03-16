@@ -25,12 +25,17 @@ namespace boost
     struct monad_category<optional<T> > : mpl::identity<category::expected_like> { };
     template <class T>
     struct monad_error_category<optional<T> > : mpl::identity<category::expected_like> { };
+    template <class T>
+    struct value_category<optional<T> > : mpl::identity<category::expected_like> { };
 
     template <class T>
     struct unexpected_traits< optional<T> > {
       template< class M >
       using type = none_t;
       static constexpr none_t get_unexpected(optional<T> const& ) { return none; }
+      template< class M >
+      static constexpr none_t error(M && m) { return none; }
+
     };
 
 

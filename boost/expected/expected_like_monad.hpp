@@ -42,7 +42,7 @@ namespace boost
       template <class M>
       static constexpr auto value(M& m) -> decltype(m.value()) { return m.value(); };
       template <class M>
-      static constexpr auto value_pre_has_value(M& m) -> decltype(m.value_pre_has_value()) { return *m; };
+      static constexpr auto value_pre_has_value(M& m) -> decltype(*m) { return *m; };
     };
 
     template <>
