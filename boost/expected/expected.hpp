@@ -23,6 +23,18 @@
 #include <utility>
 #include <initializer_list>
 
+
+#if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
+#if defined __clang__
+#if ! __has_feature(cxx_relaxed_constexpr)
+#define BOOST_NO_CXX14_RELAXED_CONSTEXPR
+#endif
+#else
+#define BOOST_NO_CXX14_RELAXED_CONSTEXPR
+#endif
+#endif
+
+
 // TODO: We'd need to check if std::is_default_constructible is there too.
 #ifndef BOOST_NO_CXX11_FUNCTION_TEMPLATE_DEFAULT_ARGS
   #define BOOST_EXPECTED_USE_DEFAULT_CONSTRUCTOR
@@ -874,10 +886,11 @@ public:
 # endif
 
   template <typename F>
-  expected<void, error_type>
+  BOOST_CONSTEXPR expected<void, error_type>
   next(BOOST_RV_REF(F) f,
     REQUIRES(boost::is_same<typename result_of<F(value_type)>::type, void>::value)) const
   {
+#if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
     typedef expected<void, error_type> result_type;
     if(valid())
     {
@@ -885,51 +898,73 @@ public:
         return result_type();
     }
     return get_unexpected();
+#else
+    return (valid()
+        ? (f(**this), expected<void, error_type>( ))
+        : expected<void, error_type>( get_unexpected() )
+        );
+#endif
   }
 
   template <typename F>
-  expected<typename result_of<F(value_type)>::type, error_type>
+  BOOST_CONSTEXPR expected<typename result_of<F(value_type)>::type, error_type>
   next(BOOST_RV_REF(F) f,
     REQUIRES(!boost::is_same<typename result_of<F(value_type)>::type, void>::value
         && !boost::is_expected<typename result_of<F(value_type)>::type>::value
         )) const
   {
+#if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
     typedef expected<typename result_of<F(value_type)>::type, error_type> result_type;
     if(valid())
     {
         return result_type(f(**this));
     }
     return get_unexpected();
+#else
+    return (valid()
+        ? expected<typename result_of<F(value_type)>::type, error_type>( f(value()) )
+        : expected<typename result_of<F(value_type)>::type, error_type>( get_unexpected() )
+        );
+#endif
   }
 
   template <typename F>
-  typename result_of<F(value_type)>::type
+  BOOST_CONSTEXPR typename result_of<F(value_type)>::type
   next(BOOST_RV_REF(F) f,
     REQUIRES(!boost::is_same<typename result_of<F(value_type)>::type, void>::value
         && boost::is_expected<typename result_of<F(value_type)>::type>::value
         )
     ) const
   {
-    typedef typename result_of<F(value_type)>::type result_type;
+#if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
     if(valid())
     {
         return f(value());
     }
     return get_unexpected();
+#else
+     return valid()
+         ? f(value())
+         : typename result_of<F(value_type)>::type(get_unexpected());
+#endif
   }
 
   template <typename F>
-  expected<void, error_type>
+  BOOST_CONSTEXPR expected<void, error_type>
   then(BOOST_RV_REF(F) f,
     REQUIRES(boost::is_same<typename result_of<F(expected)>::type, void>::value)) const
   {
+#if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
     typedef expected<void, error_type> result_type;
     f(boost::move(*this));
     return result_type();
+#else
+    return (f(boost::move(*this)), expected<void, error_type>());
+#endif
   }
 
   template <typename F>
-  expected<typename result_of<F(expected)>::type, error_type>
+  BOOST_CONSTEXPR expected<typename result_of<F(expected)>::type, error_type>
   then(BOOST_RV_REF(F) f,
     REQUIRES(!boost::is_same<typename result_of<F(expected)>::type, void>::value
         && !boost::is_expected<typename result_of<F(expected)>::type>::value
@@ -940,7 +975,7 @@ public:
   }
 
   template <typename F>
-  typename result_of<F(expected)>::type
+  BOOST_CONSTEXPR typename result_of<F(expected)>::type
   then(BOOST_RV_REF(F) f,
     REQUIRES(!boost::is_same<typename result_of<F(expected)>::type, void>::value
         && boost::is_expected<typename result_of<F(expected)>::type>::value
@@ -951,17 +986,21 @@ public:
   }
 
   template <typename H>
-  expected<void, error_type>
+  BOOST_CONSTEXPR expected<void, error_type>
   then(BOOST_RV_REF(adaptor_holder<H>) f,
     REQUIRES(boost::is_same<typename result_of<typename H::template bind<expected>::type(expected)>::type, void>::value)) const
   {
+#if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
     typedef expected<void, error_type> result_type;
     f(*this)(boost::move(*this));
     return result_type();
+#else
+    return (f(*this)(boost::move(*this)), expected<void, error_type>());
+#endif
   }
 
   template <typename H>
-  expected<typename result_of<typename H::template bind<expected>::type(expected)>::type, error_type>
+  BOOST_CONSTEXPR expected<typename result_of<typename H::template bind<expected>::type(expected)>::type, error_type>
   then(BOOST_RV_REF(adaptor_holder<H>) f,
     REQUIRES(!boost::is_same<typename result_of<typename H::template bind<expected>::type(expected)>::type, void>::value
         && !boost::is_expected<typename result_of<typename H::template bind<expected>::type(expected)>::type>::value
@@ -972,7 +1011,7 @@ public:
   }
 
   template <typename H>
-  typename result_of<typename H::template bind<expected>::type(expected)>::type
+  BOOST_CONSTEXPR typename result_of<typename H::template bind<expected>::type(expected)>::type
   then(BOOST_RV_REF(adaptor_holder<H>) f,
     REQUIRES(!boost::is_same<typename result_of<typename H::template bind<expected>::type(expected)>::type, void>::value
         && boost::is_expected<typename result_of<typename H::template bind<expected>::type(expected)>::type>::value
@@ -983,38 +1022,59 @@ public:
   }
 
   template <typename F>
-  this_type
+  BOOST_CONSTEXPR this_type
   recover(BOOST_RV_REF(F) f,
     REQUIRES(boost::is_same<typename result_of<F(error_type)>::type, value_type>::value)) const
   {
+#if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
     if(!valid())
     {
         return this_type(f(contained_err()));
     }
     return *this;
+#else
+    return ( ! valid()
+         ? this_type(f(contained_err()))
+         : *this
+           );
+#endif
   }
 
   template <typename F>
-  this_type recover(BOOST_RV_REF(F) f,
+  BOOST_CONSTEXPR this_type recover(BOOST_RV_REF(F) f,
     REQUIRES(boost::is_same<typename result_of<F(error_type)>::type, this_type>::value)) const
   {
+#if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
     if(!valid())
     {
         return f(contained_err());
     }
     return *this;
+#else
+    return ( ! valid()
+         ? f(contained_err())
+         : *this
+         );
+#endif
   }
 
   template <typename F>
-  this_type recover(BOOST_RV_REF(F) f,
+  BOOST_CONSTEXPR this_type recover(BOOST_RV_REF(F) f,
     REQUIRES(boost::is_same<typename result_of<F(error_type)>::type, unexpected_type<error_type> >::value)) const
   {
+#if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
     if(!valid())
     {
         return f(contained_err());
     }
     return *this;
-  }
+#else
+    return (! valid()
+        ? this_type( f(contained_err()) )
+        : *this
+        );
+#endif
+    }
 
   template <typename Ex, typename F>
   this_type catch_exception(BOOST_RV_REF(F) f,
@@ -1239,9 +1299,10 @@ public:
   // next factory
 
   template <typename F>
-  expected<void, error_type> next(BOOST_RV_REF(F) f,
+  BOOST_CONSTEXPR expected<void, error_type> next(BOOST_RV_REF(F) f,
     REQUIRES(boost::is_same<typename result_of<F()>::type, void>::value)) const
   {
+#if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
     typedef expected<void, error_type> result_type;
     if(valid())
     {
@@ -1249,34 +1310,53 @@ public:
         return result_type();
     }
     return get_unexpected();
+#else
+    typedef expected<typename result_of<F()>::type, error_type> result_type;
+    return ( valid()
+        ? ( f(), result_type() )
+        :  result_type(get_unexpected())
+        );
+#endif
   }
 
   template <typename F>
-  expected<typename result_of<F()>::type, error_type>
+  BOOST_CONSTEXPR expected<typename result_of<F()>::type, error_type>
   next(BOOST_RV_REF(F) f,
     REQUIRES(!boost::is_same<typename result_of<F()>::type, void>::value)) const
   {
+#if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
     typedef expected<typename result_of<F()>::type, error_type> result_type;
     if(valid())
     {
         return result_type(f());
     }
     return get_unexpected();
+#else
+    typedef expected<typename result_of<F()>::type, error_type> result_type;
+    return ( valid()
+        ? result_type(f())
+        :  result_type(get_unexpected())
+        );
+#endif
   }
 
   template <typename F>
-  expected<void, error_type>
+  BOOST_CONSTEXPR expected<void, error_type>
   then(BOOST_RV_REF(F) f,
     REQUIRES(boost::is_same<typename result_of<F(expected)>::type, void>::value)) const
   {
+#if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
     typedef expected<void, error_type> result_type;
     f(boost::move(*this));
     return result_type();
+#else
+    return ( f(boost::move(*this)), expected<void, error_type>() );
+#endif
   }
 
   // then factory
   template <typename F>
-  expected<typename result_of<F(expected)>::type, error_type>
+  BOOST_CONSTEXPR expected<typename result_of<F(expected)>::type, error_type>
   then(BOOST_RV_REF(F) f,
     REQUIRES(!boost::is_same<typename result_of<F(expected)>::type, void>::value
         && !boost::is_expected<typename result_of<F(expected)>::type>::value
@@ -1287,7 +1367,7 @@ public:
   }
 
   template <typename F>
-  typename result_of<F(expected)>::type
+  BOOST_CONSTEXPR typename result_of<F(expected)>::type
   then(BOOST_RV_REF(F) f,
     REQUIRES(!boost::is_same<typename result_of<F(expected)>::type, void>::value
         && boost::is_expected<typename result_of<F(expected)>::type>::value
@@ -1298,17 +1378,21 @@ public:
   }
 
   template <typename H>
-  expected<void, error_type>
+  BOOST_CONSTEXPR expected<void, error_type>
   then(BOOST_RV_REF(adaptor_holder<H>) f,
     REQUIRES(boost::is_same<typename result_of<typename H::template bind<expected>::type(expected)>::type, void>::value)) const
   {
+#if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
     typedef expected<void, error_type> result_type;
     f(*this)(boost::move(*this));
     return result_type();
+#else
+    return (f(*this)(boost::move(*this)), expected<void, error_type>());
+#endif
   }
 
   template <typename H>
-  expected<typename result_of<typename H::template bind<expected>::type(expected)>::type, error_type>
+  BOOST_CONSTEXPR expected<typename result_of<typename H::template bind<expected>::type(expected)>::type, error_type>
   then(BOOST_RV_REF(adaptor_holder<H>) f,
     REQUIRES(!boost::is_same<typename result_of<typename H::template bind<expected>::type(expected)>::type, void>::value
         && !boost::is_expected<typename result_of<typename H::template bind<expected>::type(expected)>::type>::value
@@ -1319,7 +1403,7 @@ public:
   }
 
   template <typename H>
-  typename result_of<typename H::template bind<expected>::type(expected)>::type
+  BOOST_CONSTEXPR typename result_of<typename H::template bind<expected>::type(expected)>::type
   then(BOOST_RV_REF(adaptor_holder<H>) f,
     REQUIRES(!boost::is_same<typename result_of<typename H::template bind<expected>::type(expected)>::type, void>::value
         && boost::is_expected<typename result_of<typename H::template bind<expected>::type(expected)>::type>::value
@@ -1332,25 +1416,39 @@ public:
   // recover factory
 
   template <typename F>
-  this_type recover(BOOST_RV_REF(F) f,
+  BOOST_CONSTEXPR this_type recover(BOOST_RV_REF(F) f,
     REQUIRES(boost::is_same<typename result_of<F(error_type)>::type, value_type>::value)) const
   {
-    if(!valid())
+#if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
+    if(! valid())
     {
         return this_type(f(contained_err()));
     }
     return *this;
-  }
+#else
+    return (! valid()
+        ? this_type(f(contained_err()))
+        : *this
+        );
+#endif
+    }
 
   template <typename F>
-  this_type recover(BOOST_RV_REF(F) f,
+  BOOST_CONSTEXPR this_type recover(BOOST_RV_REF(F) f,
       REQUIRES(! boost::is_same<typename result_of<F(error_type)>::type, value_type>::value)) const
   {
+#if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
     if(!valid())
     {
       return f(contained_err());
     }
     return *this;
+#else
+    return (! valid()
+        ? f(contained_err())
+        : *this
+        );
+#endif
   }
 
   template <typename Ex, typename F>
@@ -1462,7 +1560,7 @@ void swap(expected<T>& x, expected<T>& y) BOOST_NOEXCEPT_IF(BOOST_NOEXCEPT_EXPR(
 
 // Factories
 template<typename T>
-inline expected<T> make_expected(BOOST_FWD_REF(T) v )
+BOOST_CONSTEXPR expected<T> make_expected(BOOST_FWD_REF(T) v )
 {
   return expected<T>(std::forward<T>(v));
 }

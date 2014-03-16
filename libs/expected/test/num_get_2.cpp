@@ -37,6 +37,12 @@ namespace boost
   namespace monads
   {
 
+    template <class T, class I, typename E, class U>
+    struct bind<pair_expected<I, T, E>, U>
+    {
+      typedef pair_expected<I, U, E> type;
+    };
+
     template <class T, class I, typename E>
     struct monad_traits<pair_expected<I, T, E> >
     {
@@ -45,21 +51,22 @@ namespace boost
       typedef std::pair<I, T> value_type;
       typedef E error_type;
 
-      static bool valid(monad_type m)
+
+      static BOOST_CONSTEXPR bool valid(monad_type m)
       {
         return m.second.valid();
       }
 
-      static value_type get(monad_type m)
+      static BOOST_CONSTEXPR value_type get(monad_type m)
       {
         return std::make_pair(m.first, m.second.value());
       }
 
-      static error_type error(monad_type m)
+      static BOOST_CONSTEXPR error_type error(monad_type m)
       {
         return m.second.error();
       }
-      static unexpected_type<error_type> get_unexpected(monad_type m)
+      static BOOST_CONSTEXPR unexpected_type<error_type> get_unexpected(monad_type m)
       {
         return m.second.get_unexpected();
       }
@@ -71,17 +78,24 @@ namespace boost
       };
     public:
       template <class F>
-      static typename result_type<F>::type when_valued(monad_type m, F f)
+      static BOOST_CONSTEXPR typename result_type<F>::type when_valued(monad_type m, F f)
       {
         typedef typename std::result_of<F(value_type)>::type result_type;
         typedef typename result_type::second_type expected_type;
+#if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
         if (valid(m))
         {
           return f(get(m));
         }
         return make_pair(m.first, expected_type(get_unexpected(m)));
+#else
+        typedef typename bind<monad_type, result_type>::type monad_result_type;
+        return ( valid(m)
+               ?  f(get(m))
+               : make_pair(m.first, expected_type(get_unexpected(m)))
+        );
+#endif
       }
-
     };
   }
 } // boost

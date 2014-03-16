@@ -18,10 +18,11 @@ namespace boost
   public:
     unexpected_type() = delete;
 
-    explicit unexpected_type(ErrorType e) :
+    BOOST_CONSTEXPR explicit unexpected_type(ErrorType e) :
       error_(e)
     {
     }
+    BOOST_CONSTEXPR
     ErrorType value() const
     {
       return error_;
@@ -29,7 +30,7 @@ namespace boost
   };
 
   template <class E>
-  inline unexpected_type<E> make_unexpected(E ex)
+  BOOST_CONSTEXPR unexpected_type<E> make_unexpected(E ex)
   {
     return unexpected_type<E> (ex);
   }
@@ -39,17 +40,18 @@ namespace boost
   {
     boost::exception_ptr error_;
   public:
-
     unexpected_type() = delete;
 
     explicit unexpected_type(boost::exception_ptr e) :
       error_(e)
     {
     }
+
     template <class E> explicit unexpected_type(E e) :
       error_(boost::copy_exception(e))
     {
     }
+
     boost::exception_ptr value() const
     {
       return error_;
@@ -62,10 +64,12 @@ namespace boost
     std::exception_ptr error_;
   public:
     unexpected_type() = delete;
+
     explicit unexpected_type(std::exception_ptr e) :
       error_(e)
     {
     }
+
     template <class E> explicit unexpected_type(E e) :
       error_(std::make_exception_ptr(e))
     {
