@@ -8,6 +8,7 @@
 
 #include <boost/move/move.hpp>
 #include <boost/utility/result_of.hpp>
+#include <boost/functional/monad.hpp>
 
 namespace boost
 {
@@ -28,12 +29,11 @@ namespace boost
       fct_(f)
     {
     }
-    ;
 
     template <class E>
-    typename H::template bind<E>::type operator()(E const&)
+    typename H::template bind<E>::type::result_type operator()(E e)
     {
-      return typename H::template bind<E>::type(fct_);
+      return typename H::template bind<E>::type(fct_)(e);
     }
   private:
     funct_type fct_;
@@ -51,20 +51,19 @@ namespace boost
         fct_(f)
       {
       }
-      ;
 
       typedef typename E::value_type value_type;
       typedef typename E::template bind<typename result_of<F(value_type)>::type>::type result_type;
 
       result_type operator()(E e)
       {
-        if (e.valid())
+        if (monads::has_value(e))
         {
-          return result_type(fct_(*e));
+          return result_type(fct_(monads::value(e)));
         }
         else
         {
-          return result_type(e.get_unexpected());
+          return result_type(monads::get_unexpected(e));
         }
       }
     };
@@ -78,20 +77,19 @@ namespace boost
         fct_(f)
       {
       }
-      ;
 
       typedef void value_type;
       typedef typename E::template bind<R>::type result_type;
 
       result_type operator()(E e)
       {
-        if (e.valid())
+        if (monads::has_value(e))
         {
           return result_type(fct_());
         }
         else
         {
-          return result_type(e.get_unexpected());
+          return result_type(monads::get_unexpected(e));
         }
       }
     };
@@ -105,21 +103,20 @@ namespace boost
         fct_(f)
       {
       }
-      ;
 
       typedef void value_type;
       typedef typename E::template bind<void>::type result_type;
 
       result_type operator()(E e)
       {
-        if (e.valid())
+        if (monads::has_value(e))
         {
           fct_();
           return result_type();
         }
         else
         {
-          return result_type(e.get_unexpected());
+          return result_type(monads::get_unexpected(e));
         }
       }
     };
@@ -132,7 +129,6 @@ namespace boost
         if_valued2<E, F, typename result_of<F()>::type> (f)
       {
       }
-      ;
 
     };
 
@@ -167,7 +163,6 @@ namespace boost
         fct_(f)
       {
       }
-      ;
 
       typedef typename result_of<F()>::type result_type;
 
@@ -200,13 +195,12 @@ namespace boost
         fct_(f)
       {
       }
-      ;
 
       E operator()(E e)
       {
-        if (!e.valid())
+        if (!monads::has_value(e))
         {
-          return result_type(fct_(e.error()));
+          return result_type(fct_(monads::error(e)));
         }
         else
         {

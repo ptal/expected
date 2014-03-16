@@ -25,6 +25,8 @@ namespace boost
     struct monad_error_category<expected<T,E> > : mpl::identity<category::expected_like> { };
     template <class T, class E>
     struct unexpected_category<expected<T,E> > : mpl::identity<category::expected_like> { };
+    template <class T, class E>
+    struct value_category<expected<T,E> > : mpl::identity<category::expected_like> { };
 
   }
 }

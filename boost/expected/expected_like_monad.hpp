@@ -9,7 +9,7 @@
 #include <boost/functional/monad.hpp>
 #include <boost/expected/unexpected.hpp>
 #include <boost/utility/enable_if.hpp>
-#include <boost/optional.hpp>
+#include <boost/type_traits/is_same.hpp>
 
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
 #if defined __clang__
@@ -34,11 +34,25 @@ namespace boost
     }
 
     template <>
+    struct value_traits<category::expected_like> {
+      template <class M>
+      using type = typename M::value_type;
+      template <class M>
+      static constexpr bool has_value(M&& m) { return bool(m); };
+      template <class M>
+      static constexpr auto value(M& m) -> decltype(m.value()) { return m.value(); };
+      template <class M>
+      static constexpr auto value_pre_has_value(M& m) -> decltype(m.value_pre_has_value()) { return *m; };
+    };
+
+    template <>
     struct unexpected_traits<category::expected_like > {
       template< class M >
       using type = unexpected_type<typename M::error_type>;
       template< class M >
       static constexpr auto get_unexpected(M && m) -> decltype(m.get_unexpected()) { return m.get_unexpected(); }
+      template< class M >
+      static constexpr auto error(M && m) -> decltype(m.error()) { return m.error(); }
     };
 
     template <>

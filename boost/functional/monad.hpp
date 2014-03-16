@@ -29,18 +29,72 @@ namespace boost
     using unexpected_category_t = typename unexpected_category<M>::type;
 
     template <class T>
-    struct unexpected_traits;
+    struct unexpected_traits {
+      template <class M>
+      using type = typename M::unexpected_type;
+      template <class M>
+      static constexpr auto get_unexpected(M&& m) -> decltype(m.get_unexpected()) { return m.get_unexpected(); };
+      template <class M>
+      static constexpr auto error(M&& m) -> decltype(m.error()) { return m.error(); };
+    };
 
     template <class M, class Traits = unexpected_traits<unexpected_category_t<decay_t<M> > >>
     using unexpected_type_t = typename Traits::template type<M>;
 
     template <class M, class Traits = unexpected_traits<unexpected_category_t<decay_t<M> > > >
-    static constexpr unexpected_type_t<decay_t<M>>
-    get_unexpected(M&& e)
+    static constexpr auto
+    get_unexpected(M&& e) -> decltype(Traits::get_unexpected(std::forward<M>(e)))
     {
       return Traits::get_unexpected(std::forward<M>(e));
     }
+    template <class M, class Traits = unexpected_traits<unexpected_category_t<decay_t<M> > > >
+    static constexpr  auto
+    error(M&& e) -> decltype(Traits::error(std::forward<M>(e)))
+    {
+      return Traits::error(std::forward<M>(e));
+    }
 
+    template <class M>
+    struct value_category {
+      typedef M type;
+    };
+
+    template <class M>
+    using value_category_t = typename value_category<M>::type;
+
+    template <class T>
+    struct value_traits {
+      template <class M>
+      using type = typename M::value_type;
+      template <class M>
+      static constexpr bool has_value(M&& m) { return m.has_value(); };
+      template <class M>
+      static constexpr auto value(M&& m) -> decltype(m.value()) { return m.value(); };
+      template <class M>
+      static constexpr auto value_pre_has_value(M& m) -> decltype(m.value_pre_has_value()) { return m.value_pre_has_value(); };
+    };
+
+    template <class M, class Traits = value_traits<value_category_t<decay_t<M> > >>
+    using value_type_t = typename Traits::template type<M>;
+
+    template <class M, class Traits = value_traits<value_category_t<decay_t<M> > > >
+    static constexpr auto
+    has_value(M&& e) -> decltype(Traits::has_value(std::forward<M>(e)))
+    {
+      return Traits::has_value(std::forward<M>(e));
+    }
+    template <class M, class Traits = value_traits<value_category_t<decay_t<M> > > >
+    static constexpr auto
+    value(M&& e) -> decltype(Traits::value(std::forward<M>(e)))
+    {
+      return Traits::value(std::forward<M>(e));
+    }
+    template <class M, class Traits = value_traits<value_category_t<decay_t<M> > > >
+    static constexpr auto
+    value_pre_has_value(M&& e) -> decltype(Traits::value(std::forward<M>(e)))
+    {
+      return Traits::value_pre_has_value(std::forward<M>(e));
+    }
 
     template <class M>
     struct functor_category {
@@ -77,24 +131,6 @@ namespace boost
     template <class Mo>
     struct monad_traits {
 
-//      template <class M>
-//      struct value_type
-//      {
-//        typedef typename M::value_type type;
-//      };
-
-//      template <class M, class F>
-//      struct when_ready_result
-//      {
-//        typedef typename bind<M, typename std::result_of<F(M)>::type>::type type;
-//      };
-
-//      template <class M, class F>
-//      struct when_valued_result
-//      {
-//        typedef typename bind<M, typename std::result_of<F(typename value_type<M>::type)>::type>::type type;
-//      };
-//
       template <class M, class T>
       static M make(T&& v)
       {
