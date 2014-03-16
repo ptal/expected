@@ -355,7 +355,6 @@ BOOST_AUTO_TEST_CASE(expected_from_exception_catch)
   }
   catch(...)
   {
-    //expected<int> e = make_expected_from_error<int>();
     expected<int> e = make_unexpected(std::current_exception());
 
     BOOST_REQUIRE_THROW(e.value(), std::exception);
@@ -387,7 +386,6 @@ BOOST_AUTO_TEST_CASE(expected_from_exception_catch)
 BOOST_AUTO_TEST_CASE(expected_from_exception_ptr)
 {
   // From exception_ptr constructor.
-  //boost::expected<int> e = make_expected_from_error<int>(test_exception());
   boost::expected<int> e = make_unexpected(test_exception());
   BOOST_CHECK_THROW(e.value(), test_exception);
   BOOST_CHECK_EQUAL(e.valid(), false);
@@ -507,7 +505,7 @@ BOOST_AUTO_TEST_CASE(expected_then)
     if(b)
       return expected<int>(5);
     else
-      return make_expected_from_error<int>(test_exception());
+      return expected<int>(boost::make_unexpected(test_exception()));
   };
 
   auto add_five = [](int sum)
@@ -534,7 +532,7 @@ BOOST_AUTO_TEST_CASE(expected_void_then)
     if(b)
       return expected<void>();
     else
-      return make_expected_from_error<void>(test_exception());
+      return expected<void>(boost::make_unexpected(test_exception()));
   };
 
   auto launch_except = []()
@@ -569,7 +567,7 @@ BOOST_AUTO_TEST_CASE(expected_recover)
     if(b)
       return expected<int>(5);
     else
-      return make_expected_from_error<int>(test_exception());
+      return expected<int>(boost::make_unexpected(test_exception()));
   };
 
   auto then_launch = [](int) -> int
@@ -589,7 +587,7 @@ BOOST_AUTO_TEST_CASE(expected_recover)
 
   auto recover_error_silent_failure = [](exception_ptr_type p)
   {
-    return make_expected_from_error<int>(p);
+    return expected<int>(make_unexpected(p));
   };
 
   auto recover_error_failure = [](exception_ptr_type p) -> expected<int>
@@ -624,7 +622,7 @@ BOOST_AUTO_TEST_CASE(expected_void_recover)
     if(b)
       return expected<void>();
     else
-      return make_expected_from_error<void>(test_exception());
+      return expected<void>(boost::make_unexpected(test_exception()));
   };
 
   auto then_launch = []() -> void
@@ -641,7 +639,7 @@ BOOST_AUTO_TEST_CASE(expected_void_recover)
 
   auto recover_error_silent_failure = [](exception_ptr_type p)
   {
-    return make_expected_from_error<void>(p);
+    return expected<void>(boost::make_unexpected(p));
   };
 
   auto recover_error_failure = [](exception_ptr_type p) -> expected<void>

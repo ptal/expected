@@ -231,12 +231,12 @@ union trivial_expected_storage
   {}
 
   BOOST_CONSTEXPR trivial_expected_storage(unexpected_type<error_type> const& e)
-  : err(e.error_)
+  : err(e.value())
   {}
 
   template <class Err>
   BOOST_CONSTEXPR trivial_expected_storage(unexpected_type<Err> const& e)
-  : err(traits_type::from_error(e.error_))
+  : err(traits_type::from_error(e.value()))
   {}
 
   template <class... Args>
@@ -261,12 +261,12 @@ union trivial_expected_storage<void, E>
   {}
 
   BOOST_CONSTEXPR trivial_expected_storage(unexpected_type<error_type> const& e)
-  : err(e.error_)
+  : err(e.value())
   {}
 
   template <class Err>
   BOOST_CONSTEXPR trivial_expected_storage(unexpected_type<Err> const& e)
-  : err(traits_type::from_error(e.error_))
+  : err(traits_type::from_error(e.value()))
   {}
 
   ~trivial_expected_storage() = default;
@@ -287,12 +287,12 @@ union no_trivial_expected_storage
   {}
 
   BOOST_CONSTEXPR no_trivial_expected_storage(unexpected_type<error_type> const& e)
-  : err(e.error_)
+  : err(e.value())
   {}
 
   template <class Err>
   BOOST_CONSTEXPR no_trivial_expected_storage(unexpected_type<Err> const& e)
-  : err(traits_type::from_error(e.error_))
+  : err(traits_type::from_error(e.value()))
   {}
 
   template <class... Args>
@@ -317,12 +317,12 @@ union no_trivial_expected_storage<void, E>
   {}
 
   BOOST_CONSTEXPR no_trivial_expected_storage(unexpected_type<error_type> const& e)
-  : err(e.error_)
+  : err(e.value())
   {}
 
   template <class Err>
   BOOST_CONSTEXPR no_trivial_expected_storage(unexpected_type<Err> const& e)
-  : err(traits_type::from_error(e.error_))
+  : err(traits_type::from_error(e.value()))
   {}
 
   ~no_trivial_expected_storage() {};
@@ -1022,19 +1022,16 @@ public:
         boost::is_same<typename result_of<F(Ex &)>::type, this_type>::value
         )) const
   {
-    if(!valid())
+    try {
+      if(!valid()) std::rethrow_exception(contained_err());
+    }
+    catch(Ex& e)
     {
-      try {
-        std::rethrow_exception(contained_err());
-      }
-      catch(Ex& e)
-      {
-        return f(e);
-      }
-      catch (...)
-      {
-        return *this;
-      }
+      return f(e);
+    }
+    catch (...)
+    {
+      return *this;
     }
     return *this;
   }
@@ -1042,15 +1039,15 @@ public:
   template <typename Ex>
   bool has_exception() const
   {
-    if(!valid())
+    try {
+      if(!valid()) std::rethrow_exception(contained_err());
+    }
+    catch(Ex& e)
     {
-      try {
-        std::rethrow_exception(contained_err());
-      }
-      catch(Ex& e)
-      {
-        return true;
-      }
+      return true;
+    }
+    catch(...)
+    {
     }
     return false;
   }
@@ -1362,19 +1359,16 @@ public:
         boost::is_same<typename result_of<F(Ex &)>::type, this_type>::value
         )) const
   {
-    if(!valid())
+    try {
+      if(!valid()) std::rethrow_exception(contained_err());
+    }
+    catch(Ex& e)
     {
-      try {
-        std::rethrow_exception(contained_err());
-      }
-      catch(Ex& e)
-      {
-        return f(e);
-      }
-      catch (...)
-      {
-        return *this;
-      }
+      return f(e);
+    }
+    catch (...)
+    {
+      return *this;
     }
     return *this;
   }
@@ -1382,15 +1376,15 @@ public:
   template <typename Ex>
   bool has_exception() const
   {
-    if(!valid())
+    try {
+      if(!valid()) std::rethrow_exception(contained_err());
+    }
+    catch(Ex& e)
     {
-      try {
-        std::rethrow_exception(contained_err());
-      }
-      catch(Ex& e)
-      {
-        return true;
-      }
+      return true;
+    }
+    catch(...)
+    {
     }
     return false;
   }
@@ -1478,11 +1472,7 @@ inline expected<void> make_expected()
   return expected<void>();
 }
 
-template<typename E, typename T>
-inline expected<T, E> make_expected_error(BOOST_FWD_REF(T) v )
-{
-  return expected<T, E>(std::forward<T>(v));
-}
+
 
 #if ! defined BOOST_NO_CXX11_VARIADIC_TEMPLATES && ! defined BOOST_NO_CXX11_RVALUE_REFERENCES
   template<typename T, typename E, typename Arg0, typename Arg1, typename... Args>
@@ -1499,29 +1489,34 @@ inline expected<T, E> make_expected_error(BOOST_FWD_REF(T) v )
 #endif
 
 template <typename T>
-inline expected<T> make_expected_from_error() BOOST_NOEXCEPT
+inline expected<T> make_expected_from_current_exception() BOOST_NOEXCEPT
 {
-  return expected<T>(unexpected_type<>());
+  return expected<T>(make_unexpected_from_current_exception());
 }
+
+//template<typename E, typename T>
+//inline expected<decay_t<T>, E> make_expected_error(BOOST_FWD_REF(T) v )
+//{
+//  return expected<T, E>(std::forward<T>(v));
+//}
+//template <typename T, typename E>
+//inline expected<T, E> make_expected_from_error() BOOST_NOEXCEPT
+//{
+//  return expected<T, E>(unexpected_type<E>());
+//}
+
+//template <typename T, typename U, typename E>
+//inline expected<T,U> make_expected_from_error(E const& e
+//    , REQUIRES(! boost::is_same<U, E>::value)
+//)
+//{
+//  return expected<T, U>(unexpected_type<U>(e));
+//}
 
 template <typename T, typename E>
-inline expected<T, E> make_expected_from_error()
-{
-  return expected<T, E>(unexpected_type<E>());
-}
-
-template <typename T, typename U, typename E>
-inline expected<T,U> make_expected_from_error(E const& e
-    , REQUIRES(! boost::is_same<U, E>::value)
-)
-{
-  return expected<T, U>(unexpected_type<U>(e));
-}
-
-template <typename T, typename E>
-inline expected<T> make_expected_from_error(E e
-  , REQUIRES(boost::is_base_of<std::exception, E>::value
-          || boost::is_base_of<boost::exception, E>::value)
+inline expected<T> make_expected_from_exception(E e
+  //, REQUIRES(boost::is_base_of<std::exception, E>::value
+  //        || boost::is_base_of<boost::exception, E>::value)
 ) BOOST_NOEXCEPT
 {
   return expected<T>(unexpected_type<>(e));
@@ -1529,8 +1524,8 @@ inline expected<T> make_expected_from_error(E e
 
 template <typename T, typename E>
 inline expected<T,E> make_expected_from_error(E e
-      , REQUIRES(! boost::is_base_of<std::exception, E>::value
-              && ! boost::is_base_of<boost::exception, E>::value)
+   //   , REQUIRES(! boost::is_base_of<std::exception, E>::value
+    //           && ! boost::is_base_of<boost::exception, E>::value)
 )
 {
   return expected<T, E>(make_unexpected(e));
@@ -1542,14 +1537,13 @@ inline make_expected_from_call(F funct
   , REQUIRES( ! boost::is_same<typename boost::result_of<F()>::type, void>::value)
 ) BOOST_NOEXCEPT
 {
-  typedef typename boost::result_of<F()>::type result_type;
   try
   {
-    return make_expected<result_type>(funct());
+    return make_expected(funct());
   }
   catch (...)
   {
-    return make_expected_from_error<result_type>();
+    return make_unexpected_from_current_exception();
   }
 }
 
@@ -1562,11 +1556,11 @@ make_expected_from_call(F funct
   try
   {
     funct();
-    return expected<void>();
+    return make_expected();
   }
   catch (...)
   {
-    return make_expected_from_error<void>();
+    return make_unexpected_from_current_exception();
   }
 }
 

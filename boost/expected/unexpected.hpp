@@ -12,20 +12,20 @@
 namespace boost
 {
   template <typename ErrorType = std::exception_ptr>
-  struct unexpected_type
+  class unexpected_type
   {
     ErrorType error_;
+  public:
+    unexpected_type() = delete;
 
-    unexpected_type() :
-      error_()
-    {
-    }
-    ;
     explicit unexpected_type(ErrorType e) :
       error_(e)
     {
     }
-    ;
+    ErrorType value() const
+    {
+      return error_;
+    }
   };
 
   template <class E>
@@ -38,10 +38,10 @@ namespace boost
   struct unexpected_type<boost::exception_ptr>
   {
     boost::exception_ptr error_;
-    unexpected_type() :
-      error_(boost::current_exception())
-    {
-    }
+  public:
+
+    unexpected_type() = delete;
+
     explicit unexpected_type(boost::exception_ptr e) :
       error_(e)
     {
@@ -50,16 +50,18 @@ namespace boost
       error_(boost::copy_exception(e))
     {
     }
+    boost::exception_ptr value() const
+    {
+      return error_;
+    }
   };
 
   template <>
   struct unexpected_type<std::exception_ptr>
   {
     std::exception_ptr error_;
-    unexpected_type() :
-      error_(std::current_exception())
-    {
-    }
+  public:
+    unexpected_type() = delete;
     explicit unexpected_type(std::exception_ptr e) :
       error_(e)
     {
@@ -68,7 +70,16 @@ namespace boost
       error_(std::make_exception_ptr(e))
     {
     }
+    std::exception_ptr value() const
+    {
+      return error_;
+    }
   };
+
+  inline unexpected_type<std::exception_ptr> make_unexpected_from_current_exception()
+  {
+    return unexpected_type<std::exception_ptr> (std::current_exception());
+  }
 
 } // namespace boost
 

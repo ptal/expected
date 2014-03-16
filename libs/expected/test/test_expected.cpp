@@ -397,7 +397,6 @@ BOOST_AUTO_TEST_CASE(expected_from_exception_catch)
   }
   catch(...)
   {
-    //expected<int> e = make_expected_from_error<int>();
     expected<int> e = make_unexpected(std::current_exception());
 
     BOOST_REQUIRE_THROW(e.value(), std::exception);
@@ -437,7 +436,8 @@ BOOST_AUTO_TEST_CASE(expected_from_error)
 BOOST_AUTO_TEST_CASE(expected_from_exception)
 {
   // From unexpected_type constructor.
-  auto e = make_expected_from_error<int>(test_exception());
+  auto e = make_expected_from_exception<int>(test_exception());
+  //auto e = expected<int>(unexpected_type<>(test_exception()));
   BOOST_CHECK_THROW(e.value(), test_exception);
   BOOST_CHECK_EQUAL(e.valid(), false);
   BOOST_CHECK_EQUAL(static_cast<bool>(e), false);
@@ -446,7 +446,7 @@ BOOST_AUTO_TEST_CASE(expected_from_exception)
 BOOST_AUTO_TEST_CASE(expected_from_exception_ptr)
 {
   // From exception_ptr constructor.
-  auto e = make_expected_from_error<int>(std::make_exception_ptr(test_exception()));
+  auto e = expected<int>(make_unexpected(test_exception()));
   BOOST_CHECK_THROW(e.value(), test_exception);
   BOOST_CHECK_EQUAL(e.valid(), false);
   BOOST_CHECK_EQUAL(static_cast<bool>(e), false);
@@ -607,7 +607,7 @@ BOOST_AUTO_TEST_CASE(expected_void_next)
     if(b)
       return expected<void>();
     else
-      return make_expected_from_error<void>(std::make_exception_ptr(test_exception()));
+      return expected<void>(make_unexpected(test_exception()));
   };
 
   auto launch_except = []()
@@ -730,7 +730,7 @@ BOOST_AUTO_TEST_CASE(expected_recover)
     if(b)
       return expected<int>(5);
     else
-      return make_expected_from_error<int>(std::make_exception_ptr(test_exception()));
+      return expected<int>(make_unexpected(test_exception()));
   };
 
   auto add_five = [](int sum) -> int
@@ -745,12 +745,12 @@ BOOST_AUTO_TEST_CASE(expected_recover)
 
   auto recover_error_silent_failure = [](std::exception_ptr p)
   {
-    return make_expected_from_error<int>(p);
+    return expected<int>(make_unexpected(p));
   };
 
   auto recover_error_failure = [](std::exception_ptr p) -> expected<int>
   {
-    return make_expected_from_error<int>(test_exception());
+    return expected<int>(make_unexpected(test_exception()));
   };
 
   auto recover_error_throws = [](std::exception_ptr p) -> expected<int>
@@ -786,7 +786,7 @@ BOOST_AUTO_TEST_CASE(expected_void_recover)
     if(b)
       return expected<void>();
     else
-      return make_expected_from_error<void>(std::make_exception_ptr(test_exception()));
+      return expected<void>(boost::make_unexpected(test_exception()));
   };
 
   auto do_nothing = [](){};
@@ -798,7 +798,7 @@ BOOST_AUTO_TEST_CASE(expected_void_recover)
 
   auto recover_error_silent_failure = [](std::exception_ptr p)
   {
-    return make_expected_from_error<void>(p);
+    return expected<void>(boost::make_unexpected(p));
   };
 
   auto recover_error_failure = [](std::exception_ptr p) -> expected<void>
