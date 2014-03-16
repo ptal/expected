@@ -8,6 +8,7 @@
 
 #include <boost/expected/expected_like_monad.hpp>
 #include <boost/optional.hpp>
+#include <boost/mpl/identity.hpp>
 
 namespace boost
 {
@@ -16,28 +17,18 @@ namespace boost
 
     template <class T>
     struct is_monad<optional<T> > : std::true_type {};
-
     template <class T, class U>
-    struct bind<optional<T>, U>
-    {
-      typedef optional<U> type;
-    };
+    struct bind<optional<T>, U> : mpl::identity<optional<U> > {};
+    template <class T>
+    struct functor_category<optional<T> > : mpl::identity<category::expected_like> { };
+    template <class T>
+    struct monad_category<optional<T> > : mpl::identity<category::expected_like> { };
+    template <class T>
+    struct monad_error_category<optional<T> > : mpl::identity<category::expected_like> { };
 
     template <class T>
-    struct functor_category<optional<T> > {
-      typedef category::expected_like type;
-    };
-    template <class T>
-    struct monad_category<optional<T> > {
-      typedef category::expected_like type;
-    };
-    template <class T>
-    struct monad_error_category<optional<T> > {
-      typedef category::expected_like type;
-    };
-
-    template <class T>
-    struct unexpected_traits<optional<T> > {
+    struct unexpected_traits< optional<T> > {
+      template< class M >
       using type = none_t;
       static constexpr none_t get_unexpected(optional<T> const& ) { return none; }
     };

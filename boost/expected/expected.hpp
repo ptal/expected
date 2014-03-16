@@ -890,8 +890,8 @@ public:
   next(BOOST_RV_REF(F) f,
     REQUIRES(boost::is_same<typename result_of<F(value_type)>::type, void>::value)) const
   {
-#if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
     typedef expected<void, error_type> result_type;
+#if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
     if(valid())
     {
         f(**this);
@@ -900,8 +900,8 @@ public:
     return get_unexpected();
 #else
     return (valid()
-        ? (f(**this), expected<void, error_type>( ))
-        : expected<void, error_type>( get_unexpected() )
+        ? (f(**this), result_type( ))
+        : result_type( get_unexpected() )
         );
 #endif
   }
@@ -913,8 +913,8 @@ public:
         && !boost::is_expected<typename result_of<F(value_type)>::type>::value
         )) const
   {
-#if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
     typedef expected<typename result_of<F(value_type)>::type, error_type> result_type;
+#if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
     if(valid())
     {
         return result_type(f(**this));
@@ -922,8 +922,8 @@ public:
     return get_unexpected();
 #else
     return (valid()
-        ? expected<typename result_of<F(value_type)>::type, error_type>( f(value()) )
-        : expected<typename result_of<F(value_type)>::type, error_type>( get_unexpected() )
+        ? result_type( f(value()) )
+        : result_type( get_unexpected() )
         );
 #endif
   }
@@ -954,12 +954,12 @@ public:
   then(BOOST_RV_REF(F) f,
     REQUIRES(boost::is_same<typename result_of<F(expected)>::type, void>::value)) const
   {
-#if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
     typedef expected<void, error_type> result_type;
+#if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
     f(boost::move(*this));
     return result_type();
 #else
-    return (f(boost::move(*this)), expected<void, error_type>());
+    return (f(boost::move(*this)), result_type());
 #endif
   }
 
@@ -1565,7 +1565,7 @@ BOOST_CONSTEXPR expected<T> make_expected(BOOST_FWD_REF(T) v )
   return expected<T>(std::forward<T>(v));
 }
 
-inline expected<void> make_expected()
+BOOST_FORCEINLINE expected<void> make_expected()
 {
   return expected<void>();
 }
@@ -1587,51 +1587,33 @@ inline expected<void> make_expected()
 #endif
 
 template <typename T>
-inline expected<T> make_expected_from_current_exception() BOOST_NOEXCEPT
+BOOST_FORCEINLINE expected<T> make_expected_from_current_exception() BOOST_NOEXCEPT
 {
   return expected<T>(make_unexpected_from_current_exception());
 }
 
-//template<typename E, typename T>
-//inline expected<decay_t<T>, E> make_expected_error(BOOST_FWD_REF(T) v )
-//{
-//  return expected<T, E>(std::forward<T>(v));
-//}
-//template <typename T, typename E>
-//inline expected<T, E> make_expected_from_error() BOOST_NOEXCEPT
-//{
-//  return expected<T, E>(unexpected_type<E>());
-//}
-
-//template <typename T, typename U, typename E>
-//inline expected<T,U> make_expected_from_error(E const& e
-//    , REQUIRES(! boost::is_same<U, E>::value)
-//)
-//{
-//  return expected<T, U>(unexpected_type<U>(e));
-//}
-
-template <typename T, typename E>
-inline expected<T> make_expected_from_exception(E e
-  //, REQUIRES(boost::is_base_of<std::exception, E>::value
-  //        || boost::is_base_of<boost::exception, E>::value)
-) BOOST_NOEXCEPT
+template <typename T>
+BOOST_FORCEINLINE expected<T> make_expected_from_exception(std::exception_ptr e) BOOST_NOEXCEPT
 {
   return expected<T>(unexpected_type<>(e));
 }
 
 template <typename T, typename E>
-inline expected<T,E> make_expected_from_error(E e
-   //   , REQUIRES(! boost::is_base_of<std::exception, E>::value
-    //           && ! boost::is_base_of<boost::exception, E>::value)
-)
+BOOST_FORCEINLINE expected<T> make_expected_from_exception(E e) BOOST_NOEXCEPT
 {
-  return expected<T, E>(make_unexpected(e));
+  return expected<T>(unexpected_type<>(e));
+}
+
+template <typename T, typename E>
+BOOST_FORCEINLINE BOOST_CONSTEXPR
+expected<T,decay_t<E>> make_expected_from_error(E e) BOOST_NOEXCEPT
+{
+  return expected<T, decay_t<E> >(make_unexpected(e));
 }
 
 template <typename F>
 expected<typename boost::result_of<F()>::type>
-inline make_expected_from_call(F funct
+BOOST_FORCEINLINE make_expected_from_call(F funct
   , REQUIRES( ! boost::is_same<typename boost::result_of<F()>::type, void>::value)
 ) BOOST_NOEXCEPT
 {

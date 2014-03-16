@@ -7,6 +7,7 @@
 #define BOOST_EXPECTED_EXPECTED_LIKE_MONAD_HPP
 
 #include <boost/functional/monad.hpp>
+#include <boost/expected/unexpected.hpp>
 #include <boost/utility/enable_if.hpp>
 #include <boost/optional.hpp>
 
@@ -31,6 +32,14 @@ namespace boost
     {
       struct expected_like {};
     }
+
+    template <>
+    struct unexpected_traits<category::expected_like > {
+      template< class M >
+      using type = unexpected_type<typename M::error_type>;
+      template< class M >
+      static constexpr auto get_unexpected(M && m) -> decltype(m.get_unexpected()) { return m.get_unexpected(); }
+    };
 
     template <>
     struct functor_traits<category::expected_like>
@@ -102,8 +111,8 @@ namespace boost
           REQUIRES(boost::is_same<FR, void>::value)
       ) -> typename bind<decay_t<M>, FR>::type
       {
-#if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
         typedef typename bind<decay_t<M>, FR>::type result_type;
+#if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
         if(m)
         {
           f(*m);
@@ -111,7 +120,6 @@ namespace boost
         }
         return get_unexpected(m);
 #else
-        typedef typename bind<decay_t<M>, FR>::type result_type;
         return (m
         ? (f(*m), result_type() )
         : result_type( get_unexpected(m) )

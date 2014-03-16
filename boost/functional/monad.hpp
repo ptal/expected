@@ -7,32 +7,38 @@
 #define BOOST_FUNCTIONAL_MONAD_HPP
 
 #include <boost/config.hpp>
+#include <boost/functional/type_traits_t.hpp>
 #include <exception>
 #include <utility>
 #include <type_traits>
 
 namespace boost
 {
-  template <class M>
-  using decay_t = typename std::decay<M>::type;
-
   namespace monads
   {
 
     template <class M>
     struct is_monad : std::false_type {};
 
+    template <class M>
+    struct unexpected_category {
+      typedef M type;
+    };
+
+    template <class M>
+    using unexpected_category_t = typename unexpected_category<M>::type;
+
     template <class T>
     struct unexpected_traits;
 
-    template <class T>
-    using unexpected_type_t = typename unexpected_traits<T>::type;
+    template <class M, class Traits = unexpected_traits<unexpected_category_t<decay_t<M> > >>
+    using unexpected_type_t = typename Traits::template type<M>;
 
-    template <class M>
+    template <class M, class Traits = unexpected_traits<unexpected_category_t<decay_t<M> > > >
     static constexpr unexpected_type_t<decay_t<M>>
-    get_unexpected(M const& e)
+    get_unexpected(M&& e)
     {
-      return unexpected_traits<decay_t<M>>::get_unexpected(e);
+      return Traits::get_unexpected(std::forward<M>(e));
     }
 
 

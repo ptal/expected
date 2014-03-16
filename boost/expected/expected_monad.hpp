@@ -8,6 +8,7 @@
 
 #include <boost/expected/expected_like_monad.hpp>
 #include <boost/expected/expected.hpp>
+#include <boost/mpl/identity.hpp>
 
 namespace boost
 {
@@ -15,27 +16,15 @@ namespace boost
   {
 
     template <class T, class E>
-    struct is_monad<expected<T,E> > : std::true_type {};
-
+    struct is_monad<expected<T,E> > : std::true_type { };
     template <class T, class E>
-    struct functor_category<expected<T,E> > {
-      typedef category::expected_like type;
-    };
+    struct functor_category<expected<T,E> > : mpl::identity<category::expected_like> { };
     template <class T, class E>
-    struct monad_category<expected<T,E> > {
-      typedef category::expected_like type;
-    };
+    struct monad_category<expected<T,E> > : mpl::identity<category::expected_like> { };
     template <class T, class E>
-    struct monad_error_category<expected<T,E> > {
-      typedef category::expected_like type;
-    };
-
+    struct monad_error_category<expected<T,E> > : mpl::identity<category::expected_like> { };
     template <class T, class E>
-    struct unexpected_traits<expected<T,E> > {
-      using type = unexpected_type<E>;
-      static constexpr unexpected_type<E> get_unexpected(expected<T, E> const& e) { return e.get_unexpected(); }
-    };
-
+    struct unexpected_category<expected<T,E> > : mpl::identity<category::expected_like> { };
 
   }
 }
