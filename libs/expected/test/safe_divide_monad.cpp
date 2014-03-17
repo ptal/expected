@@ -287,10 +287,6 @@ namespace expected_based
         {
           std::rethrow_exception(ex);
         }
-        catch(DivideByZero& e)
-        {
-          return make_unexpected(e);
-        }
         catch(NotDivisible& e)
         {
           return e.i / e.j;
@@ -310,10 +306,6 @@ namespace expected_based
           try
           {
             std::rethrow_exception(ex);
-          }
-          catch(DivideByZero& e)
-          {
-            return make_unexpected(e);
           }
           catch(NotDivisible& e)
           {
@@ -343,6 +335,14 @@ namespace expected_based
           return make_expected(e.i / e.j);
         });
   }
+  expected<int> divide4(int i, int j)
+  {
+    return safe_divide(i,j).
+    catch_exception<NotDivisible>([](NotDivisible& e)
+        {
+          return e.i / e.j;
+        });
+  }
 }
 
 void expected_test()
@@ -362,6 +362,8 @@ void expected_test()
   auto a0 = divide0(1, 0);
   auto a = divide(1, 0);
   auto a2 = divide2(1, 0);
+  auto a3 = divide3(1, 0);
+  auto a4 = divide4(1, 0);
 }
 
 void optional_test()

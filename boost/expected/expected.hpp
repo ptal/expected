@@ -1096,6 +1096,26 @@ public:
     return *this;
   }
 
+  template <typename Ex, typename F>
+  this_type catch_exception(BOOST_RV_REF(F) f,
+    REQUIRES(
+        boost::is_same<typename result_of<F(Ex &)>::type, value_type>::value
+        )) const
+  {
+    try {
+      if(!valid()) std::rethrow_exception(contained_err());
+    }
+    catch(Ex& e)
+    {
+      return this_type(f(e));
+    }
+    catch (...)
+    {
+      return *this;
+    }
+    return *this;
+  }
+
   template <typename Ex>
   bool has_exception() const
   {
@@ -1463,6 +1483,26 @@ public:
     catch(Ex& e)
     {
       return f(e);
+    }
+    catch (...)
+    {
+      return *this;
+    }
+    return *this;
+  }
+
+  template <typename Ex, typename F>
+  this_type catch_exception(BOOST_RV_REF(F) f,
+    REQUIRES(
+        boost::is_same<typename result_of<F(Ex &)>::type, value_type>::value
+        )) const
+  {
+    try {
+      if(!valid()) std::rethrow_exception(contained_err());
+    }
+    catch(Ex& e)
+    {
+      return this_type(f(e));
     }
     catch (...)
     {
