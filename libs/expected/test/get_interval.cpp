@@ -66,7 +66,7 @@ matchedString(std::string str, ios_range<CharT, InputIterator>& r) {
       return boost::make_unexpected(std::ios_base::failbit);
   }
   ++r.begin;
-  return boost::expected<void, std::ios_base::iostate>();
+  return boost::expected<void, std::ios_base::iostate>(boost::in_place2);
 }
 
 /**
@@ -189,6 +189,16 @@ boost::expected<std::pair<Num,Num>, std::ios_base::iostate> get_interval4(ios_ra
 int main()
 {
   {
+    std::stringstream is("1");
+    ios_range<> r(is);
+    auto x = get_num<long>(r);
+    if (!x.valid()) {
+      std::cout << x.error() << std::endl;
+      return 5;
+    }
+    std::cout << *x << std::endl;
+  }
+  {
     std::stringstream is("1..3");
     ios_range<> r(is);
     auto x = get_interval<long>(r);
@@ -205,7 +215,7 @@ int main()
     auto x = get_interval2<long>(r);
     if (!x.valid()) {
       std::cout << x.error() << std::endl;
-      return 1;
+      return 2;
     }
 
     std::cout << x.value().first << ".." << x.value().second << std::endl;
@@ -217,7 +227,7 @@ int main()
     auto x = get_interval3<long>(r);
     if (!x.valid()) {
       std::cout << x.error() << std::endl;
-      return 1;
+      return 3;
     }
 
     std::cout << x.value().first << ".." << x.value().second << std::endl;
@@ -229,7 +239,7 @@ int main()
     auto x = get_interval4<long>(r);
     if (!x.valid()) {
       std::cout << x.error() << std::endl;
-      return 1;
+      return 4;
     }
 
     std::cout << x.value().first << ".." << x.value().second << std::endl;

@@ -60,8 +60,8 @@ BOOST_AUTO_TEST_SUITE(except_expected_constructors)
 BOOST_AUTO_TEST_CASE(expected_default_constructor)
 {
   expected<int> e;
-  BOOST_CHECK_EQUAL(e.valid(), true);
-  BOOST_CHECK_EQUAL(e.value(), int());
+  BOOST_CHECK_EQUAL(e.valid(), false);
+  BOOST_CHECK(e.error() == std::exception_ptr());
 
   class DefaultConstructibleTest
   {
@@ -74,8 +74,8 @@ BOOST_AUTO_TEST_CASE(expected_default_constructor)
   };
 
   expected<DefaultConstructibleTest> e2;
-  BOOST_CHECK_EQUAL(e2.valid(), true);
-  BOOST_CHECK_EQUAL(e2.value().value(), 0);
+  BOOST_CHECK_EQUAL(e2.valid(), false);
+  BOOST_CHECK(e2.error() == std::exception_ptr());
 }
 #endif
 
@@ -530,7 +530,7 @@ BOOST_AUTO_TEST_CASE(expected_void_then)
   auto fun = [](bool b)
   {
     if(b)
-      return expected<void>();
+      return make_expected();
     else
       return expected<void>(boost::make_unexpected(test_exception()));
   };
@@ -620,7 +620,7 @@ BOOST_AUTO_TEST_CASE(expected_void_recover)
   auto fun = [](bool b)
   {
     if(b)
-      return expected<void>();
+      return make_expected();
     else
       return expected<void>(boost::make_unexpected(test_exception()));
   };
@@ -634,7 +634,7 @@ BOOST_AUTO_TEST_CASE(expected_void_recover)
 
   auto recover_error = [](exception_ptr_type p)
   {
-    return expected<void>();
+    return make_expected();
   };
 
   auto recover_error_silent_failure = [](exception_ptr_type p)

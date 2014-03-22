@@ -27,6 +27,7 @@
 #include <initializer_list>
 
 #include <boost/expected/expected_monad.hpp>
+#include <boost/functional/adaptor.hpp>
 
 enum State
 {
@@ -82,21 +83,41 @@ void do_nothing_fun(){}
 
 BOOST_AUTO_TEST_SUITE(except_default_constructor)
 
+BOOST_AUTO_TEST_CASE(except_default_constructor2)
+{
+  // From value constructor.
+  expected<int> e {};
+  try {
+    e.value();
+  } catch (expected_default_constructed& ex )  {
+  } catch(...) {
+    BOOST_CHECK(false);
+  };
+  BOOST_CHECK(!e.valid());
+  BOOST_CHECK(! e);
+  BOOST_CHECK(! static_cast<bool>(e));
+}
+
 BOOST_AUTO_TEST_CASE(except_default_constructor)
 {
   // From value constructor.
   expected<int> e;
-  BOOST_REQUIRE_NO_THROW(e.value());
-  BOOST_CHECK(e.valid());
-  BOOST_CHECK(! ! e);
-  BOOST_CHECK(static_cast<bool>(e));
+  try {
+    e.value();
+  } catch (expected_default_constructed& ex )  {
+  } catch(...) {
+    BOOST_CHECK(false);
+  };
+  BOOST_CHECK(!e.valid());
+  BOOST_CHECK(! e);
+  BOOST_CHECK(! static_cast<bool>(e));
 }
 
 BOOST_AUTO_TEST_CASE(except_default_constructor_constexpr)
 {
   // From value constructor.
   BOOST_CONSTEXPR expected<int,int> e;
-  BOOST_CHECK(e.valid());
+  BOOST_CHECK(!e.valid());
 }
 
 
@@ -114,6 +135,19 @@ BOOST_AUTO_TEST_CASE(expected_from_value)
   BOOST_CHECK(static_cast<bool>(e));
 }
 
+BOOST_AUTO_TEST_CASE(expected_from_value2)
+{
+  // From value constructor.
+  expected<int> e(5);
+  e = {};
+  try {
+    e.value();
+  } catch (expected_default_constructed& ex )  {
+  } catch(...) {
+    BOOST_CHECK(false);
+  };
+  BOOST_CHECK(! e.valid());
+}
 BOOST_AUTO_TEST_CASE(expected_from_cnv_value)
 {
   OracleVal v;
@@ -272,7 +306,7 @@ BOOST_AUTO_TEST_CASE(except_valid_constexpr)
   // From value constructor.
   BOOST_CONSTEXPR expected<int,int> e;
   BOOST_CONSTEXPR bool b = e.valid();
-  BOOST_CHECK(b);
+  BOOST_CHECK(!b);
 }
 BOOST_AUTO_TEST_CASE(except_value_constexpr)
 {
@@ -419,6 +453,7 @@ BOOST_AUTO_TEST_CASE(expected_from_exception_catch)
 //    //BOOST_CHECK_THROW(throw_lambda(), test_exception);
 //  }
 //}
+
 
 BOOST_AUTO_TEST_CASE(expected_from_error)
 {
@@ -605,7 +640,7 @@ BOOST_AUTO_TEST_CASE(expected_void_next)
   auto fun = [](bool b)
   {
     if(b)
-      return expected<void>();
+      return make_expected();
     else
       return expected<void>(make_unexpected(test_exception()));
   };
@@ -709,6 +744,7 @@ BOOST_AUTO_TEST_CASE(expected_void_then)
 
   auto do_nothing = [](){};
 
+  BOOST_CHECK(true);
   expected<void> e = fun(true).then(if_valued(do_nothing));
   BOOST_CHECK_NO_THROW(e.value());
 
@@ -784,7 +820,7 @@ BOOST_AUTO_TEST_CASE(expected_void_recover)
   auto fun = [](bool b)
   {
     if(b)
-      return expected<void>();
+      return make_expected();
     else
       return expected<void>(boost::make_unexpected(test_exception()));
   };
@@ -793,7 +829,7 @@ BOOST_AUTO_TEST_CASE(expected_void_recover)
 
   auto recover_error = [](std::exception_ptr p)
   {
-    return expected<void>();
+    return make_expected();
   };
 
   auto recover_error_silent_failure = [](std::exception_ptr p)

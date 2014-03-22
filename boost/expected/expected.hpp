@@ -7,7 +7,6 @@
 #ifndef BOOST_EXPECTED_HPP
 #define BOOST_EXPECTED_HPP
 
-#include <boost/functional/adaptor.hpp>
 #include <boost/expected/unexpected.hpp>
 
 #include <boost/config.hpp>
@@ -135,6 +134,15 @@ class bad_expected_access : public std::logic_error
     // Add implicit/explicit conversion to error_type ?
 };
 
+class expected_default_constructed : public std::logic_error
+{
+  public:
+  public:
+    expected_default_constructed()
+    : std::logic_error("Found an error instead of the expected value.")
+    {}
+};
+
 // Traits classes
 template <typename ErrorType, class Exception>
 struct expected_error_traits
@@ -173,6 +181,8 @@ struct expected_traits<boost::exception_ptr>
 
   static void bad_access(const error_type &e)
   {
+    if (e==boost::exception_ptr())
+      throw expected_default_constructed();
     boost::rethrow_exception(e);
   }
 };
@@ -191,6 +201,8 @@ struct expected_traits<std::exception_ptr>
 
   static void bad_access(const error_type &e)
   {
+    if (e==std::exception_ptr())
+      throw expected_default_constructed();
     std::rethrow_exception(e);
   }
 };
@@ -239,7 +251,7 @@ union trivial_expected_storage
 
   BOOST_CONSTEXPR trivial_expected_storage()
     BOOST_NOEXCEPT_IF(has_nothrow_default_constructor<value_type>::value)
-  : val()
+  : err()
   {}
 
   BOOST_CONSTEXPR trivial_expected_storage(unexpected_type<error_type> const& e)
@@ -252,7 +264,7 @@ union trivial_expected_storage
   {}
 
   template <class... Args>
-  BOOST_CONSTEXPR trivial_expected_storage(BOOST_FWD_REF(Args)... args)
+  BOOST_CONSTEXPR trivial_expected_storage(in_place_t, BOOST_FWD_REF(Args)... args)
   : val(constexpr_forward<Args>(args)...)
   {}
 
@@ -269,7 +281,7 @@ union trivial_expected_storage<void, E>
   unsigned char dummy;
 
   BOOST_CONSTEXPR trivial_expected_storage()
-  : dummy(0)
+  : err()
   {}
 
   BOOST_CONSTEXPR trivial_expected_storage(unexpected_type<error_type> const& e)
@@ -281,6 +293,9 @@ union trivial_expected_storage<void, E>
   : err(traits_type::from_error(e.value()))
   {}
 
+  BOOST_CONSTEXPR trivial_expected_storage(in_place_t)
+  : dummy(0)
+  {}
   ~trivial_expected_storage() = default;
 };
 
@@ -295,7 +310,7 @@ union no_trivial_expected_storage
   value_type val;
 
   BOOST_CONSTEXPR no_trivial_expected_storage()
-  : val()
+  : err()
   {}
 
   BOOST_CONSTEXPR no_trivial_expected_storage(unexpected_type<error_type> const& e)
@@ -308,7 +323,7 @@ union no_trivial_expected_storage
   {}
 
   template <class... Args>
-  BOOST_CONSTEXPR no_trivial_expected_storage(BOOST_FWD_REF(Args)... args) //BOOST_NOEXCEPT_IF()
+  BOOST_CONSTEXPR no_trivial_expected_storage(in_place_t, BOOST_FWD_REF(Args)... args) //BOOST_NOEXCEPT_IF()
   : val(constexpr_forward<Args>(args)...)
   {}
 
@@ -325,7 +340,7 @@ union no_trivial_expected_storage<void, E>
   unsigned char dummy;
 
   BOOST_CONSTEXPR no_trivial_expected_storage()
-  : dummy(0)
+  : err()
   {}
 
   BOOST_CONSTEXPR no_trivial_expected_storage(unexpected_type<error_type> const& e)
@@ -335,6 +350,10 @@ union no_trivial_expected_storage<void, E>
   template <class Err>
   BOOST_CONSTEXPR no_trivial_expected_storage(unexpected_type<Err> const& e)
   : err(traits_type::from_error(e.value()))
+  {}
+
+  BOOST_CONSTEXPR no_trivial_expected_storage(in_place_t)
+  : dummy(0)
   {}
 
   ~no_trivial_expected_storage() {};
@@ -353,7 +372,7 @@ struct trivial_expected_base
 
   BOOST_CONSTEXPR trivial_expected_base()
     BOOST_NOEXCEPT_IF(has_nothrow_default_constructor<value_type>::value)
-  : has_value(true), storage()
+  : has_value(false), storage()
   {}
 
   BOOST_CONSTEXPR trivial_expected_base(only_set_valid_t, bool has_value)
@@ -361,11 +380,11 @@ struct trivial_expected_base
   {}
 
   BOOST_CONSTEXPR trivial_expected_base(const value_type& v)
-  : has_value(true), storage(v)
+  : has_value(true), storage(in_place2, v)
   {}
 
   BOOST_CONSTEXPR trivial_expected_base(BOOST_FWD_REF(value_type) v)
-  : has_value(true), storage(constexpr_move(v))
+  : has_value(true), storage(in_place2, constexpr_move(v))
   {}
 
   BOOST_CONSTEXPR trivial_expected_base(unexpected_type<error_type> const& e)
@@ -380,13 +399,13 @@ struct trivial_expected_base
   template <class... Args>
   explicit BOOST_CONSTEXPR
   trivial_expected_base(in_place_t, BOOST_FWD_REF(Args)... args)
-  : has_value(true), storage(constexpr_forward<Args>(args)...)
+  : has_value(true), storage(in_place2, constexpr_forward<Args>(args)...)
   {}
 
   template <class U, class... Args>
   explicit BOOST_CONSTEXPR
   trivial_expected_base(in_place_t, std::initializer_list<U> il, BOOST_FWD_REF(Args)... args)
-  : has_value(true), storage(il, constexpr_forward<Args>(args)...)
+  : has_value(true), storage(in_place2, il, constexpr_forward<Args>(args)...)
   {}
 
    ~trivial_expected_base() = default;
@@ -402,7 +421,7 @@ struct trivial_expected_base<void, E>
   trivial_expected_storage<void, E> storage;
 
   BOOST_CONSTEXPR trivial_expected_base()
-  : has_value(true), storage() {}
+  : has_value(false), storage() {}
 
   BOOST_CONSTEXPR trivial_expected_base(only_set_valid_t, bool has_value)
   : has_value(has_value) {}
@@ -413,6 +432,9 @@ struct trivial_expected_base<void, E>
   template <class Err>
   BOOST_CONSTEXPR trivial_expected_base(unexpected_type<Err> const& e)
   : has_value(false), storage(e)
+  {}
+  BOOST_CONSTEXPR trivial_expected_base(in_place_t)
+  : has_value(true), storage(in_place2)
   {}
 
    ~trivial_expected_base() = default;
@@ -429,7 +451,7 @@ struct no_trivial_expected_base
 
   BOOST_CONSTEXPR no_trivial_expected_base()
     BOOST_NOEXCEPT_IF(has_nothrow_default_constructor<value_type>::value)
-  : has_value(true), storage()
+  : has_value(false), storage()
   {}
 
   BOOST_CONSTEXPR no_trivial_expected_base(only_set_valid_t, bool has_value)
@@ -437,11 +459,11 @@ struct no_trivial_expected_base
   {}
 
   BOOST_CONSTEXPR no_trivial_expected_base(const value_type& v)
-  : has_value(true), storage(v)
+  : has_value(true), storage(in_place2, v)
   {}
 
   BOOST_CONSTEXPR no_trivial_expected_base(BOOST_FWD_REF(value_type) v)
-  : has_value(true), storage(constexpr_move(v))
+  : has_value(true), storage(in_place2, constexpr_move(v))
   {}
 
   BOOST_CONSTEXPR no_trivial_expected_base(unexpected_type<error_type> const& e)
@@ -456,13 +478,13 @@ struct no_trivial_expected_base
   template <class... Args>
   explicit BOOST_CONSTEXPR
   no_trivial_expected_base(in_place_t, BOOST_FWD_REF(Args)... args)
-  : has_value(true), storage(constexpr_forward<Args>(args)...)
+  : has_value(true), storage(in_place2, constexpr_forward<Args>(args)...)
   {}
 
   template <class U, class... Args>
   explicit BOOST_CONSTEXPR
   no_trivial_expected_base(in_place_t, std::initializer_list<U> il, BOOST_FWD_REF(Args)... args)
-  : has_value(true), storage(il, constexpr_forward<Args>(args)...)
+  : has_value(true), storage(in_place2, il, constexpr_forward<Args>(args)...)
   {}
 
   ~no_trivial_expected_base()
@@ -481,7 +503,7 @@ struct no_trivial_expected_base<void, E> {
   no_trivial_expected_storage<void, E> storage;
 
   BOOST_CONSTEXPR no_trivial_expected_base()
-  : has_value(true), storage() {}
+  : has_value(false), storage() {}
 
   BOOST_CONSTEXPR no_trivial_expected_base(only_set_valid_t, bool has_value)
   : has_value(has_value) {}
@@ -494,6 +516,10 @@ struct no_trivial_expected_base<void, E> {
   template <class Err>
   BOOST_CONSTEXPR no_trivial_expected_base(unexpected_type<Err> const& e)
   : has_value(false), storage(e)
+  {}
+
+  BOOST_CONSTEXPR no_trivial_expected_base(in_place_t)
+  : has_value(true), storage(in_place2)
   {}
 
   ~no_trivial_expected_base() {
@@ -702,13 +728,15 @@ public:
     return *this;
   }
 
-  expected& operator=(BOOST_COPY_ASSIGN_REF(value_type) value)
+  template <class U, T_REQUIRES(is_same<decay_t<U>, value_type>::value)>
+  expected& operator=(BOOST_COPY_ASSIGN_REF(U) value)
   {
     this_type(value).swap(*this);
     return *this;
   }
 
-  expected& operator=(BOOST_RV_REF(value_type) value)
+  template <class U, T_REQUIRES(is_same<decay_t<U>, value_type>::value)>
+  expected& operator=(BOOST_RV_REF(U) value)
   {
     this_type(boost::move(value)).swap(*this);
     return *this;
@@ -1213,7 +1241,7 @@ public:
   }
 
   BOOST_CONSTEXPR explicit expected(in_place_t) BOOST_NOEXCEPT
-  : base_type()
+  : base_type(in_place2)
   {}
 
   BOOST_CONSTEXPR expected() BOOST_NOEXCEPT
@@ -1333,7 +1361,7 @@ public:
 #else
     typedef expected<typename result_of<F()>::type, error_type> result_type;
     return ( valid()
-        ? ( f(), result_type() )
+        ? ( f(), result_type(in_place2) )
         :  result_type(get_unexpected())
         );
 #endif
@@ -1368,9 +1396,9 @@ public:
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
     typedef expected<void, error_type> result_type;
     f(boost::move(*this));
-    return result_type();
+    return result_type(in_place2);
 #else
-    return ( f(boost::move(*this)), expected<void, error_type>() );
+    return ( f(boost::move(*this)), expected<void, error_type>(in_place2) );
 #endif
   }
 
@@ -1607,7 +1635,13 @@ BOOST_CONSTEXPR expected<T> make_expected(BOOST_FWD_REF(T) v )
 
 BOOST_FORCEINLINE expected<void> make_expected()
 {
-  return expected<void>();
+  return expected<void>(in_place2);
+}
+
+template<typename E>
+BOOST_FORCEINLINE expected<void, E> make_expected()
+{
+  return expected<void,E>(in_place2);
 }
 
 
@@ -1646,7 +1680,7 @@ BOOST_FORCEINLINE expected<T> make_expected_from_exception(E e) BOOST_NOEXCEPT
 
 template <typename T, typename E>
 BOOST_FORCEINLINE BOOST_CONSTEXPR
-expected<T,decay_t<E>> make_expected_from_error(E e) BOOST_NOEXCEPT
+expected<T,decay_t<E> > make_expected_from_error(E e) BOOST_NOEXCEPT
 {
   return expected<T, decay_t<E> >(make_unexpected(e));
 }

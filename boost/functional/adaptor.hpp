@@ -9,6 +9,7 @@
 #include <boost/move/move.hpp>
 #include <boost/utility/result_of.hpp>
 #include <boost/functional/monad.hpp>
+#include <boost/expected/expected.hpp>
 
 namespace boost
 {
@@ -112,7 +113,7 @@ namespace boost
         if (monads::has_value(e))
         {
           fct_();
-          return result_type();
+          return result_type(in_place2);
         }
         else
         {

@@ -38,7 +38,7 @@ namespace boost
       static constexpr auto error(M&& m) -> decltype(m.error()) { return m.error(); };
     };
 
-    template <class M, class Traits = unexpected_traits<unexpected_category_t<decay_t<M> > >>
+    template <class M, class Traits = unexpected_traits<unexpected_category_t<decay_t<M> > > >
     using unexpected_type_t = typename Traits::template type<M>;
 
     template <class M, class Traits = unexpected_traits<unexpected_category_t<decay_t<M> > > >
@@ -74,7 +74,7 @@ namespace boost
       static constexpr auto value_pre_has_value(M&& m) -> decltype(m.value_pre_has_value()) { return m.value_pre_has_value(); };
     };
 
-    template <class M, class Traits = value_traits<value_category_t<decay_t<M> > >>
+    template <class M, class Traits = value_traits<value_category_t<decay_t<M> > > >
     using value_type_t = typename Traits::template type<M>;
 
     template <class M, class Traits = value_traits<value_category_t<decay_t<M> > > >
@@ -153,13 +153,13 @@ namespace boost
 
     };
 
-    template <class M, class T, class Traits = monad_traits<monad_category_t<decay_t<M>> > >
+    template <class M, class T, class Traits = monad_traits<monad_category_t<decay_t<M> > > >
     M make(T&& v)
     {
       return Traits::make(std::forward<T>(v));
     }
 
-    template <template <class ...> class M, class T, class Traits = monad_traits<monad_category_t<M<T> > >>
+    template <template <class ...> class M, class T, class Traits = monad_traits<monad_category_t<M<T> > > >
     M<T> make(T&& v)
     {
       return Traits::make(std::forward<T>(v));
@@ -191,9 +191,9 @@ namespace boost
     class monad;
 
     template <class M>
-    monad<decay_t<M>> make_monad(M&& v)
+    monad<decay_t<M> > make_monad(M&& v)
     {
-      return monad<decay_t<M>>(std::forward<M>(v));
+      return monad<decay_t<M> >(std::forward<M>(v));
     }
 
     template <class M>
@@ -284,9 +284,9 @@ namespace boost
     class monad_error;
 
     template <class M>
-    monad_error<decay_t<M>> make_monad_error(M&& v)
+    monad_error<decay_t<M> > make_monad_error(M&& v)
     {
-      return monad_error<decay_t<M>>(std::forward<M>(v));
+      return monad_error<decay_t<M> >(std::forward<M>(v));
     }
 
     template <class M>

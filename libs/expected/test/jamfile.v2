@@ -62,7 +62,7 @@ project expected
       <toolset>intel-win:<iterator_debugging>off
     ;
 
-test-suite "Expected"
+test-suite Expected
     : 
       [ run test_expected.cpp  boost_unit_test ]
       [ run test_expected2.cpp  boost_unit_test ]

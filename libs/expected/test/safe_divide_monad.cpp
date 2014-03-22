@@ -11,6 +11,9 @@
 
 #include <boost/expected/expected_monad.hpp>
 #include <boost/expected/optional_monad.hpp>
+#include <boost/expected/expected_to_optional.hpp>
+#include <boost/expected/expected_to_future.hpp>
+
 #include <iostream>
 #include <exception>
 

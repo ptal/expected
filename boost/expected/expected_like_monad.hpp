@@ -40,56 +40,62 @@ namespace boost
       template <class M>
       static constexpr bool has_value(M&& m) { return bool(m); };
       template <class M>
-      static constexpr auto value(M& m) -> decltype(m.value()) { return m.value(); };
+      static constexpr auto value(M&& m) -> decltype(m.value()) { return m.value(); };
       template <class M>
-      static constexpr auto value_pre_has_value(M& m) -> decltype(*m) { return *m; };
+      static constexpr auto value_pre_has_value(M&& m) -> decltype(*m) { return *m; };
     };
+
+    template< class M >
+    BOOST_CONSTEXPR bool have_value( M&& m )
+    {
+      return has_value(std::forward<M>(m));
+    }
+    template< class M1, class ...Ms >
+    BOOST_CONSTEXPR bool have_value( M1&& m1, Ms&& ...ms )
+    {
+      return has_value(std::forward<M1>(m1)) && have_value( std::forward<Ms>(ms)... );
+    }
 
     template <>
     struct unexpected_traits<category::expected_like > {
       template< class M >
       using type = unexpected_type<typename M::error_type>;
       template< class M >
-      static constexpr auto get_unexpected(M && m) -> decltype(m.get_unexpected()) { return m.get_unexpected(); }
+      static constexpr auto get_unexpected(M && m) -> decltype(m.get_unexpected())
+      {
+        return m.get_unexpected();
+      }
       template< class M >
-      static constexpr auto error(M && m) -> decltype(m.error()) { return m.error(); }
+      static constexpr auto error(M && m) -> decltype(m.error())
+      {
+        return m.error();
+      }
     };
+
+    template< class M >
+    BOOST_CONSTEXPR unexpected_type_t<M> first_unexpected( M&& m )
+    {
+      return get_unexpected(std::forward<M>(m));
+    }
+    template< class M1, class ...Ms >
+    BOOST_CONSTEXPR unexpected_type_t<M1> first_unexpected( M1&& m1, Ms&& ...ms )
+    {
+      return has_value(std::forward<M1>(m1))
+          ? first_unexpected( std::forward<Ms>(ms)... )
+              : get_unexpected(std::forward<M1>(m1)) ;
+    }
 
     template <>
     struct functor_traits<category::expected_like>
     {
-      template< class M >
-      static BOOST_CONSTEXPR bool each( const M& m )
-      {
-        return (bool)m;
-      }
-
-      template< class M1, class ...Ms >
-      static BOOST_CONSTEXPR bool each( const M1& m1, const Ms& ...ms )
-      {
-        return (bool)m1 && each( ms... );
-      }
-
-      template< class M >
-      static BOOST_CONSTEXPR unexpected_type_t<M> the_unexpected( const M& m )
-      {
-        return get_unexpected(m);
-      }
-
-      template< class M1, class ...Ms >
-      static BOOST_CONSTEXPR unexpected_type_t<M1> the_unexpected( const M1& m1, const Ms& ...ms )
-      {
-        return (bool)m1 ? the_unexpected( ms... ) : get_unexpected(m1) ;
-      }
-
       template <class F, class M0, class ...M,
-          class FR = decltype( std::declval<F>()(*std::declval<M0>(), *std::declval<M>()...) )>
+          class FR = decltype( std::declval<F>()(value_pre_has_value(std::declval<M0>()), value_pre_has_value(std::declval<M>())...) )>
       static BOOST_CONSTEXPR auto when_all_valued(F&& f, M0&& m0, M&& ...m) -> typename bind<decay_t<M0>, FR>::type
       {
         typedef typename bind<decay_t<M0>, FR>::type expected_type;
-        return each( std::forward<M0>(m0), std::forward<M>(m)... )
-        ? expected_type( std::forward<F>(f)( *std::forward<M0>(m0), *std::forward<M>(m)... ) )
-        : the_unexpected( std::forward<M0>(m0), std::forward<M>(m)... )
+        return have_value( std::forward<M0>(m0), std::forward<M>(m)... )
+        ? expected_type( std::forward<F>(f)( value_pre_has_value(std::forward<M0>(m0)), value_pre_has_value(std::forward<M>(m))... ) )
+        : first_unexpected( std::forward<M0>(m0), std::forward<M>(m)... )
         ;
       }
     };
@@ -119,7 +125,7 @@ namespace boost
         return m.next(std::forward<F>(f));
       }
 #else
-      template <class M, class F, class FR = decltype( std::declval<F>()( *std::declval<M>() ) )>
+      template <class M, class F, class FR = decltype( std::declval<F>()( value_pre_has_value(std::declval<M>()) ) )>
       static BOOST_CONSTEXPR auto
       when_valued(M&& m, F&& f,
           REQUIRES(boost::is_same<FR, void>::value)
@@ -127,21 +133,21 @@ namespace boost
       {
         typedef typename bind<decay_t<M>, FR>::type result_type;
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
-        if(m)
+        if(has_value(m))
         {
-          f(*m);
+          f(value_pre_has_value(m));
           return result_type();
         }
         return get_unexpected(m);
 #else
-        return (m
-        ? (f(*m), result_type() )
+        return (has_value(m)
+        ? (f(value_pre_has_value(m)), result_type() )
         : result_type( get_unexpected(m) )
         );
 #endif
       }
 
-      template <class M, class F, class FR = decltype( std::declval<F>()( *std::declval<M>() ) )>
+      template <class M, class F, class FR = decltype( std::declval<F>()( value_pre_has_value(std::declval<M>()) ) )>
       static BOOST_CONSTEXPR auto
       when_valued(M&& m, F&& f,
           REQUIRES((! boost::is_same<FR, void>::value
@@ -150,34 +156,34 @@ namespace boost
       {
         typedef typename bind<decay_t<M>, FR>::type result_type;
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
-        if(m)
+        if(has_value(m))
         {
-            return result_type(f(*m));
+            return result_type(f(value_pre_has_value(m)));
         }
         return get_unexpected(m);
 #else
-        return (m
-        ? result_type(f(*m))
+        return (has_value(m)
+        ? result_type(f(value_pre_has_value(m)))
         : result_type( get_unexpected(m) )
         );
 #endif
       }
 
-      template <class M, class F, class FR = decltype( std::declval<F>()( *std::declval<M>() ) )>
+      template <class M, class F, class FR = decltype( std::declval<F>()( value_pre_has_value(std::declval<M>()) ) )>
       static BOOST_CONSTEXPR auto
       when_valued(M&& m, F&& f,
           REQUIRES( boost::monads::is_monad<FR>::value )
       ) -> FR
       {
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
-        if(m)
+        if(has_value(m))
         {
-            return f(*m);
+            return f(value_pre_has_value(m));
         }
         return get_unexpected(m);
 #else
-        return (m
-        ? f(*m)
+        return (has_value(m)
+        ? f(value_pre_has_value(m))
         : FR( get_unexpected(m) )
         );
 #endif
