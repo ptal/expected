@@ -1640,7 +1640,6 @@ BOOST_CONSTEXPR bool operator==(const expected<T, E>& x, const expected<T, E>& y
     : (!x && !y)
       ?  x.error() == y.error()
       : false;
-
 }
 
 template <class E>
@@ -1651,13 +1650,26 @@ BOOST_CONSTEXPR bool operator==(const expected<void, E>& x, const expected<void,
     : (!x && !y)
       ?  x.error() == y.error()
       : false;
-
 }
 
 template <class T, class E>
 BOOST_CONSTEXPR bool operator!=(const expected<T, E>& x, const expected<T, E>& y)
 {
-  return !(x == y);
+  return (x && y)
+    ? *x != *y
+    : (!x && !y)
+      ?  x.error() != y.error()
+      : true;
+}
+
+template <class E>
+BOOST_CONSTEXPR bool operator!=(const expected<void, E>& x, const expected<void, E>& y)
+{
+  return (x && y)
+    ? false
+    : (!x && !y)
+      ?  x.error() != y.error()
+      : true;
 }
 
 template <class T, class E>
@@ -1665,7 +1677,7 @@ BOOST_CONSTEXPR bool operator<(const expected<T, E>& x, const expected<T, E>& y)
 {
   return (x)
     ? (y) ? *x < *y : true
-    : (y) ? false : x.error() < y.error();
+    : (y) ? true : x.error() < y.error();
 }
 
 template <class E>
@@ -1673,25 +1685,186 @@ BOOST_CONSTEXPR bool operator<(const expected<void, E>& x, const expected<void, 
 {
   return (x)
     ? (y) ? false : true
-    : (y) ? false : x.error() < y.error();
+    : (y) ? true : x.error() < y.error();
 }
 
 template <class T, class E>
 BOOST_CONSTEXPR bool operator>(const expected<T, E>& x, const expected<T, E>& y)
 {
-  return (y < x);
+  return (x)
+    ? (y) ? *x > *y : true
+    : (y) ? false : x.error() > y.error();
+}
+template <class E>
+BOOST_CONSTEXPR bool operator>(const expected<void, E>& x, const expected<void, E>& y)
+{
+  return (x)
+    ? (y) ? false : true
+    : (y) ? false : x.error() > y.error();
 }
 
 template <class T, class E>
 BOOST_CONSTEXPR bool operator<=(const expected<T, E>& x, const expected<T, E>& y)
 {
-  return !(y < x);
+  return (x)
+    ? (y) ? *x <= *y : false
+    : (y) ? true : x.error() <= y.error();
+}
+template <class E>
+BOOST_CONSTEXPR bool operator<=(const expected<void, E>& x, const expected<void, E>& y)
+{
+  return (x)
+    ? (y) ? true : false
+    : (y) ? true : x.error() <= y.error();
 }
 
 template <class T, class E>
 BOOST_CONSTEXPR bool operator>=(const expected<T, E>& x, const expected<T, E>& y)
 {
-  return !(x < y);
+  return (x)
+    ? (y) ? *x >= *y : true
+    : (y) ? false : x.error() >= y.error();
+}
+template <class E>
+BOOST_CONSTEXPR bool operator>=(const expected<void, E>& x, const expected<void, E>& y)
+{
+  return (x)
+    ? (y) ? true : true
+    : (y) ? false : x.error() >= y.error();
+}
+
+// Relational operators with T
+template <class T, class E>
+BOOST_CONSTEXPR bool operator==(const expected<T, E>& x, const T& v)
+{
+  return (x) ? *x == v :  false;
+}
+template <class E>
+BOOST_CONSTEXPR bool operator==(const E& v, const expected<void, E>& x)
+{
+  return (x) ? *x == v :  false;
+}
+
+template <class T, class E>
+BOOST_CONSTEXPR bool operator!=(const expected<T, E>& x, const T& v)
+{
+  return (x) ? *x != v : true;
+}
+template <class T, class E>
+BOOST_CONSTEXPR bool operator!=(const T& v, const expected<T, E>& x)
+{
+  return (x) ? *x != v : true;
+}
+
+
+template <class T, class E>
+BOOST_CONSTEXPR bool operator<(const expected<T, E>& x, const T& v)
+{
+  return (x) ? (*x < v) : true ;
+}
+template <class T, class E>
+BOOST_CONSTEXPR bool operator<(const T& v, const expected<T, E>& x)
+{
+  return (x) ? (v < *x) : true ;
+}
+
+template <class T, class E>
+BOOST_CONSTEXPR bool operator>(const expected<T, E>& x, const T& v)
+{
+  return (x) ? (*x > v) : true ;
+}
+template <class T, class E>
+BOOST_CONSTEXPR bool operator>(const T& v, const expected<T, E>& x)
+{
+  return (x) ? (v > *x) : true ;
+}
+
+template <class T, class E>
+BOOST_CONSTEXPR bool operator<=(const expected<T, E>& x, const T& v)
+{
+  return (x) ? (*x <= v) : true ;
+}
+template <class T, class E>
+BOOST_CONSTEXPR bool operator<=(const T& v, const expected<T, E>& x)
+{
+  return (x) ? (v <= *x) : false ;
+}
+
+template <class T, class E>
+BOOST_CONSTEXPR bool operator>=(const expected<T, E>& x, const T& v)
+{
+  return (x) ? (*x >= v) : false ;
+}
+template <class T, class E>
+BOOST_CONSTEXPR bool operator>=(const T& v, const expected<T, E>& x)
+{
+  return (x) ? (v >= *x) : true ;
+}
+
+// Relational operators with unexpected_type<E>
+template <class T, class E>
+BOOST_CONSTEXPR bool operator==(const expected<T, E>& x, const unexpected_type<E>& e)
+{
+  return (!x) ? x.error() == e.value() :  false;
+}
+template <class T, class E>
+BOOST_CONSTEXPR bool operator==(const unexpected_type<E>& e, const expected<T, E>& x)
+{
+  return (!x) ? x.error() == e.value() :  false;
+}
+template <class T, class E>
+BOOST_CONSTEXPR bool operator!=(const expected<T, E>& x, const unexpected_type<E>& e)
+{
+  return (!x) ? x.error() != e.value() :  true;
+}
+template <class T, class E>
+BOOST_CONSTEXPR bool operator!=(const unexpected_type<E>& e , const expected<T, E>& x)
+{
+  return (!x) ? x.error() != e.value() :  true;
+}
+
+template <class T, class E>
+BOOST_CONSTEXPR bool operator<(const expected<T, E>& x, const unexpected_type<E>& e)
+{
+  return (!x) ? (x.error() < e.value()) : false ;
+}
+template <class T, class E>
+BOOST_CONSTEXPR bool operator<(const unexpected_type<E>& e, const expected<T, E>& x)
+{
+  return (!x) ? (e.value() < x.error() ) : true ;
+}
+
+template <class T, class E>
+BOOST_CONSTEXPR bool operator>(const expected<T, E>& x, const unexpected_type<E>& e)
+{
+  return (!x) ? (x.error() > e.value()) : true ;
+}
+template <class T, class E>
+BOOST_CONSTEXPR bool operator>(const unexpected_type<E>& e, const expected<T, E>& x)
+{
+  return (!x) ? (e.value() > x.error() ) : false ;
+}
+
+template <class T, class E>
+BOOST_CONSTEXPR bool operator<=(const expected<T, E>& x, const unexpected_type<E>& e)
+{
+  return (!x) ? (x.error() <= e.value()) : false ;
+}
+template <class T, class E>
+BOOST_CONSTEXPR bool operator<=(const unexpected_type<E>& e, const expected<T, E>& x)
+{
+  return (!x) ? (e.value() <= x.error()) : true ;
+}
+
+template <class T, class E>
+BOOST_CONSTEXPR bool operator>=(const expected<T, E>& x, const unexpected_type<E>& e)
+{
+  return (!x) ? (x.error() >= e.value()) : true ;
+}
+template <class T, class E>
+BOOST_CONSTEXPR bool operator>=(const unexpected_type<E>& e, const expected<T, E>& x)
+{
+  return (!x) ? (e.value() >= x.error()) : false ;
 }
 
 // Specialized algorithms

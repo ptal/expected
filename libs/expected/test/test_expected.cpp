@@ -955,10 +955,20 @@ BOOST_AUTO_TEST_CASE(rel_xx)
     expected<unsigned, int> e1{1};
     expected<unsigned, int> eN{unexpect, -1};
 
-    //assert (eN < e0);
+    assert (eN < e0);
     assert (e0 < e1);
-    //assert (!(eN  < eN));
+    assert (eN <= e0);
+    assert (e0 <= e1);
+
+    assert (e0 > eN);
+    assert (e1 > e0);
+    assert (e0 >= eN);
+    assert (e1 >= e0);
+
+    assert (!(eN  < eN));
     assert (!(e1 < e1));
+    assert (eN <= eN);
+    assert (e1 <= e1);
 
     assert (eN != e0);
     assert (e0 != e1);
@@ -967,13 +977,25 @@ BOOST_AUTO_TEST_CASE(rel_xx)
 
     //////
 
-//    assert (eN == make_unexpected(1));
-//    assert (e0 != make_unexpected(1));
-//    assert (eN != 1);
-//    assert (e1 == 1);
-//
-//    assert (eN < 1);
-//    assert (e0 > make_unexpected(1));
+    assert (eN == make_unexpected(-1));
+    assert (e0 != make_unexpected(1));
+    assert (eN != 1u);
+    assert (e1 == 1u);
+
+    assert (eN < 1u);
+    assert (eN <= 1u);
+    assert (1u > eN);
+    assert (1u >= eN);
+    assert (make_unexpected(1) < e0);
+    assert (make_unexpected(1) <= e0);
+    assert (! (make_unexpected(1) > e0));
+    assert (! (make_unexpected(1) >= e0));
+
+
+    assert (!(e0 < make_unexpected(1)));
+    assert (!(e0 <= make_unexpected(1)));
+    assert (e0 > make_unexpected(1));
+    assert (e0 >= make_unexpected(1));
 
   }
 }
