@@ -25,6 +25,7 @@
 #include <exception>
 #include <system_error>
 #include <initializer_list>
+#include <string>
 
 #include <boost/expected/expected_monad.hpp>
 #include <boost/functional/adaptor.hpp>
@@ -66,6 +67,34 @@ struct Oracle
     Oracle& operator=(OracleVal&& v) { s = sValueMoveConstructed; val = std::move(v); v.s = sMovedFrom; return *this; }
     Oracle& operator=(const Oracle& o) { s = sCopyConstructed; val = o.val; return *this; }
     Oracle& operator=(Oracle&& o) { s = sMoveConstructed; val = std::move(o.val); o.s = sMovedFrom; return *this; }
+};
+
+struct Guard
+{
+    std::string val;
+    Guard() : val{} {}
+    explicit Guard(std::string s, int = 0) : val(s) {}
+    Guard(const Guard&) = delete;
+    Guard(Guard&&) = delete;
+    void operator=(const Guard&) = delete;
+    void operator=(Guard&&) = delete;
+};
+
+struct ExplicitStr
+{
+    std::string s;
+    explicit ExplicitStr(const char* chp) : s(chp) {};
+};
+
+struct Date
+{
+    int i;
+    Date() = delete;
+    Date(int i) : i{i} {};
+    Date(Date&& d) : i(d.i) { d.i = 0; }
+    Date(const Date&) = delete;
+    Date& operator=(const Date&) = delete;
+    Date& operator=(Date&& d) { i = d.i; d.i = 0; return *this;};
 };
 
 using namespace boost;
@@ -854,5 +883,98 @@ BOOST_AUTO_TEST_CASE(expected_void_recover)
   BOOST_CHECK_THROW(fun(false).next(do_nothing).recover(recover_error_failure), test_exception);
 
 }
+BOOST_AUTO_TEST_SUITE_END()
 
+BOOST_AUTO_TEST_SUITE(proposal)
+
+BOOST_AUTO_TEST_CASE(concept)
+{
+  using namespace std;
+
+  {
+  expected<int, string> ei = 0;
+  expected<int, string> ej = 1;
+  expected<int, string> ek = make_unexpected(string());
+
+  ei = 1;
+  ej = make_unexpected(string());;
+  ek = 0;
+
+  ei = make_unexpected(string());;
+  ej = 0;
+  ek = 1;
+  }
+}
+BOOST_AUTO_TEST_CASE(init)
+{
+  using namespace std;
+  {
+    string s{"STR"};
+
+    expected<string,int> ep{make_unexpected(-1)};              // unexpected value, requires Movable<E>
+    expected<string,int> eq = {make_unexpected(-1)};           // unexpected value, requires Movable<E>
+
+    expected<string> es{s};                    // requires Copyable<T>
+    expected<string> et = s;                   // requires Copyable<T>
+    expected<string> ev = string{"STR"};       // requires Movable<T>
+
+    expected<string> ew;                       // unexpected value
+    expected<string> ex{};                     // unexpected value
+    expected<string> ey = {};                  // unexpected value
+    expected<string> ez = expected<string>{};  // unexpected value
+  }
+
+  {
+    expected<Guard, int> eg;                        // unexpected value
+    expected<Guard, int> eh{};                      // unexpected value
+    expected<Guard, int> ei{in_place2};               // calls Guard{} in place
+    expected<Guard, int> ej{in_place2, "arg"};        // calls Guard{"arg"} in place
+  }
+
+  {
+    expected<int,string> ei{unexpect};               // unexpected value, calls string{} in place
+    expected<int,string> ej{unexpect, "arg"};        // unexpected value, calls string{"arg"} in place
+  }
+}
+BOOST_AUTO_TEST_CASE(make_unexpected_fact)
+{
+  using namespace std;
+  {
+    expected<string,int> opt1 = make_unexpected(1);
+    expected<string,int> opt2 = {unexpect, 1};
+
+    opt1 =   make_unexpected(1);
+    opt2 =  {unexpect, 1};
+  }
+}
+BOOST_AUTO_TEST_CASE(rel_xx)
+{
+  using namespace std;
+  {
+    expected<unsigned, int> e0{0};
+    expected<unsigned, int> e1{1};
+    expected<unsigned, int> eN{unexpect, -1};
+
+    //assert (eN < e0);
+    assert (e0 < e1);
+    //assert (!(eN  < eN));
+    assert (!(e1 < e1));
+
+    assert (eN != e0);
+    assert (e0 != e1);
+    assert (eN == eN);
+    assert (e0 == e0);
+
+    //////
+
+//    assert (eN == make_unexpected(1));
+//    assert (e0 != make_unexpected(1));
+//    assert (eN != 1);
+//    assert (e1 == 1);
+//
+//    assert (eN < 1);
+//    assert (e0 > make_unexpected(1));
+
+  }
+}
 BOOST_AUTO_TEST_SUITE_END()

@@ -49,7 +49,7 @@
   #endif
 
   #define MAKE_BOOST_FWD_REF_ARG(z, count, unused) BOOST_PP_COMMA_IF(count) BOOST_FWD_REF(Arg##count) arg##count
-  #define MAKE_BOOST_FWD_PARAM(z, count, unused) BOOST_PP_COMMA_IF(count) boost::forward<Arg##count>(arg##count)
+  #define MAKE_BOOST_FWD_PARAM(z, count, unused) BOOST_PP_COMMA_IF(count) boost::constexpr_forward<Arg##count>(arg##count)
 #endif
 
 # define REQUIRES(...) typename ::boost::enable_if_c<__VA_ARGS__, void*>::type = 0
@@ -211,6 +211,12 @@ struct expected_traits<std::exception_ptr>
 struct in_place_t {};
 BOOST_CONSTEXPR_OR_CONST in_place_t in_place2 = {};
 
+struct expect_t {};
+BOOST_CONSTEXPR_OR_CONST expect_t expect = {};
+
+struct unexpect_t {};
+BOOST_CONSTEXPR_OR_CONST unexpect_t unexpect = {};
+
 // workaround: std utility functions aren't constexpr yet
 template <class T> inline
 BOOST_CONSTEXPR T&& constexpr_forward(typename std::remove_reference<T>::type& t) BOOST_NOEXCEPT
@@ -371,7 +377,7 @@ struct trivial_expected_base
   trivial_expected_storage<T, E> storage;
 
   BOOST_CONSTEXPR trivial_expected_base()
-    BOOST_NOEXCEPT_IF(has_nothrow_default_constructor<value_type>::value)
+    //BOOST_NOEXCEPT_IF(has_nothrow_default_constructor<value_type>::value)
   : has_value(false), storage()
   {}
 
@@ -450,7 +456,7 @@ struct no_trivial_expected_base
   no_trivial_expected_storage<T, E> storage;
 
   BOOST_CONSTEXPR no_trivial_expected_base()
-    BOOST_NOEXCEPT_IF(has_nothrow_default_constructor<value_type>::value)
+    //BOOST_NOEXCEPT_IF(has_nothrow_default_constructor<value_type>::value)
   : has_value(false), storage()
   {}
 
@@ -559,14 +565,22 @@ private:
   typedef detail::expected_base<value_type, error_type> base_type;
 
   // Static asserts.
-  //typedef boost::is_same<value_type, exceptional_t> is_same_value_exceptional_t;
+  //typedef boost::is_unexpected<value_type> is_unexpected_value_t;
+  //BOOST_STATIC_ASSERT_MSG( !is_unexpected_value_t::value, "bad ValueType" );
   typedef boost::is_same<value_type, in_place_t> is_same_value_in_place_t;
-  //typedef boost::is_same<error_type, exceptional_t> is_same_error_exceptional_t;
-  typedef boost::is_same<error_type, in_place_t> is_same_error_in_place_t;
-  //BOOST_STATIC_ASSERT_MSG( !is_same_value_exceptional_t::value, "bad ValueType" );
   BOOST_STATIC_ASSERT_MSG( !is_same_value_in_place_t::value, "bad ValueType" );
-  //BOOST_STATIC_ASSERT_MSG( !is_same_error_exceptional_t::value, "bad ErrorType" );
+  typedef boost::is_same<value_type, unexpect_t> is_same_value_unexpect_t;
+  BOOST_STATIC_ASSERT_MSG( !is_same_value_unexpect_t::value, "bad ValueType" );
+  typedef boost::is_same<value_type, expect_t> is_same_value_expect_t;
+  BOOST_STATIC_ASSERT_MSG( !is_same_value_expect_t::value, "bad ValueType" );
+  //typedef boost::is_unexpected<error_type> is_unexpected_error_t;
+  //BOOST_STATIC_ASSERT_MSG( !is_unexpected_error_t::value, "bad ErrorType" );
+  typedef boost::is_same<error_type, in_place_t> is_same_error_in_place_t;
   BOOST_STATIC_ASSERT_MSG( !is_same_error_in_place_t::value, "bad ErrorType" );
+  typedef boost::is_same<error_type, unexpect_t> is_same_error_unexpect_t;
+  BOOST_STATIC_ASSERT_MSG( !is_same_error_unexpect_t::value, "bad ErrorType" );
+  typedef boost::is_same<error_type, expect_t> is_same_error_expect_t;
+  BOOST_STATIC_ASSERT_MSG( !is_same_error_expect_t::value, "bad ErrorType" );
 
   value_type* dataptr() { return std::addressof(base_type::storage.val); }
   BOOST_CONSTEXPR const value_type* dataptr() const { return static_addressof(base_type::storage.val); }
@@ -607,15 +621,23 @@ public:
 
   // Constructors/Destructors/Assignments
 
+  BOOST_CONSTEXPR expected(
+     //REQUIRES(std::is_default_constructible<error_type>::value)
+  ) BOOST_NOEXCEPT_IF(
+  has_nothrow_default_constructor<error_type>::value
+  )
+  : base_type()
+  {}
+
   BOOST_CONSTEXPR expected(const value_type& v
-    , REQUIRES(std::is_copy_constructible<value_type>::value)
+    //, REQUIRES(std::is_copy_constructible<value_type>::value)
   )
   BOOST_NOEXCEPT_IF(has_nothrow_copy_constructor<value_type>::value)
   : base_type(v)
   {}
 
   BOOST_CONSTEXPR expected(BOOST_RV_REF(value_type) v
-    , REQUIRES(std::is_move_constructible<value_type>::value)
+    //, REQUIRES(std::is_move_constructible<value_type>::value)
   )
   BOOST_NOEXCEPT_IF(
         std::is_nothrow_move_constructible<value_type>::value
@@ -625,8 +647,8 @@ public:
   {}
 
   expected(const expected& rhs
-    , REQUIRES( std::is_copy_constructible<value_type>::value
-             && std::is_copy_constructible<error_type>::value)
+    //, REQUIRES( std::is_copy_constructible<value_type>::value
+      //         && std::is_copy_constructible<error_type>::value)
   )
   BOOST_NOEXCEPT_IF(
     has_nothrow_copy_constructor<value_type>::value &&
@@ -645,8 +667,8 @@ public:
   }
 
   expected(BOOST_RV_REF(expected) rhs
-    , REQUIRES( std::is_move_constructible<value_type>::value
-             && std::is_move_constructible<error_type>::value)
+    //, REQUIRES( std::is_move_constructible<value_type>::value
+      //         && std::is_move_constructible<error_type>::value)
   )
   BOOST_NOEXCEPT_IF(
     std::is_nothrow_move_constructible<value_type>::value &&
@@ -683,15 +705,30 @@ public:
   : base_type(e)
   {}
 
+#if ! defined BOOST_NO_CXX11_VARIADIC_TEMPLATES
+  template <class... Args
+#if !defined BOOST_EXPECTED_NO_CXX11_FUNCTION_TEMPLATE_DEFAULT_ARGS
+  , T_REQUIRES(std::is_constructible<error_type, Args&...>::value)
+#endif
+  >
+  expected(unexpect_t, BOOST_FWD_REF(Args)... args
+  )
+  BOOST_NOEXCEPT_IF(
+    has_nothrow_copy_constructor<error_type>::value
+  )
+  : base_type(unexpected_type<error_type>(error_type(args...)))
+  {}
+#endif
+
 
 #if ! defined BOOST_NO_CXX11_VARIADIC_TEMPLATES
   template <class... Args
 #if !defined BOOST_EXPECTED_NO_CXX11_FUNCTION_TEMPLATE_DEFAULT_ARGS
-    , T_REQUIRES(std::is_constructible<value_type, Args&...>::value)
+    //, T_REQUIRES(std::is_constructible<value_type, decay_t<Args>...>::value)
 #endif
     >
   BOOST_CONSTEXPR explicit expected(in_place_t, BOOST_FWD_REF(Args)... args)
-  : base_type(in_place_t{}, boost::forward<Args>(args)...)
+  : base_type(in_place_t{}, boost::constexpr_forward<Args>(args)...)
   {}
 
   template <class U, class... Args
@@ -702,16 +739,29 @@ public:
   BOOST_CONSTEXPR explicit expected(in_place_t, std::initializer_list<U> il, BOOST_FWD_REF(Args)... args)
   : base_type(in_place_t{}, il, constexpr_forward<Args>(args)...)
   {}
+#endif
+
+#if ! defined BOOST_NO_CXX11_VARIADIC_TEMPLATES
+  template <class... Args
+#if !defined BOOST_EXPECTED_NO_CXX11_FUNCTION_TEMPLATE_DEFAULT_ARGS
+    , T_REQUIRES(std::is_constructible<value_type, Args&...>::value)
+#endif
+    >
+  BOOST_CONSTEXPR explicit expected(expect_t, BOOST_FWD_REF(Args)... args)
+  : base_type(in_place_t{}, constexpr_forward<Args>(args)...)
+  {}
+
+  template <class U, class... Args
+#if !defined BOOST_EXPECTED_NO_CXX11_FUNCTION_TEMPLATE_DEFAULT_ARGS
+    , T_REQUIRES(std::is_constructible<value_type, std::initializer_list<U> >::value)
+#endif
+    >
+  BOOST_CONSTEXPR explicit expected(expect_t, std::initializer_list<U> il, BOOST_FWD_REF(Args)... args)
+  : base_type(in_place_t{}, il, constexpr_forward<Args>(args)...)
+  {}
 
 #endif
 
-  BOOST_CONSTEXPR expected(
-     REQUIRES(std::is_default_constructible<value_type>::value)
-  ) BOOST_NOEXCEPT_IF(
-    has_nothrow_default_constructor<value_type>::value
-  )
-  : base_type()
-  {}
 
   ~expected() = default;
 
@@ -750,8 +800,7 @@ public:
     >
   expected& emplace(BOOST_FWD_REF(Args)... args)
     {
-      // Why emplace doesn't work (instead of in_place_t()) ?
-      this_type(in_place_t(), boost::forward<Args>(args)...).swap(*this);
+      this_type(in_place_t{}, constexpr_forward<Args>(args)...).swap(*this);
       return *this;
     }
 
@@ -762,8 +811,7 @@ public:
       >
     expected& emplace(std::initializer_list<U> il, BOOST_FWD_REF(Args)... args)
     {
-      // Why emplace doesn't work (instead of in_place_t()) ?
-      this_type(in_place_t(), il, boost::forward<Args>(args)...).swap(*this);
+      this_type(in_place_t{}, il, constexpr_forward<Args>(args)...).swap(*this);
       return *this;
     }
 #endif
@@ -923,12 +971,12 @@ public:
     if(valid())
     {
         f(**this);
-        return result_type();
+        return result_type(in_place_t{});
     }
     return get_unexpected();
 #else
     return (valid()
-        ? (f(**this), result_type( ))
+        ? (f(**this), result_type( in_place_t{}))
         : result_type( get_unexpected() )
         );
 #endif
@@ -985,9 +1033,9 @@ public:
     typedef expected<void, error_type> result_type;
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
     f(boost::move(*this));
-    return result_type();
+    return result_type(in_place_t{});
 #else
-    return (f(boost::move(*this)), result_type());
+    return (f(boost::move(*this)), result_type(in_place_t{}));
 #endif
   }
 
@@ -1176,10 +1224,14 @@ private:
   typedef detail::expected_base<void, error_type> base_type;
 
   // Static asserts.
-  //typedef boost::is_same<error_type, exceptional_t> is_same_error_exceptional_t;
+  //typedef boost::is_unexpected<error_type> is_unexpected_error_t;
+  //BOOST_STATIC_ASSERT_MSG( !is_unexpected_error_t::value, "bad ErrorType" );
   typedef boost::is_same<error_type, in_place_t> is_same_error_in_place_t;
-  //BOOST_STATIC_ASSERT_MSG( !is_same_error_exceptional_t::value, "bad ErrorType" );
   BOOST_STATIC_ASSERT_MSG( !is_same_error_in_place_t::value, "bad ErrorType" );
+  typedef boost::is_same<error_type, unexpect_t> is_same_error_unexpect_t;
+  BOOST_STATIC_ASSERT_MSG( !is_same_error_unexpect_t::value, "bad ErrorType" );
+  typedef boost::is_same<error_type, expect_t> is_same_error_expect_t;
+  BOOST_STATIC_ASSERT_MSG( !is_same_error_expect_t::value, "bad ErrorType" );
 
   error_type* errorptr() { return std::addressof(base_type::storage.err); }
   BOOST_CONSTEXPR const error_type* errorptr() const { return static_addressof(base_type::storage.err); }
@@ -1243,10 +1295,18 @@ public:
   BOOST_CONSTEXPR explicit expected(in_place_t) BOOST_NOEXCEPT
   : base_type(in_place2)
   {}
+  BOOST_CONSTEXPR explicit expected(expect_t) BOOST_NOEXCEPT
+  : base_type(in_place2)
+  {}
 
-  BOOST_CONSTEXPR expected() BOOST_NOEXCEPT
+  BOOST_CONSTEXPR expected(
+     REQUIRES(std::is_default_constructible<error_type>::value)
+  ) BOOST_NOEXCEPT_IF(
+    has_nothrow_default_constructor<error_type>::value
+  )
   : base_type()
   {}
+
 
   expected(unexpected_type<error_type> const& e
     , REQUIRES(std::is_copy_constructible<error_type>::value)
@@ -1267,6 +1327,21 @@ public:
   : base_type(e)
   {}
 
+#if ! defined BOOST_NO_CXX11_VARIADIC_TEMPLATES
+  template <class... Args
+#if !defined BOOST_EXPECTED_NO_CXX11_FUNCTION_TEMPLATE_DEFAULT_ARGS
+  , T_REQUIRES(std::is_constructible<error_type, Args&...>::value)
+#endif
+  >
+  expected(unexpect_t, BOOST_FWD_REF(Args)... args
+  )
+  BOOST_NOEXCEPT_IF(
+    has_nothrow_copy_constructor<error_type>::value
+  )
+  : base_type(unexpected_type<error_type>(error_type(args...)))
+  {}
+#endif
+
   ~expected() = default;
 
   // Assignments
@@ -1285,7 +1360,7 @@ public:
 
   expected& emplace()
   {
-    this_type(in_place_t()).swap(*this);
+    this_type(in_place_t{}).swap(*this);
     return *this;
   }
 
@@ -1355,13 +1430,13 @@ public:
     if(valid())
     {
         f();
-        return result_type();
+        return result_type(in_place_t{});
     }
     return get_unexpected();
 #else
     typedef expected<typename result_of<F()>::type, error_type> result_type;
     return ( valid()
-        ? ( f(), result_type(in_place2) )
+        ? ( f(), result_type(in_place_t{}) )
         :  result_type(get_unexpected())
         );
 #endif
@@ -1396,9 +1471,9 @@ public:
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
     typedef expected<void, error_type> result_type;
     f(boost::move(*this));
-    return result_type(in_place2);
+    return result_type(in_place_t{});
 #else
-    return ( f(boost::move(*this)), expected<void, error_type>(in_place2) );
+    return ( f(boost::move(*this)), expected<void, error_type>(in_place_t{}) );
 #endif
   }
 
@@ -1650,13 +1725,13 @@ BOOST_FORCEINLINE expected<void, E> make_expected()
   template<typename T, typename E, typename Arg0, typename Arg1, typename... Args>
   inline expected<T,E> make_expected(BOOST_FWD_REF(Arg0) arg0, BOOST_FWD_REF(Arg1) arg1, BOOST_FWD_REF(Args)... args)
   {
-    return expected<T,E>(in_place2, boost::forward<Arg0>(arg0), boost::forward<Arg1>(arg1), boost::forward<Args>(args)...);
+    return expected<T,E>(in_place2, constexpr_forward<Arg0>(arg0), constexpr_forward<Arg1>(arg1), constexpr_forward<Args>(args)...);
   }
 
   template<typename T, typename Arg0, typename Arg1, typename... Args>
   inline expected<T> make_expected(BOOST_FWD_REF(Arg0) arg0, BOOST_FWD_REF(Arg0) arg1, BOOST_FWD_REF(Args)... args)
   {
-    return expected<T>(in_place2, boost::forward<Arg0>(arg0), boost::forward<Arg1>(arg1), boost::forward<Args>(args)...);
+    return expected<T>(in_place2, constexpr_forward<Arg0>(arg0), constexpr_forward<Arg1>(arg1), constexpr_forward<Args>(args)...);
   }
 #endif
 
