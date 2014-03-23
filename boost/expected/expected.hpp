@@ -137,7 +137,6 @@ class bad_expected_access : public std::logic_error
 class expected_default_constructed : public std::logic_error
 {
   public:
-  public:
     expected_default_constructed()
     : std::logic_error("Found an error instead of the expected value.")
     {}
@@ -245,12 +244,11 @@ BOOST_CONSTEXPR T * constexpr_addressof(T& Val)
 
 namespace detail {
 
-template <typename T, typename E>
+template <typename T, typename E, class traits_type=expected_traits<E> >
 union trivial_expected_storage
 {
   typedef T value_type;
   typedef E error_type;
-  typedef expected_traits<error_type> traits_type;
 
   error_type err;
   value_type val;
@@ -277,11 +275,10 @@ union trivial_expected_storage
   ~trivial_expected_storage() = default;
 };
 
-template <typename E>
-union trivial_expected_storage<void, E>
+template <typename E, class traits_type>
+union trivial_expected_storage<void, E, traits_type >
 {
   typedef E error_type;
-  typedef expected_traits<error_type> traits_type;
 
   error_type err;
   unsigned char dummy;
@@ -305,12 +302,11 @@ union trivial_expected_storage<void, E>
   ~trivial_expected_storage() = default;
 };
 
-template <typename T, typename E>
+template <typename T, typename E, class traits_type=expected_traits<E> >
 union no_trivial_expected_storage
 {
   typedef T value_type;
   typedef E error_type;
-  typedef expected_traits<error_type> traits_type;
 
   error_type err;
   value_type val;
@@ -336,11 +332,10 @@ union no_trivial_expected_storage
   ~no_trivial_expected_storage() {};
 };
 
-template <typename E>
-union no_trivial_expected_storage<void, E>
+template <typename E, class traits_type>
+union no_trivial_expected_storage<void, E, traits_type >
 {
   typedef E error_type;
-  typedef expected_traits<error_type> traits_type;
 
   error_type err;
   unsigned char dummy;
@@ -367,14 +362,14 @@ union no_trivial_expected_storage<void, E>
 
 BOOST_CONSTEXPR struct only_set_valid_t{} only_set_valid{};
 
-template <typename T, typename E>
+template <typename T, typename E, class traits_type=expected_traits<E> >
 struct trivial_expected_base
 {
   typedef T value_type;
   typedef E error_type;
 
   bool has_value;
-  trivial_expected_storage<T, E> storage;
+  trivial_expected_storage<T, E, traits_type> storage;
 
   BOOST_CONSTEXPR trivial_expected_base()
     //BOOST_NOEXCEPT_IF(has_nothrow_default_constructor<value_type>::value)
@@ -417,14 +412,14 @@ struct trivial_expected_base
    ~trivial_expected_base() = default;
 };
 
-template <typename E>
-struct trivial_expected_base<void, E>
+template <typename E, class traits_type>
+struct trivial_expected_base<void, E, traits_type >
 {
   typedef void value_type;
   typedef E error_type;
 
   bool has_value;
-  trivial_expected_storage<void, E> storage;
+  trivial_expected_storage<void, E, traits_type> storage;
 
   BOOST_CONSTEXPR trivial_expected_base()
   : has_value(false), storage() {}
@@ -446,14 +441,14 @@ struct trivial_expected_base<void, E>
    ~trivial_expected_base() = default;
 };
 
-template <typename T, typename E>
+template <typename T, typename E, class traits_type=expected_traits<E> >
 struct no_trivial_expected_base
 {
   typedef T value_type;
   typedef E error_type;
 
   bool has_value;
-  no_trivial_expected_storage<T, E> storage;
+  no_trivial_expected_storage<T, E, traits_type> storage;
 
   BOOST_CONSTEXPR no_trivial_expected_base()
     //BOOST_NOEXCEPT_IF(has_nothrow_default_constructor<value_type>::value)
@@ -500,13 +495,13 @@ struct no_trivial_expected_base
   }
 };
 
-template <typename E>
-struct no_trivial_expected_base<void, E> {
+template <typename E, class traits_type>
+struct no_trivial_expected_base<void, E, traits_type> {
   typedef void value_type;
   typedef E error_type;
 
   bool has_value;
-  no_trivial_expected_storage<void, E> storage;
+  no_trivial_expected_storage<void, E, traits_type> storage;
 
   BOOST_CONSTEXPR no_trivial_expected_base()
   : has_value(false), storage() {}
@@ -534,11 +529,11 @@ struct no_trivial_expected_base<void, E> {
   }
 };
 
-template <typename T, typename E>
+template <typename T, typename E, class traits_type=expected_traits<E>>
   using expected_base = typename std::conditional<
     has_trivial_destructor<T>::value && has_trivial_destructor<E>::value,
-    trivial_expected_base<T,E>,
-    no_trivial_expected_base<T,E>
+    trivial_expected_base<T,E,traits_type>,
+    no_trivial_expected_base<T,E,traits_type>
   >::type;
 
 } // namespace detail
