@@ -7,11 +7,14 @@
 #define BOOST_EXPECTED_UNEXPECTED_HPP
 
 #include <exception>
+#include <utility>
 #include <boost/exception_ptr.hpp>
 #include <boost/functional/type_traits_t.hpp>
+#include <boost/type_traits.hpp>
 
 namespace boost
 {
+
   template <typename ErrorType = std::exception_ptr>
   class unexpected_type
   {
@@ -19,12 +22,16 @@ namespace boost
   public:
     unexpected_type() = delete;
 
-    BOOST_FORCEINLINE BOOST_CONSTEXPR explicit unexpected_type(ErrorType e) :
+    BOOST_FORCEINLINE BOOST_CONSTEXPR explicit unexpected_type(ErrorType const& e) :
       error_(e)
     {
     }
+    BOOST_FORCEINLINE BOOST_CONSTEXPR explicit unexpected_type(ErrorType&& e) :
+      error_(std::move(e))
+    {
+    }
     BOOST_CONSTEXPR
-    BOOST_FORCEINLINE ErrorType value() const
+    BOOST_FORCEINLINE ErrorType const& value() const
     {
       return error_;
     }
@@ -43,8 +50,12 @@ namespace boost
   public:
     unexpected_type() = delete;
 
-    BOOST_FORCEINLINE explicit unexpected_type(boost::exception_ptr e) :
+    BOOST_FORCEINLINE explicit unexpected_type(boost::exception_ptr const& e) :
       error_(e)
+    {
+    }
+    BOOST_FORCEINLINE explicit unexpected_type(boost::exception_ptr&& e) :
+      error_(std::move(e))
     {
     }
 
@@ -54,7 +65,7 @@ namespace boost
     {
     }
 
-    BOOST_FORCEINLINE boost::exception_ptr value() const
+    BOOST_FORCEINLINE boost::exception_ptr const& value() const
     {
       return error_;
     }
@@ -67,8 +78,13 @@ namespace boost
   public:
     unexpected_type() = delete;
 
-    BOOST_FORCEINLINE explicit unexpected_type(std::exception_ptr e) :
+    BOOST_FORCEINLINE explicit unexpected_type(std::exception_ptr const& e) :
       error_(e)
+    {
+    }
+
+    BOOST_FORCEINLINE explicit unexpected_type(std::exception_ptr &&e) :
+      error_(std::move(e))
     {
     }
 
@@ -77,11 +93,16 @@ namespace boost
       error_(std::make_exception_ptr(e))
     {
     }
-    BOOST_FORCEINLINE std::exception_ptr value() const
+    BOOST_FORCEINLINE std::exception_ptr const& value() const
     {
       return error_;
     }
   };
+
+  template <typename E>
+  struct is_unexpected : false_type {};
+  template <typename E>
+  struct is_unexpected<unexpected_type<E> > : true_type {};
 
   BOOST_FORCEINLINE unexpected_type<std::exception_ptr> make_unexpected_from_current_exception()
   {
