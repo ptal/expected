@@ -26,6 +26,8 @@
 #include <system_error>
 #include <initializer_list>
 #include <string>
+#include <iostream>
+#include <system_error>
 
 #include <boost/expected/expected_monad.hpp>
 #include <boost/functional/adaptor.hpp>
@@ -95,6 +97,25 @@ struct Date
     Date(const Date&) = delete;
     Date& operator=(const Date&) = delete;
     Date& operator=(Date&& d) { i = d.i; d.i = 0; return *this;};
+};
+
+template <class T>
+struct MoveAware
+{
+  T val;
+  bool moved;
+  MoveAware(T val) : val(val), moved(false) {}
+  MoveAware(MoveAware const&) = delete;
+  MoveAware(MoveAware&& rhs) : val(rhs.val), moved(rhs.moved) {
+    rhs.moved = true;
+  }
+  MoveAware& operator=(MoveAware const&) = delete;
+  MoveAware& operator=(MoveAware&& rhs) {
+    val = (rhs.val);
+    moved = (rhs.moved);
+    rhs.moved = true;
+    return *this;
+  }
 };
 
 using namespace boost;
@@ -947,7 +968,35 @@ BOOST_AUTO_TEST_CASE(make_unexpected_fact)
     opt2 =  {unexpect, 1};
   }
 }
-BOOST_AUTO_TEST_CASE(rel_xx)
+BOOST_AUTO_TEST_CASE(error_exception_ts)
+{
+  using namespace std;
+  {
+    expected<int, error_exception<std::error_code, std::system_error> > e =
+        make_unexpected(make_error_code(errc::invalid_argument));
+    BOOST_CHECK(e.error()==make_error_code(errc::invalid_argument));
+    try {
+      e.value();
+      BOOST_CHECK (false);
+    } catch (std::system_error const& ex) {
+
+    } catch (...) {
+      BOOST_CHECK (false);
+    }
+    expected<int, error_exception<std::error_code, std::system_error> > e2 = e.get_unexpected();
+    BOOST_CHECK(e2.error()==make_error_code(errc::invalid_argument));
+    try {
+      e2.value();
+      BOOST_CHECK (false);
+    } catch (std::system_error const& ex) {
+
+    } catch (...) {
+      BOOST_CHECK (false);
+    }
+
+  }
+}
+BOOST_AUTO_TEST_CASE(relational_operators)
 {
   using namespace std;
   {
@@ -955,48 +1004,239 @@ BOOST_AUTO_TEST_CASE(rel_xx)
     expected<unsigned, int> e1{1};
     expected<unsigned, int> eN{unexpect, -1};
 
-    assert (eN < e0);
-    assert (e0 < e1);
-    assert (eN <= e0);
-    assert (e0 <= e1);
+    BOOST_CHECK (eN < e0);
+    BOOST_CHECK (e0 < e1);
+    BOOST_CHECK (eN <= e0);
+    BOOST_CHECK (e0 <= e1);
 
-    assert (e0 > eN);
-    assert (e1 > e0);
-    assert (e0 >= eN);
-    assert (e1 >= e0);
+    BOOST_CHECK (e0 > eN);
+    BOOST_CHECK (e1 > e0);
+    BOOST_CHECK (e0 >= eN);
+    BOOST_CHECK (e1 >= e0);
 
-    assert (!(eN  < eN));
-    assert (!(e1 < e1));
-    assert (eN <= eN);
-    assert (e1 <= e1);
+    BOOST_CHECK (!(eN  < eN));
+    BOOST_CHECK (!(e1 < e1));
+    BOOST_CHECK (eN <= eN);
+    BOOST_CHECK (e1 <= e1);
 
-    assert (eN != e0);
-    assert (e0 != e1);
-    assert (eN == eN);
-    assert (e0 == e0);
+    BOOST_CHECK (eN != e0);
+    BOOST_CHECK (e0 != e1);
+    BOOST_CHECK (eN == eN);
+    BOOST_CHECK (e0 == e0);
 
     //////
 
-    assert (eN == make_unexpected(-1));
-    assert (e0 != make_unexpected(1));
-    assert (eN != 1u);
-    assert (e1 == 1u);
+    BOOST_CHECK (eN == make_unexpected(-1));
+    BOOST_CHECK (e0 != make_unexpected(1));
+    BOOST_CHECK (eN != 1u);
+    BOOST_CHECK (e1 == 1u);
 
-    assert (eN < 1u);
-    assert (eN <= 1u);
-    assert (1u > eN);
-    assert (1u >= eN);
-    assert (make_unexpected(1) < e0);
-    assert (make_unexpected(1) <= e0);
-    assert (! (make_unexpected(1) > e0));
-    assert (! (make_unexpected(1) >= e0));
+    BOOST_CHECK (eN < 1u);
+    BOOST_CHECK (eN <= 1u);
+    BOOST_CHECK (1u > eN);
+    BOOST_CHECK (1u >= eN);
+    BOOST_CHECK (make_unexpected(1) < e0);
+    BOOST_CHECK (make_unexpected(1) <= e0);
+    BOOST_CHECK (! (make_unexpected(1) > e0));
+    BOOST_CHECK (! (make_unexpected(1) >= e0));
 
 
-    assert (!(e0 < make_unexpected(1)));
-    assert (!(e0 <= make_unexpected(1)));
-    assert (e0 > make_unexpected(1));
-    assert (e0 >= make_unexpected(1));
+    BOOST_CHECK (!(e0 < make_unexpected(1)));
+    BOOST_CHECK (!(e0 <= make_unexpected(1)));
+    BOOST_CHECK (e0 > make_unexpected(1));
+    BOOST_CHECK (e0 >= make_unexpected(1));
 
   }
 }
+BOOST_AUTO_TEST_SUITE_END()
+
+BOOST_AUTO_TEST_SUITE(movesem)
+//////////////////////////////
+BOOST_AUTO_TEST_CASE(moved_from_state)
+{
+  // first, test mock:
+  MoveAware<int> i{1}, j{2};
+  BOOST_CHECK (i.val == 1);
+  BOOST_CHECK (!i.moved);
+  BOOST_CHECK (j.val == 2);
+  BOOST_CHECK (!j.moved);
+
+  MoveAware<int> k = std::move(i);
+  BOOST_CHECK (k.val == 1);
+  BOOST_CHECK (!k.moved);
+  BOOST_CHECK (i.val == 1);
+  BOOST_CHECK (i.moved);
+
+  k = std::move(j);
+  BOOST_CHECK (k.val == 2);
+  BOOST_CHECK (!k.moved);
+  BOOST_CHECK (j.val == 2);
+  BOOST_CHECK (j.moved);
+
+  // now, test expected
+  expected<MoveAware<int>> oi{1}, oj{2};
+  BOOST_CHECK (oi);
+  BOOST_CHECK (!oi->moved);
+  BOOST_CHECK (oj);
+  BOOST_CHECK (!oj->moved);
+
+  expected<MoveAware<int>> ok = std::move(oi);
+  BOOST_CHECK (ok);
+  BOOST_CHECK (!ok->moved);
+  BOOST_CHECK (oi);
+  BOOST_CHECK (oi->moved);
+
+  ok = std::move(oj);
+  BOOST_CHECK (ok);
+  BOOST_CHECK (!ok->moved);
+  BOOST_CHECK (oj);
+  BOOST_CHECK (oj->moved);
+}
+BOOST_AUTO_TEST_CASE(copy_move_ctor_optional_int)
+{
+  expected<int> oi;
+  expected<int> oj = oi;
+
+  BOOST_CHECK (!oj);
+  BOOST_CHECK (oj == oi);
+  BOOST_CHECK (!bool(oj));
+
+  oi = 1;
+  expected<int> ok = oi;
+  BOOST_CHECK (!!ok);
+  BOOST_CHECK (bool(ok));
+  BOOST_CHECK (ok == oi);
+  BOOST_CHECK (ok != oj);
+  BOOST_CHECK (*ok == 1);
+
+  expected<int> ol = std::move(oi);
+  BOOST_CHECK (!!ol);
+  BOOST_CHECK (bool(ol));
+  BOOST_CHECK (ol == oi);
+  BOOST_CHECK (ol != oj);
+  BOOST_CHECK (*ol == 1);
+}
+BOOST_AUTO_TEST_CASE(expected_expected)
+{
+  expected<expected<int>> oi1 = make_unexpected(-1);
+  BOOST_CHECK (!oi1);
+
+  {
+  expected<expected<int>> oi2 {expect};
+  BOOST_CHECK (bool(oi2));
+  BOOST_CHECK (!(*oi2));
+  //std::cout << typeid(**oi2).name() << std::endl;
+  }
+
+  {
+  expected<expected<int>> oi2 {expect, make_unexpected(-1)};
+  BOOST_CHECK (bool(oi2));
+  BOOST_CHECK (!*oi2);
+  }
+
+  {
+  expected<expected<int>> oi2 {expected<int>{}};
+  BOOST_CHECK (bool(oi2));
+  BOOST_CHECK (!*oi2);
+  }
+
+  expected<int> oi;
+  auto ooi = make_expected(oi);
+  static_assert( std::is_same<expected<expected<int>>, decltype(ooi)>::value, "");
+
+}
+BOOST_AUTO_TEST_SUITE_END()
+
+void process(){}
+void process(int ){}
+void processNil(){}
+
+BOOST_AUTO_TEST_SUITE(Examples)
+//////////////////////////////
+
+BOOST_AUTO_TEST_CASE(example1)
+{
+  expected<int> oi; // create disengaged object
+  expected<int> oj = {unexpect}; // alternative syntax
+  oi = oj; // assign disengaged object
+  expected<int> ok = oj; // ok is disengaged
+
+  if (oi) BOOST_CHECK(false); // 'if oi is engaged...'
+  if (!oi) BOOST_CHECK(true); // 'if oi is disengaged...'
+
+  BOOST_CHECK(oi == ok); // two disengaged optionals compare equal
+
+  ///////////////////////////////////////////////////////////////////////////
+  expected<int> ol{1}; // ol is engaged; its contained value is 1
+  ok = 2; // ok becomes engaged; its contained value is 2
+  oj = ol; // oj becomes engaged; its contained value is 1
+
+  BOOST_CHECK(oi != ol); // disengaged != engaged
+  BOOST_CHECK(ok != ol); // different contained values
+  BOOST_CHECK(oj == ol); // same contained value
+  //BOOST_CHECK(oi < ol); // disengaged < engaged
+  //BOOST_CHECK(ol < ok); // less by contained value
+
+  /////////////////////////////////////////////////////////////////////////////
+  expected<int> om{1}; // om is engaged; its contained value is 1
+  expected<int> on = om; // on is engaged; its contained value is 1
+  om = 2; // om is engaged; its contained value is 2
+  BOOST_CHECK (on != om); // on still contains 3. They are not pointers
+
+  /////////////////////////////////////////////////////////////////////////////
+  int i = *ol; // i obtains the value contained in ol
+  BOOST_CHECK (i == 1);
+  *ol = 9; // the object contained in ol becomes 9
+  BOOST_CHECK(*ol == 9);
+  BOOST_CHECK(ol == make_expected(9));
+
+  ///////////////////////////////////
+  int p = 1;
+  expected<int> op = p;
+  BOOST_CHECK(*op == 1);
+  p = 2;
+  BOOST_CHECK(*op == 1); // value contained in op is separated from p
+
+  ////////////////////////////////
+  if (ol)
+    process(*ol); // use contained value if present
+  else
+    process(); // proceed without contained value
+
+  if (!om)
+    processNil();
+  else
+    process(*om);
+
+  /////////////////////////////////////////
+  process(ol.value_or(0)); // use 0 if ol is disengaged
+
+  ////////////////////////////////////////////
+  ok = {unexpect}; // if ok was engaged calls T's dtor
+  oj = {}; // assigns a temporary disengaged expected
+}
+BOOST_AUTO_TEST_CASE(BOOST_AUTO_TEST_CASE)
+{
+  expected<int> oi = 1;
+  int i = oi.value_or(0);
+  BOOST_CHECK (i == 1);
+
+  oi = {unexpect};
+  BOOST_CHECK (oi.value_or(3) == 3);
+
+  expected<std::string> os{"AAA"};
+  BOOST_CHECK (os.value_or("BBB") == "AAA");
+  os = {};
+  BOOST_CHECK (os.value_or("BBB") == "BBB");
+};
+
+BOOST_AUTO_TEST_SUITE_END()
+///////////////////////////
+BOOST_AUTO_TEST_SUITE(Void)
+BOOST_AUTO_TEST_SUITE(DefaultConstructor)
+BOOST_AUTO_TEST_CASE(BOOST_AUTO_TEST_CASE)
+{
+  expected<int> oi;
+}
+BOOST_AUTO_TEST_SUITE_END()
 BOOST_AUTO_TEST_SUITE_END()
