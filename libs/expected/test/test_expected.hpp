@@ -322,7 +322,7 @@ BOOST_AUTO_TEST_SUITE(expected_factories)
 BOOST_AUTO_TEST_CASE(expected_from_emplace)
 {
   // From emplace factory.
-  boost::expected<std::string> e = make_expected<std::string>("emplace");
+  boost::expected<std::string> e = boost::expected<std::string>(boost::in_place_t{}, "emplace");
   BOOST_REQUIRE_NO_THROW(e.value());
   BOOST_CHECK_EQUAL(e.value(), "emplace");
   BOOST_CHECK_EQUAL(*e, "emplace");
@@ -336,7 +336,7 @@ BOOST_AUTO_TEST_CASE(expected_from_emplace_error)
 {
   // From emplace factory.
   boost::expected<std::string, ERROR_CONDITION_NS::error_condition> e =
-    expected<std::string, ERROR_CONDITION_NS::error_condition>("emplace");
+      boost::expected<std::string, ERROR_CONDITION_NS::error_condition>(boost::in_place_t{}, "emplace");
   BOOST_REQUIRE_NO_THROW(e.value());
   BOOST_CHECK_EQUAL(e.value(), "emplace");
   BOOST_CHECK_EQUAL(*e, "emplace");

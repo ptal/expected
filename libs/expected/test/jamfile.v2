@@ -66,6 +66,7 @@ test-suite Expected
     : 
       [ run test_expected.cpp  boost_unit_test ]
       [ run test_expected2.cpp  boost_unit_test ]
+      [ run test_if_then_else.cpp  boost_unit_test ]
       [ run safe_divide.cpp ]
       [ run num_get.cpp ]
       [ run num_get_2.cpp ]
@@ -76,4 +77,9 @@ test-suite Expected
 test-suite Monads
     : 
       [ run safe_divide_monad.cpp ]
+    ;
+
+test-suite fix
+    : 
+      #[ run test_expected.cpp  boost_unit_test ]
     ;

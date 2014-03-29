@@ -607,7 +607,7 @@ struct no_trivial_expected_base<void, E, traits_type> {
   }
 };
 
-template <typename T, typename E, class traits_type=expected_traits<E>>
+template <typename T, typename E, class traits_type=expected_traits<E> >
   using expected_base = typename std::conditional<
     has_trivial_destructor<T>::value && has_trivial_destructor<E>::value,
     trivial_expected_base<T,E,traits_type>,
@@ -637,7 +637,7 @@ public:
 
 private:
   typedef expected<value_type, ErrorType> this_type;
-  typedef detail::expected_base<ValueType, ErrorType, expected_traits<ErrorType>> base_type;
+  typedef detail::expected_base<ValueType, ErrorType, expected_traits<ErrorType> > base_type;
 
   // Static asserts.
   typedef boost::is_unexpected<value_type> is_unexpected_value_t;
@@ -1038,6 +1038,47 @@ public:
 
   template <typename F>
   BOOST_CONSTEXPR bind_t<void>
+  fmap(BOOST_RV_REF(F) f,
+    REQUIRES(boost::is_same<typename result_of<F(value_type)>::type, void>::value)) const
+  {
+    typedef bind_t<void> result_type;
+#if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
+    if(valid())
+    {
+        f(**this);
+        return result_type(in_place_t{});
+    }
+    return get_unexpected();
+#else
+    return (valid()
+        ? (f(**this), result_type( in_place_t{}))
+        : result_type( get_unexpected() )
+        );
+#endif
+  }
+
+  template <typename F>
+  BOOST_CONSTEXPR bind_t<typename result_of<F(value_type)>::type>
+  fmap(BOOST_RV_REF(F) f,
+    REQUIRES(!boost::is_same<typename result_of<F(value_type)>::type, void>::value)) const
+  {
+    typedef bind_t<typename result_of<F(value_type)>::type> result_type;
+#if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
+    if(valid())
+    {
+        return result_type(f(**this));
+    }
+    return get_unexpected();
+#else
+    return (valid()
+        ? result_type( f(value()) )
+        : result_type( get_unexpected() )
+        );
+#endif
+  }
+
+  template <typename F>
+  BOOST_CONSTEXPR bind_t<void>
   next(BOOST_RV_REF(F) f,
     REQUIRES(boost::is_same<typename result_of<F(value_type)>::type, void>::value)) const
   {
@@ -1287,7 +1328,7 @@ public:
 
 template <typename ErrorType>
 class expected<void, ErrorType>
-: detail::expected_base<void, ErrorType, expected_traits<ErrorType>>
+: detail::expected_base<void, ErrorType, expected_traits<ErrorType> >
 {
 public:
   typedef void value_type;
@@ -1951,10 +1992,28 @@ void swap(expected<T>& x, expected<T>& y) BOOST_NOEXCEPT_IF(BOOST_NOEXCEPT_EXPR(
 }
 
 // Factories
-template<typename T>
-BOOST_CONSTEXPR expected<decay_t<T>> make_expected(BOOST_FWD_REF(T) v )
+
+template <class T, class E>
+expected<T,E> unwrap(expected<expected<T,E>,E> ee) {
+  if (ee) return *ee;
+  return ee.get_unexpected();
+}
+template <class T, class E>
+expected<T,E> unwrap(expected<T,E> e) {
+  return e;
+}
+
+template <class T, class E, class True, class False>
+auto if_then_else(expected<T,E> e, True&& t, False&& f)
+-> decltype(unwrap(e.fmap(std::forward<True>(t)).recover(std::forward<False>(f))))
 {
-  return expected<decay_t<T>>(std::forward<T>(v));
+  return unwrap(e.fmap(std::forward<True>(t)).recover(std::forward<False>(f)));
+}
+
+template<typename T>
+BOOST_CONSTEXPR expected<decay_t<T> > make_expected(BOOST_FWD_REF(T) v )
+{
+  return expected<decay_t<T> >(std::forward<T>(v));
 }
 
 BOOST_FORCEINLINE expected<void> make_expected()
@@ -1967,30 +2026,6 @@ BOOST_FORCEINLINE expected<void, E> make_expected()
 {
   return expected<void,E>(in_place2);
 }
-
-template <class T, class E>
-expected<T> unwrap(expected<expected<T,E>,E> ee) {
-  if (ee) return *ee;
-  return ee.get_unexpected();
-}
-template <class T, class E>
-expected<T> unwrap(expected<T,E> e) {
-  return e;
-}
-
-#if ! defined BOOST_NO_CXX11_VARIADIC_TEMPLATES && ! defined BOOST_NO_CXX11_RVALUE_REFERENCES
-  template<typename T, typename E, typename Arg0, typename Arg1, typename... Args>
-  inline expected<T,E> make_expected(BOOST_FWD_REF(Arg0) arg0, BOOST_FWD_REF(Arg1) arg1, BOOST_FWD_REF(Args)... args)
-  {
-    return expected<T,E>(in_place2, constexpr_forward<Arg0>(arg0), constexpr_forward<Arg1>(arg1), constexpr_forward<Args>(args)...);
-  }
-
-  template<typename T, typename Arg0, typename Arg1, typename... Args>
-  inline expected<T> make_expected(BOOST_FWD_REF(Arg0) arg0, BOOST_FWD_REF(Arg0) arg1, BOOST_FWD_REF(Args)... args)
-  {
-    return expected<T>(in_place2, constexpr_forward<Arg0>(arg0), constexpr_forward<Arg1>(arg1), constexpr_forward<Args>(args)...);
-  }
-#endif
 
 template <typename T>
 BOOST_FORCEINLINE expected<T> make_expected_from_current_exception() BOOST_NOEXCEPT

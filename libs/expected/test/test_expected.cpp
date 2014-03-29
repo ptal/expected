@@ -1215,7 +1215,7 @@ BOOST_AUTO_TEST_CASE(example1)
   ok = {unexpect}; // if ok was engaged calls T's dtor
   oj = {}; // assigns a temporary disengaged expected
 }
-BOOST_AUTO_TEST_CASE(BOOST_AUTO_TEST_CASE)
+BOOST_AUTO_TEST_CASE(test_value_or)
 {
   expected<int> oi = 1;
   int i = oi.value_or(0);
