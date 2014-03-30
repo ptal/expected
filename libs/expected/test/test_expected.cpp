@@ -1215,7 +1215,8 @@ BOOST_AUTO_TEST_CASE(example1)
   ok = {unexpect}; // if ok was engaged calls T's dtor
   oj = {}; // assigns a temporary disengaged expected
 }
-BOOST_AUTO_TEST_CASE(test_value_or)
+//////////////////////////////////////////////////
+BOOST_AUTO_TEST_CASE(ValueOr)
 {
   expected<int> oi = 1;
   int i = oi.value_or(0);
@@ -1228,15 +1229,9 @@ BOOST_AUTO_TEST_CASE(test_value_or)
   BOOST_CHECK (os.value_or("BBB") == "AAA");
   os = {};
   BOOST_CHECK (os.value_or("BBB") == "BBB");
-};
-
-BOOST_AUTO_TEST_SUITE_END()
-///////////////////////////
-BOOST_AUTO_TEST_SUITE(Void)
-BOOST_AUTO_TEST_SUITE(DefaultConstructor)
-BOOST_AUTO_TEST_CASE(BOOST_AUTO_TEST_CASE)
-{
-  expected<int> oi;
 }
+
+//////////////////////////////////////////////////
 BOOST_AUTO_TEST_SUITE_END()
-BOOST_AUTO_TEST_SUITE_END()
+
+
