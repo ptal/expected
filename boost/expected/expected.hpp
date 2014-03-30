@@ -82,6 +82,12 @@
 # endif
 #endif
 
+#if defined __GNUC__
+# if (__GNUC__*10000 + __GNUC_MINOR__*100 + __GNUC_PATCHLEVEL__ < 40800) || !defined(__GXX_EXPERIMENTAL_CXX0X__)
+#  define BOOST_EXPECTED_NO_IF_THEN_ELSE
+# endif
+#endif
+
 
 namespace boost {
 namespace detail {
@@ -1992,23 +1998,6 @@ void swap(expected<T>& x, expected<T>& y) BOOST_NOEXCEPT_IF(BOOST_NOEXCEPT_EXPR(
 }
 
 // Factories
-
-template <class T, class E>
-expected<T,E> unwrap(expected<expected<T,E>,E> ee) {
-  if (ee) return *ee;
-  return ee.get_unexpected();
-}
-template <class T, class E>
-expected<T,E> unwrap(expected<T,E> e) {
-  return e;
-}
-
-template <class T, class E, class True, class False>
-auto if_then_else(expected<T,E> e, True&& t, False&& f)
--> decltype(unwrap(e.fmap(std::forward<True>(t)).recover(std::forward<False>(f))))
-{
-  return unwrap(e.fmap(std::forward<True>(t)).recover(std::forward<False>(f)));
-}
 
 template<typename T>
 BOOST_CONSTEXPR expected<decay_t<T> > make_expected(BOOST_FWD_REF(T) v )
