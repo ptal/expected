@@ -7,6 +7,7 @@
 #define MOCA_ERROR_HPP
 
 #include <system_error>
+#include <string>
 #include <array>
 
 namespace moca{
@@ -44,6 +45,7 @@ class error_category : public std::error_category
 {
   static const std::array<std::string, num_error> error_messages;
 public:
+  error_category() {}
   const char* name() const noexcept;
   std::string message(int ev) const;
 };
