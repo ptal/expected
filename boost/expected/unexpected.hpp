@@ -151,6 +151,23 @@ namespace boost
     return x==y;
   }
 
+  inline BOOST_CONSTEXPR bool operator<(const unexpected_type<boost::exception_ptr>& x, const unexpected_type<boost::exception_ptr>& y)
+  {
+    return false;
+  }
+  inline BOOST_CONSTEXPR bool operator>(const unexpected_type<boost::exception_ptr>& x, const unexpected_type<boost::exception_ptr>& y)
+  {
+    return false;
+  }
+  inline BOOST_CONSTEXPR bool operator<=(const unexpected_type<boost::exception_ptr>& x, const unexpected_type<boost::exception_ptr>& y)
+  {
+    return x==y;
+  }
+  inline BOOST_CONSTEXPR bool operator>=(const unexpected_type<boost::exception_ptr>& x, const unexpected_type<boost::exception_ptr>& y)
+  {
+    return x==y;
+  }
+
   template <typename E>
   struct is_unexpected : false_type {};
   template <typename E>
