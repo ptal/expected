@@ -30,6 +30,7 @@
 #include <system_error>
 
 #include <boost/expected/expected_monad.hpp>
+#include <boost/expected/error_exception.hpp>
 #include <boost/functional/adaptor.hpp>
 
 enum State

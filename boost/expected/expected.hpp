@@ -137,63 +137,16 @@ class bad_expected_access : public std::logic_error
     error_type& error() { return error_value; }
     const error_type& error() const { return error_value; }
 
-    // Add implicit/explicit conversion to error_type ?
+    // todo - Add implicit/explicit conversion to error_type ?
 };
 
 class expected_default_constructed : public std::logic_error
 {
   public:
     expected_default_constructed()
-    : std::logic_error("Found an error instead of the expected value.")
+    : std::logic_error("Found a default constructed expected.")
     {}
 };
-
-template <class Error, class Exception>
-struct error_exception {
-    typedef Error error_type;
-    typedef Exception exception_type;
-    error_exception() : value_(){}
-    error_exception(Error e) : value_(e){}
-    operator Error() { return value_; }
-    Error value() { return value_; }
-private:
-    Error value_;
-};
-
-template <class E, class X>
-BOOST_CONSTEXPR bool operator==(const error_exception<E,X>& x, const error_exception<E,X>& y)
-{
-  return x.value() == y.value();
-}
-template <class E, class X>
-BOOST_CONSTEXPR bool operator!=(const error_exception<E,X>& x, const error_exception<E,X>& y)
-{
-  return !(x == y);
-}
-
-template <class E, class X>
-BOOST_CONSTEXPR bool operator<(const error_exception<E,X>& x, const error_exception<E,X>& y)
-{
-  return x.value() < y.value();
-}
-
-template <class E, class X>
-BOOST_CONSTEXPR bool operator>(const error_exception<E,X>& x, const error_exception<E,X>& y)
-{
-  return (y < x);
-}
-
-template <class E, class X>
-BOOST_CONSTEXPR bool operator<=(const error_exception<E,X>& x, const error_exception<E,X>& y)
-{
-  return !(y < x);
-}
-
-template <class E, class X>
-BOOST_CONSTEXPR bool operator>=(const error_exception<E,X>& x, const error_exception<E,X>& y)
-{
-  return !(x < y);
-}
 
 // Traits classes
 template <typename ErrorType, class Exception>
@@ -217,13 +170,6 @@ struct expected_error_traits
 
 template <typename ErrorType>
 struct expected_traits : expected_error_traits<ErrorType, bad_expected_access<ErrorType> >
-{
-};
-
-// Specialization for error_exception
-template <class ErrorType, class Exception>
-struct expected_traits<error_exception<ErrorType, Exception> >
-: expected_error_traits<ErrorType, Exception >
 {
 };
 
