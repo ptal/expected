@@ -26,7 +26,7 @@
   typedef std::exception_ptr exception_ptr_type;
 #endif
 
-#include "../../../boost/expected/expected.hpp"
+#include <boost/expected/expected.hpp>
 
 #include <boost/bind.hpp>
 

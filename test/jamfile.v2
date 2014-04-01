@@ -36,11 +36,12 @@ project expected
     : requirements
       <include>$(BOOST_ROOT)
       <include>. # .cpp files in expected/test.
-      <include>../../.. # expected .hpp files.
+      <include>../include/ # expected .hpp files.
       <library>$(BOOST_ROOT/boost/test//boost_unit_test_framework
       
       <link>static
       <toolset>gcc:<cxxflags>-std=c++11
+      <toolset>clang:<cxxflags>-std=c++11
       <toolset>msvc:<asynch-exceptions>on # Needed for Boost.Test
       <toolset>msvc:<warnings>all
       <toolset>msvc:<define>_SCL_SECURE_NO_WARNINGS
