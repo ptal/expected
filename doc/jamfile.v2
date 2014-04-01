@@ -19,23 +19,6 @@ using doxygen ;  # Required if you want to use Doxygen.
 
 import modules ;
 import path ;
-import os ; # Needed to get environment variables.
-
-# Set up Boost root folder.
-# For example, might be current release, a previous release, or trunk.
-#  Assumes you have set an environment variable $BOOST_ROOT.
-local BOOST_ROOT = [ os.environ BOOST_ROOT ] ;
-ECHO "os.environ BOOST_ROOT boost-root = " $(BOOST_ROOT) ; #  Upper case for the value of environment variable(s).
-# For example: os.environ BOOST_ROOT boost-root =  /boost_1_47_0
-ECHO "BOOST_ROOT " $(BOOST_ROOT) ;
-path-constant local-boost-root : $(BOOST_ROOT) ; # Or you can access your chosen boost version here.
-ECHO "local-boost-root = " $(local-boost-root) ; # local-boost-root =  I:\boost_1_47_0
-
-local boost_sandbox = [ os.environ BOOST_SANDBOX ] ;
-ECHO "os.environ boost-sandbox = " $(boost_sandbox) ; #  Upper case for the value of environment variable(s).
-
-path-constant here : . ; # Convenient to refer to files in the same directory as this jamfile.v2.
-ECHO "here = " $(here) ; 
 
 path-constant nav_images : html/images/ ; # png and svg images for home, next, note, tip...
 path-constant images_location : html ; # location of SVG and PNG images referenced by Quickbook.
@@ -86,8 +69,9 @@ else
 
 doxygen autodoc
   :
-    [ glob ../../../boost/expected/*.hpp ] # These are your hpp header include files.
-    [ glob ../../../boost/expected/*.cpp ] # These are your cpp source files.
+    [ glob ../include/boost/expected/*.hpp ]
+    [ glob ../include/boost/expected/algorithms/*.hpp ]
+    [ glob ../include/boost/functional/*.hpp ] 
   : 
     # Lots of parameters passed to Doxygen.  You can see these in the doxygen docs, or the Wizard Expert tab displays them.
     # If you have successfuly built your Doxygen docs standalone using the Wizard (strongly recommended as it is much quicker).
@@ -178,7 +162,7 @@ doxygen autodoc
     # Users can place (or edit) their own personal choice CSS file here.
     
     # Default is just Reference but you can provide your own title for reference section here.
-    <xsl:param>"boost.doxygen.reftitle=Checks Reference"
+    <xsl:param>"boost.doxygen.reftitle=Expected Reference"
 
 ;
 
@@ -197,16 +181,10 @@ boostbook standalone
   # Path for links to Boost:
   #<xsl:param>boost.root=\$(local-boost-root) # Link to Boost logo boost.png
   # Links are relative and trying to make absolute does NOT work.
-  # And remember that all links MUST (unless in quotes) use  backslash, not forward that is trip char.
+  # And remember that all links MUST (unless in quotes) use backslash, not forward that is trip char.
 
-  <xsl:param>boost.root=../../../../../../../boost_trunk # OK but link to I:/boost_trunk/boost.png
+  <xsl:param>boost.root=$(boost-root) # OK but link to I:/boost_trunk/boost.png
 
-  # Also control links to admonitions, so need to set separately.
-  #<xsl:param>boost.root=../../../../../../../boost_1_47_0 # OK file:///I:/boost_1_48_0/boost.png
-  # Quickbook [@boost:/boost/units/detail/utility.hpp] should make it relative to xsl parameter boost.root.
-
-  # Path for libraries index:
-  <xsl:param>boost.libraries=../../../../../../../boost-trunk/libs/libraries.htm
   # Use the main Boost stylesheet:
   <xsl:param>html.stylesheet=./boostbook.css # in /doc folder.
 
@@ -214,7 +192,7 @@ boostbook standalone
   # <xsl:param>html.stylesheet=../html/boostbook.css
 
   # Some general style settings:
-  #   see http://docbook.sourceforge.net/release/xsl/current/doc/html/index.html
+  # see http://docbook.sourceforge.net/release/xsl/current/doc/html/index.html
   <xsl:param>table.footnote.number.format=1 # Identifies the format used for footnote numbers in tables.
   <xsl:param>footnote.number.format=1 # Identifies the format used for text footnote numbers.
 
@@ -232,14 +210,14 @@ boostbook standalone
 
   # HTML options:
   # ------------
-  <xsl:param>navig.graphics=1  # Use graphics not text for navigation.
-  <xsl:param>chunk.section.depth=10  # How far down we chunk nested sections, basically all of them.
-  <xsl:param>chunk.first.sections=1  # Don't put the first section on the same page as the TOC.
-  <xsl:param>toc.section.depth=10  # How far down sections get TOCs.
-  <xsl:param>toc.max.depth=4  # Max depth in each TOC.
-  <xsl:param>generate.section.toc.level=10  # How far down we go with TOCs.
+  <xsl:param>navig.graphics=1 # Use graphics not text for navigation.
+  <xsl:param>chunk.section.depth=10 # How far down we chunk nested sections, basically all of them.
+  <xsl:param>chunk.first.sections=1 # Don't put the first section on the same page as the TOC.
+  <xsl:param>toc.section.depth=10 # How far down sections get TOCs.
+  <xsl:param>toc.max.depth=4 # Max depth in each TOC.
+  <xsl:param>generate.section.toc.level=10 # How far down we go with TOCs.
 
-  #<format>html:<xsl:param>admon.graphics.extension=".png"  # default type for admonitions (important, warning, note ...)
+  #<format>html:<xsl:param>admon.graphics.extension=".png" # default type for admonitions (important, warning, note ...)
   #<format>html:<xsl:param>admon.graphics.path=$(nav-images)/ # path to admonition (warning, note...) image (.png) files.
   
   # <xsl:param name="draft.watermark.image">http://docbook.sourceforge.net/release/images/draft.png</xsl:param>
@@ -254,11 +232,11 @@ boostbook standalone
 
   # No indent on body text:
   <format>pdf:<xsl:param>body.start.indent=0pt #
-  <format>pdf:<xsl:param>paper.type=A4  # Paper type = A4
-  #  http://xml.resource.org/public/rfc/html/rfc2346.html
-  #  Making Postscript and PDF International, J Palme, RFC 2346 recommends
-  #  If you are using US letter paper format, ensure that both left and right margins are at least 21 mm (0.8 in).
-  #  If you are using A4 paper, ensure that both the top and bottom margins are at least 33 mm (1.3 in).
+  <format>pdf:<xsl:param>paper.type=A4 # Paper type = A4
+  # http://xml.resource.org/public/rfc/html/rfc2346.html
+  # Making Postscript and PDF International, J Palme, RFC 2346 recommends
+  # If you are using US letter paper format, ensure that both left and right margins are at least 21 mm (0.8 in).
+  # If you are using A4 paper, ensure that both the top and bottom margins are at least 33 mm (1.3 in).
   # Margins sizes:
   #<format>pdf:<xsl:param>page.margin.top=1.3in
   #<format>pdf:<xsl:param>page.margin.inner=0.8in
@@ -272,20 +250,22 @@ boostbook standalone
   <xsl:param>admon.graphics=1
   # Set these one for PDF generation *only*:
   # In PDF format, default PNG graphics are awful, so better use SVG images (type .svg) instead.
-  <format>pdf:<xsl:param>admon.graphics.extension=".svg"  #
+  <format>pdf:<xsl:param>admon.graphics.extension=".svg" #
   <format>pdf:<xsl:param>use.role.for.mediaobject=1 # Use print role on next line.
   <format>pdf:<xsl:param>preferred.mediaobject.role=print # pdf role is to be printed.
-  <format>pdf:<xsl:param>img.src.path=$(images_location)/ # Path of image (.svg) files. (Note trailing /) ? 
+  <format>pdf:<xsl:param>img.src.path=$(images_location)/ # Path of image (.svg) files. (Note trailing /) ?
   <format>pdf:<xsl:param>admon.graphics.path=$(nav_images)/ # path to admonition (warning, note...) image (.svg) files.
   <format>pdf:<xsl:param>draft.mode="yes" # Yes if draft watermark wanted!
   #<format>pdf:<xsl:param>draft.watermark.image="draft.png" # Watermark (local copy).
   #<format>pdf:<xsl:param>draft.watermark.image=http://docbook.sourceforge.net/release/images/draft.png # Watermark.
-	
-  <dependency>autodoc # Doxygen  reference section
+
+  <dependency>autodoc # Doxygen reference section
   # <dependency>pdf-install # final pdf
   <dependency>png-install # Boost standard icons in both png
-	<dependency>svg-install # and svg.
+<dependency>svg-install # and svg.
   ;
+
+
 
 # To install a copy of 'master' boostbook.css and logo.
 # install html : ../../../doc/html/boostbook.css ;
@@ -295,9 +275,6 @@ boostbook standalone
 # from your current Boost-root to the /doc/html folder.
 path-constant boost-root : [ modules.peek : BOOST ] ;
 install css-install : $(boost-root)/doc/src/boostbook.css : <location>html ;
-
-path-constant boost-root : [ modules.peek : BOOST ] ;
-
 
 # Install (copy) the 'master' copies of all icon images (both PNG and SVG)
 # and the Boost logo from your current Boost-root
