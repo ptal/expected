@@ -659,7 +659,6 @@ public:
   )
   BOOST_NOEXCEPT_IF(
         std::is_nothrow_move_constructible<value_type>::value
-    //&&  std::is_nothrow_move_constructible<error_type>::value
   )
   : base_type(constexpr_move(v))
   {}
@@ -717,9 +716,10 @@ public:
   expected(unexpected_type<Err> const& e
 //    , REQUIRES(std::is_copy_constructible<error_type>::value)
   )
-//  BOOST_NOEXCEPT_IF(
-//    has_nothrow_copy_constructor<error_type>::value
-//  )
+  BOOST_NOEXCEPT_IF(
+    has_nothrow_copy_constructor<error_type>::value
+    //std::is_nothrow_copy_constructible<error_type>::value
+  )
   : base_type(e)
   {}
 
@@ -1117,42 +1117,6 @@ public:
   {
     return f(boost::move(*this));
   }
-
-//  template <typename H>
-//  BOOST_CONSTEXPR expected<void, error_type>
-//  then(BOOST_RV_REF(adaptor_holder<H>) f,
-//    REQUIRES(boost::is_same<typename result_of<typename H::template bind<expected>::type(expected)>::type, void>::value)) const
-//  {
-//#if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
-//    typedef expected<void, error_type> result_type;
-//    f(*this)(boost::move(*this));
-//    return result_type();
-//#else
-//    return (f(*this)(boost::move(*this)), expected<void, error_type>());
-//#endif
-//  }
-//
-//  template <typename H>
-//  BOOST_CONSTEXPR expected<typename result_of<typename H::template bind<expected>::type(expected)>::type, error_type>
-//  then(BOOST_RV_REF(adaptor_holder<H>) f,
-//    REQUIRES(!boost::is_same<typename result_of<typename H::template bind<expected>::type(expected)>::type, void>::value
-//        && !boost::is_expected<typename result_of<typename H::template bind<expected>::type(expected)>::type>::value
-//        )) const
-//  {
-//    typedef expected<typename result_of<typename H::template bind<expected>::type(value_type)>::type, error_type> result_type;
-//    return result_type(f(*this)(boost::move(*this)));
-//  }
-//
-//  template <typename H>
-//  BOOST_CONSTEXPR typename result_of<typename H::template bind<expected>::type(expected)>::type
-//  then(BOOST_RV_REF(adaptor_holder<H>) f,
-//    REQUIRES(!boost::is_same<typename result_of<typename H::template bind<expected>::type(expected)>::type, void>::value
-//        && boost::is_expected<typename result_of<typename H::template bind<expected>::type(expected)>::type>::value
-//        )
-//    ) const
-//  {
-//    return f(*this)(boost::move(*this));
-//  }
 
   template <typename F>
   BOOST_CONSTEXPR this_type
@@ -1557,42 +1521,6 @@ public:
   {
     return f(boost::move(*this));
   }
-
-//  template <typename H>
-//  BOOST_CONSTEXPR expected<void, error_param_type>
-//  then(BOOST_RV_REF(adaptor_holder<H>) f,
-//    REQUIRES(boost::is_same<typename result_of<typename H::template bind<expected>::type(expected)>::type, void>::value)) const
-//  {
-//#if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
-//    typedef expected<void, error_param_type> result_type;
-//    f(*this)(boost::move(*this));
-//    return result_type();
-//#else
-//    return (f(*this)(boost::move(*this)), expected<void, error_param_type>());
-//#endif
-//  }
-//
-//  template <typename H>
-//  BOOST_CONSTEXPR expected<typename result_of<typename H::template bind<expected>::type(expected)>::type, error_param_type>
-//  then(BOOST_RV_REF(adaptor_holder<H>) f,
-//    REQUIRES(!boost::is_same<typename result_of<typename H::template bind<expected>::type(expected)>::type, void>::value
-//        && !boost::is_expected<typename result_of<typename H::template bind<expected>::type(expected)>::type>::value
-//        )) const
-//  {
-//    typedef expected<typename result_of<typename H::template bind<expected>::type(expected)>::type, error_param_type> result_type;
-//    return result_type(f(*this)(boost::move(*this)));
-//  }
-//
-//  template <typename H>
-//  BOOST_CONSTEXPR typename result_of<typename H::template bind<expected>::type(expected)>::type
-//  then(BOOST_RV_REF(adaptor_holder<H>) f,
-//    REQUIRES(!boost::is_same<typename result_of<typename H::template bind<expected>::type(expected)>::type, void>::value
-//        && boost::is_expected<typename result_of<typename H::template bind<expected>::type(expected)>::type>::value
-//        )
-//    ) const
-//  {
-//    return f(*this)(boost::move(*this));
-//  }
 
   // recover factory
 
