@@ -18,6 +18,13 @@
 #include <algorithm>
 #include <system_error>
 
+// Output in out a std::error_condition.
+template <class Output>
+Output& operator<<(Output& out, const std::error_condition& e)
+{
+  return (out << e.message());
+}
+
 /* Print an expected, the value and error of this expected
 must implement the << operator. */
 template <class Output, class T, class E>
@@ -27,13 +34,6 @@ Output& operator<<(Output& out, const boost::expected<T, E>& v)
     return out << *v;
   else
     return out << v.error();
-}
-
-// Output in out a std::error_condition.
-template <class Output>
-Output& operator<<(Output& out, const std::error_condition& e)
-{
-  return (out << e.message());
 }
 
 // moca stands for monadic calculator.
@@ -294,7 +294,7 @@ int main()
       break;
 
     moca::expected<std::int32_t> i = compute(user_input);
-    std::cout << i << "." << std::endl;
+    std::cout << i << std::endl;
 
     prompt();
   }
