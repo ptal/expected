@@ -172,15 +172,6 @@ struct expected_error_traits
     return error_storage_type(e);
   }
 
-  static error_type const& to_error(error_storage_type const& e)
-  {
-    return e;
-  }
-  static error_type & to_error(error_storage_type & e)
-  {
-    return e;
-  }
-
   static void bad_access(const error_type &e)
   {
     throw Exception(e);
@@ -195,30 +186,8 @@ struct expected_traits : expected_error_traits<ErrorType, bad_expected_access<Er
 // Specialization for error_exception
 template <class ErrorType, class Exception>
 struct expected_traits<error_exception<ErrorType, Exception> >
+: expected_error_traits<ErrorType, Exception >
 {
-  typedef ErrorType error_type;
-  typedef Exception exception_type;
-  typedef error_exception<ErrorType, Exception> error_storage_type;
-
-  template <class E>
-  static error_storage_type from_error(E const& e)
-  {
-    return error_storage_type(e);
-  }
-
-  static error_type const& to_error(error_storage_type const& e)
-  {
-    return e.value;
-  }
-  static error_type & to_error(error_storage_type & e)
-  {
-    return e.value;
-  }
-
-  static void bad_access(const error_storage_type &e)
-  {
-    throw Exception(to_error(e));
-  }
 };
 
 // Specialization for exception_ptr
@@ -233,15 +202,6 @@ struct expected_traits<boost::exception_ptr>
   static error_storage_type from_error(E const& e)
   {
     return boost::copy_exception(e);
-  }
-
-  static error_type const& to_error(error_storage_type const& e)
-  {
-    return e;
-  }
-  static error_type & to_error(error_storage_type & e)
-  {
-    return e;
   }
 
   static void bad_access(const error_storage_type &e)
@@ -264,14 +224,6 @@ struct expected_traits<std::exception_ptr>
   static error_type from_error(E const& e)
   {
     return std::make_exception_ptr(e);
-  }
-  static error_type const& to_error(error_storage_type const& e)
-  {
-    return e;
-  }
-  static error_type & to_error(error_storage_type & e)
-  {
-    return e;
   }
 
   static void bad_access(const error_type &e)
@@ -979,12 +931,12 @@ public:
 
   BOOST_CONSTEXPR error_type const& error() const BOOST_NOEXCEPT
   {
-    return traits_type::to_error(contained_err());
+    return contained_err();
   }
 
   BOOST_CONSTEXPR unexpected_type<error_type> get_unexpected() const BOOST_NOEXCEPT
   {
-    return unexpected_type<error_type>(traits_type::to_error(contained_err()));
+    return unexpected_type<error_type>(contained_err());
   }
 
 
@@ -1537,11 +1489,11 @@ public:
 
   BOOST_CONSTEXPR error_storage_type const& error() const BOOST_NOEXCEPT
   {
-    return traits_type::to_error(contained_err());
+    return contained_err();
   }
   BOOST_CONSTEXPR unexpected_type<error_type> get_unexpected() const BOOST_NOEXCEPT
   {
-    return unexpected_type<error_type>(traits_type::to_error(contained_err()));
+    return unexpected_type<error_type>(contained_err());
   }
 
   // next factory
