@@ -152,11 +152,48 @@ template <class Error, class Exception>
 struct error_exception {
     typedef Error error_type;
     typedef Exception exception_type;
-    Error value;
-    error_exception() : value(){}
-    error_exception(Error e) : value(e){}
+    error_exception() : value_(){}
+    error_exception(Error e) : value_(e){}
+    operator Error() { return value_; }
+    Error value() { return value_; }
+private:
+    Error value_;
 };
 
+template <class E, class X>
+BOOST_CONSTEXPR bool operator==(const error_exception<E,X>& x, const error_exception<E,X>& y)
+{
+  return x.value() == y.value();
+}
+template <class E, class X>
+BOOST_CONSTEXPR bool operator!=(const error_exception<E,X>& x, const error_exception<E,X>& y)
+{
+  return !(x == y);
+}
+
+template <class E, class X>
+BOOST_CONSTEXPR bool operator<(const error_exception<E,X>& x, const error_exception<E,X>& y)
+{
+  return x.value() < y.value();
+}
+
+template <class E, class X>
+BOOST_CONSTEXPR bool operator>(const error_exception<E,X>& x, const error_exception<E,X>& y)
+{
+  return (y < x);
+}
+
+template <class E, class X>
+BOOST_CONSTEXPR bool operator<=(const error_exception<E,X>& x, const error_exception<E,X>& y)
+{
+  return !(y < x);
+}
+
+template <class E, class X>
+BOOST_CONSTEXPR bool operator>=(const error_exception<E,X>& x, const error_exception<E,X>& y)
+{
+  return !(x < y);
+}
 
 // Traits classes
 template <typename ErrorType, class Exception>
