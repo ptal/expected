@@ -99,6 +99,58 @@ namespace boost
     }
   };
 
+  template <class E>
+  BOOST_CONSTEXPR bool operator==(const unexpected_type<E>& x, const unexpected_type<E>& y)
+  {
+    return x.value() == y.value();
+  }
+  template <class E>
+  BOOST_CONSTEXPR bool operator!=(const unexpected_type<E>& x, const unexpected_type<E>& y)
+  {
+    return !(x == y);
+  }
+
+  template <class E>
+  BOOST_CONSTEXPR bool operator<(const unexpected_type<E>& x, const unexpected_type<E>& y)
+  {
+    return x.value() < y.value();
+  }
+
+  template <class E>
+  BOOST_CONSTEXPR bool operator>(const unexpected_type<E>& x, const unexpected_type<E>& y)
+  {
+    return (y < x);
+  }
+
+  template <class E>
+  BOOST_CONSTEXPR bool operator<=(const unexpected_type<E>& x, const unexpected_type<E>& y)
+  {
+    return !(y < x);
+  }
+
+  template <class E>
+  BOOST_CONSTEXPR bool operator>=(const unexpected_type<E>& x, const unexpected_type<E>& y)
+  {
+    return !(x < y);
+  }
+
+  inline BOOST_CONSTEXPR bool operator<(const unexpected_type<std::exception_ptr>& x, const unexpected_type<std::exception_ptr>& y)
+  {
+    return false;
+  }
+  inline BOOST_CONSTEXPR bool operator>(const unexpected_type<std::exception_ptr>& x, const unexpected_type<std::exception_ptr>& y)
+  {
+    return false;
+  }
+  inline BOOST_CONSTEXPR bool operator<=(const unexpected_type<std::exception_ptr>& x, const unexpected_type<std::exception_ptr>& y)
+  {
+    return x==y;
+  }
+  inline BOOST_CONSTEXPR bool operator>=(const unexpected_type<std::exception_ptr>& x, const unexpected_type<std::exception_ptr>& y)
+  {
+    return x==y;
+  }
+
   template <typename E>
   struct is_unexpected : false_type {};
   template <typename E>
