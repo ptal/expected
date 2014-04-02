@@ -16,21 +16,22 @@ namespace expected_alg
   template <class F>
   struct defer_t
   {
+  private:
+    F fct_;
+  public:
     defer_t(F&& f) :
       fct_(std::move(f))
     {
     }
     template <class ...A>
-    T operator()(A...)
-    { return f();}
-  private:
-    F fct_;
+    auto operator()(A...) -> decltype(fct_())
+    { return fct_();}
   };
 
-  template <class T>
+  template <class F>
   inline defer_t<decay_t<F>> defer(F&& f)
   {
-    return defer_t<decay_t<F>>(std::forward<F>(f));
+    return defer_t<decay_t<F> >(std::forward<F>(f));
   }
 
   template <class T, class E, class F>
@@ -38,7 +39,7 @@ namespace expected_alg
   {
     // We are sure that e.recover(just(std::forward<T>(v))) will be valid or a exception will be thrown
     // so the derefference is safe
-    return * e.recover(defer(std::forward<F>(f));
+    return * e.recover(defer(std::forward<F>(f)));
   }
 
   template <class T, class E, class F>
@@ -46,7 +47,7 @@ namespace expected_alg
   {
     // We are sure that e.recover(just(std::forward<T>(v))) will be valid or a exception will be thrown
     // so the derefference is safe
-    return * e.recover(defer(std::forward<T>(v)));
+    return * e.recover(defer(std::forward<T>(f)));
   }
 
 } // namespace expected_alg

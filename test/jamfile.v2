@@ -74,6 +74,7 @@ test-suite algorithms
     : 
       [ run algorithms/test_if_then_else.cpp  boost_unit_test ]
       [ run algorithms/test_value_or.cpp  boost_unit_test ]
+      [ run algorithms/test_value_or_call.cpp  boost_unit_test ]
     ;
 
 test-suite expected_ex

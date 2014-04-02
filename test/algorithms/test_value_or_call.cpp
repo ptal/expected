@@ -23,7 +23,7 @@
 using namespace boost;
 using namespace boost::expected_alg;
 
-int f0() {Êreturn 0; }
+int f0() { return 0; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 BOOST_AUTO_TEST_SUITE(ValueOrCall)
