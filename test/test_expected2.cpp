@@ -8,4 +8,4 @@
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #define EXPECTED_CPP11_TESTS
-#include "test_expected.hpp"
+#include "test_expected2.hpp"
