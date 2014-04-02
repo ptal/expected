@@ -1,0 +1,55 @@
+// Distributed under the Boost Software License, Version 1.0. (See
+// accompanying file LICENSE_1_0.txt or copy at
+// http://www.boost.org/LICENSE_1_0.txt)
+// (C) Copyright 2014 Vicente J. Botet Escriba
+
+#ifndef BOOST_EXPECTED_ALGORITHMS_VALUE_OR_CALL_HPP
+#define BOOST_EXPECTED_ALGORITHMS_VALUE_OR_CALL_HPP
+
+#include <boost/expected/expected.hpp>
+
+namespace boost
+{
+namespace expected_alg
+{
+
+  template <class F>
+  struct defer_t
+  {
+    defer_t(F&& f) :
+      fct_(std::move(f))
+    {
+    }
+    template <class ...A>
+    T operator()(A...)
+    { return f();}
+  private:
+    F fct_;
+  };
+
+  template <class T>
+  inline defer_t<decay_t<F>> defer(F&& f)
+  {
+    return defer_t<decay_t<F>>(std::forward<F>(f));
+  }
+
+  template <class T, class E, class F>
+  BOOST_CONSTEXPR T value_or_call(expected<T,E> const& e, BOOST_FWD_REF(F) f)
+  {
+    // We are sure that e.recover(just(std::forward<T>(v))) will be valid or a exception will be thrown
+    // so the derefference is safe
+    return * e.recover(defer(std::forward<F>(f));
+  }
+
+  template <class T, class E, class F>
+  BOOST_CONSTEXPR T value_or(expected<T,E> && e, BOOST_FWD_REF(F) f)
+  {
+    // We are sure that e.recover(just(std::forward<T>(v))) will be valid or a exception will be thrown
+    // so the derefference is safe
+    return * e.recover(defer(std::forward<T>(v)));
+  }
+
+} // namespace expected_alg
+} // namespace boost
+
+#endif // BOOST_EXPECTED_ALGORITHMS_VALUE_OR_CALL_HPP
