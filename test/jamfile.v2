@@ -74,17 +74,16 @@ test-suite expected
 
 test-suite expected_ex
     : 
-      #[ run ../example/monadic_calculator/monadic_calculator.cpp ../example/monadic_calculator/error.cpp ]
-      [ run safe_divide.cpp ]
-      [ run num_get.cpp ]
-      [ run num_get_2.cpp ]
-      [ run num_get_3.cpp ]
-      [ run get_interval.cpp ]
+      [ run ../example/safe_divide.cpp ]
+      [ run ../example/num_get.cpp ]
+      [ run ../example/num_get_2.cpp ]
+      [ run ../example/num_get_3.cpp ]
+      [ run ../example/get_interval.cpp ]
     ;
 
 test-suite monads_ex
     : 
-      [ run safe_divide_monad.cpp ]
+      [ run ../example/safe_divide_monad.cpp ]
     ;
 
 test-suite fix

@@ -30,6 +30,7 @@
 #include <system_error>
 
 #include <boost/expected/expected_monad.hpp>
+#include <boost/expected/error_exception.hpp>
 #include <boost/functional/adaptor.hpp>
 
 enum State
@@ -1006,6 +1007,7 @@ BOOST_AUTO_TEST_CASE(relational_operators)
 
     BOOST_CHECK (eN < e0);
     BOOST_CHECK (e0 < e1);
+    BOOST_CHECK (! (e0 < eN));
     BOOST_CHECK (eN <= e0);
     BOOST_CHECK (e0 <= e1);
 
@@ -1034,6 +1036,7 @@ BOOST_AUTO_TEST_CASE(relational_operators)
     BOOST_CHECK (eN < 1u);
     BOOST_CHECK (eN <= 1u);
     BOOST_CHECK (1u > eN);
+    BOOST_CHECK (!(1u < eN));
     BOOST_CHECK (1u >= eN);
     BOOST_CHECK (make_unexpected(1) < e0);
     BOOST_CHECK (make_unexpected(1) <= e0);
