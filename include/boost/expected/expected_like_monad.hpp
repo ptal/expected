@@ -6,7 +6,8 @@
 #ifndef BOOST_EXPECTED_EXPECTED_LIKE_MONAD_HPP
 #define BOOST_EXPECTED_EXPECTED_LIKE_MONAD_HPP
 
-#include <boost/functional/monad.hpp>
+#include <boost/config.hpp>
+#include <boost/functional/monads.hpp>
 #include <boost/expected/unexpected.hpp>
 #include <boost/utility/enable_if.hpp>
 #include <boost/type_traits/is_same.hpp>

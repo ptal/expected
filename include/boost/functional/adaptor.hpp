@@ -8,7 +8,7 @@
 
 #include <boost/move/move.hpp>
 #include <boost/utility/result_of.hpp>
-#include <boost/functional/monad.hpp>
+#include <boost/functional/monads.hpp>
 #include <boost/expected/expected.hpp>
 
 namespace boost
