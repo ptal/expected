@@ -6,6 +6,7 @@
 #ifndef BOOST_FUNCTIONAL_DO_YIELD_HPP
 #define BOOST_FUNCTIONAL_DO_YIELD_HPP
 
+#define BOOST_PP_VARIADICS 1
 #include <boost/preprocessor.hpp>
 
 // YIELD is the expression evaluated if all the monadic expression
