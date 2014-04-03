@@ -78,7 +78,7 @@ namespace boost
       };
     public:
       template <class F>
-      static BOOST_CONSTEXPR typename result_type<F>::type when_valued(monad_type m, F f)
+      static BOOST_CONSTEXPR typename result_type<F>::type mbind(monad_type m, F f)
       {
         typedef typename std::result_of<F(value_type)>::type result_type;
         typedef typename result_type::second_type expected_type;
@@ -102,9 +102,9 @@ namespace boost
 
 template <class T, class I, typename E, class F>
 auto operator&(pair_expected<T, I, E>& m, F&& f)
--> decltype(boost::monads::make_monad(std::forward<pair_expected<T, I, E>>(m)).when_valued(std::forward<F>(f)))
+-> decltype(boost::monads::make_monad(std::forward<pair_expected<T, I, E>>(m)).mbind(std::forward<F>(f)))
 {
-  return boost::monads::make_monad(std::forward<pair_expected<T, I, E>>(m)).when_valued(std::forward<F>(f));
+  return boost::monads::make_monad(std::forward<pair_expected<T, I, E>>(m)).mbind(std::forward<F>(f));
 }
 
 /**
@@ -255,16 +255,16 @@ public:
 
     //auto  f = std::use_facet< ::NumGet<char_type, iter_type> >(ios.getloc()).template get<Num>(s, e, ios);
     auto f = ::NumGet<char_type, iter_type>().template get<Num> (s, e, ios);
-auto  m = when_valued(f, [e](std::pair<iter_type,Num> f)
+auto  m = mbind(f, [e](std::pair<iter_type,Num> f)
       {
         return matchedString("..", f.first, e);
       });
-  auto l = when_valued(m, [&ios, e](std::pair<iter_type, Num> m)
+  auto l = mbind(m, [&ios, e](std::pair<iter_type, Num> m)
       {
         //return std::use_facet< ::NumGet<char_type, iter_type> >(ios.getloc()).template get<Num>(m.first, e, ios);
         return ::NumGet<char_type, iter_type>().template get<Num> (m.first, e, ios);
       });
-  return when_valued(l, [f](std::pair<iter_type,Num> l)
+  return mbind(l, [f](std::pair<iter_type,Num> l)
       {
         value_type tmp(*f.second, l.second);
         return make_pair_expected<std::ios_base::iostate>(l.first, tmp);
@@ -316,18 +316,18 @@ pair_expected<iter_type, std::pair<Num,Num>, std::ios_base::iostate> get4(InputI
   auto f = ::NumGet<char_type, iter_type>().template get<Num>(s, e, ios);
 
   return make_monad(std::move(f))
-  .when_valued([e](std::pair<iter_type,Num> f)
+  .mbind([e](std::pair<iter_type,Num> f)
       {
 
         return matchedString("..", f.first, e);
 
-      }).when_valued( [&ios, e](std::pair<iter_type,Num> m)
+      }).mbind( [&ios, e](std::pair<iter_type,Num> m)
       {
 
         //return std::use_facet< ::NumGet<char_type, iter_type> >(ios.getloc()).template get<Num>(m.first, e, ios);
         return ::NumGet<char_type, iter_type>().template get<Num>(m.first, e, ios);
 
-      }).when_valued( [f](std::pair<iter_type,Num> l)
+      }).mbind( [f](std::pair<iter_type,Num> l)
       {
 
         value_type tmp(*f.second, l.second);

@@ -90,7 +90,7 @@ namespace boost
     {
       template <class F, class M0, class ...M,
           class FR = decltype( std::declval<F>()(value_pre_has_value(std::declval<M0>()), value_pre_has_value(std::declval<M>())...) )>
-      static BOOST_CONSTEXPR auto when_all_valued(F&& f, M0&& m0, M&& ...m) -> typename bind<decay_t<M0>, FR>::type
+      static BOOST_CONSTEXPR auto fmap(F&& f, M0&& m0, M&& ...m) -> typename bind<decay_t<M0>, FR>::type
       {
         typedef typename bind<decay_t<M0>, FR>::type expected_type;
         return have_value( std::forward<M0>(m0), std::forward<M>(m)... )
@@ -112,7 +112,7 @@ namespace boost
 
       template <class M, class F>
       static BOOST_CONSTEXPR auto
-      when_ready(M&& m, F&& f) -> decltype(m.then(std::forward<F>(f)))
+      then(M&& m, F&& f) -> decltype(m.then(std::forward<F>(f)))
       {
         return m.then(std::forward<F>(f));
       }
@@ -120,14 +120,14 @@ namespace boost
 #ifdef FORWARD_TO_EXPECTED
       template <class M, class F>
       static BOOST_CONSTEXPR auto
-      when_valued(M&& m, F&& f) -> decltype(m.next(std::forward<F>(f)))
+      mbind(M&& m, F&& f) -> decltype(m.next(std::forward<F>(f)))
       {
         return m.next(std::forward<F>(f));
       }
 #else
       template <class M, class F, class FR = decltype( std::declval<F>()( value_pre_has_value(std::declval<M>()) ) )>
       static BOOST_CONSTEXPR auto
-      when_valued(M&& m, F&& f,
+      mbind(M&& m, F&& f,
           REQUIRES(boost::is_same<FR, void>::value)
       ) -> typename bind<decay_t<M>, FR>::type
       {
@@ -149,7 +149,7 @@ namespace boost
 
       template <class M, class F, class FR = decltype( std::declval<F>()( value_pre_has_value(std::declval<M>()) ) )>
       static BOOST_CONSTEXPR auto
-      when_valued(M&& m, F&& f,
+      mbind(M&& m, F&& f,
           REQUIRES((! boost::is_same<FR, void>::value
               &&    ! boost::monads::is_monad<FR>::value)
       )) -> typename bind<decay_t<M>, FR>::type
@@ -171,7 +171,7 @@ namespace boost
 
       template <class M, class F, class FR = decltype( std::declval<F>()( value_pre_has_value(std::declval<M>()) ) )>
       static BOOST_CONSTEXPR auto
-      when_valued(M&& m, F&& f,
+      mbind(M&& m, F&& f,
           REQUIRES( boost::monads::is_monad<FR>::value )
       ) -> FR
       {
@@ -196,7 +196,7 @@ namespace boost
     {
       template <class M, class F>
       static BOOST_CONSTEXPR auto
-      when_unexpected(M&& m, F&& f) -> decltype(m.recover(std::forward<F>(f)))
+      catch_error(M&& m, F&& f) -> decltype(m.recover(std::forward<F>(f)))
       {
         return m.recover(std::forward<F>(f));
       }
