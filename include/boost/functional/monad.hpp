@@ -59,13 +59,13 @@ namespace boost
     template <class M, class T, class Traits = monad_traits<monad_category_t<decay_t<M> > > >
     M make(T&& v)
     {
-      return Traits::make(std::forward<T>(v));
+      return Traits::template make<M>(std::forward<T>(v));
     }
 
     template <template <class ...> class M, class T, class Traits = monad_traits<monad_category_t<M<T> > > >
     M<T> make(T&& v)
     {
-      return Traits::make(std::forward<T>(v));
+      return Traits::template make<M<T> >(std::forward<T>(v));
     }
 
     template <class M, class F, class Traits = monad_traits<monad_category_t<decay_t<M> > > >
