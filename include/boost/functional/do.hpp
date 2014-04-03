@@ -9,10 +9,6 @@
 #define BOOST_PP_VARIADICS 1
 #include <boost/preprocessor.hpp>
 
-// YIELD is the expression evaluated if all the monadic expression
-// of the DO construct contain a value.
-#define YIELD(yield_expr) (yield_expr);
-
 // Macro helpers.
 
 #define IS_EVEN(i) BOOST_PP_EQUAL(0, BOOST_PP_MOD(i, 2))
@@ -37,7 +33,7 @@
 #define MONADIC_BIND_0(i, seq, elem) \
   MONADIC_BIND_0_I(IS_EVEN(i), i, BOOST_PP_INC(i), seq)
 
-#define MONADIC_BIND_1(i, seq, elem) elem
+#define MONADIC_BIND_1(i, seq, elem) elem;
 
 // For each couple (decl, monad_expr) we add a lambda.
 
