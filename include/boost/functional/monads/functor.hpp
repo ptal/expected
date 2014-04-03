@@ -6,13 +6,8 @@
 #ifndef BOOST_FUNCTIONAL_FUNCTOR_HPP
 #define BOOST_FUNCTIONAL_FUNCTOR_HPP
 
-//#include <boost/config.hpp>
-//#include <boost/functional/valued.hpp>
-//#include <boost/functional/errored.hpp>
 #include <boost/functional/type_traits_t.hpp>
-//#include <exception>
 #include <utility>
-//#include <type_traits>
 
 namespace boost
 {

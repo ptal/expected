@@ -1,7 +1,7 @@
 //! \file test_expected.cpp
 
 // Copyright Pierre Talbot 2013.
-// Copyright Vicente J. Botet Escriba 2013.
+// Copyright Vicente J. Botet Escriba 2013,2014.
 
 // Use, modification and distribution are subject to the
 // Boost Software License, Version 1.0.
@@ -31,7 +31,7 @@
 
 #include <boost/expected/expected_monad.hpp>
 #include <boost/expected/error_exception.hpp>
-#include <boost/functional/adaptor.hpp>
+#include <boost/functional/monads/adaptor.hpp>
 
 enum State
 {
