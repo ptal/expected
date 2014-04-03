@@ -115,9 +115,9 @@ namespace boost
 
       template <class F, class M0, class ...M, class FR = decltype( std::declval<F>()(*std::declval<M0>(), *std::declval<M>()...) )>
       static auto
-      when_all_valued(F&& f, M0&& m0, M&& ...ms) -> typename bind<decay_t<M0>, FR>::type
+      fmap(F&& f, M0&& m0, M&& ...ms) -> typename bind<decay_t<M0>, FR>::type
       {
-        return M0::when_all_valued(std::forward<F>(f), std::forward<M0>(m0), std::forward<M>(ms)...);
+        return M0::fmap(std::forward<F>(f), std::forward<M0>(m0), std::forward<M>(ms)...);
       }
     };
     template <class M>
@@ -139,16 +139,16 @@ namespace boost
 
       template <class M, class F>
       static auto
-      when_ready(M&& m, F&& f) -> decltype(m.when_ready(std::forward<F>(f)))
+      then(M&& m, F&& f) -> decltype(m.then(std::forward<F>(f)))
       {
-        m.when_ready(std::forward<F>(f));
+        m.then(std::forward<F>(f));
       }
 
       template <class M, class F>
       static auto
-      when_valued(M&& m, F&& f) -> decltype(m.when_valued(std::forward<F>(f)))
+      mbind(M&& m, F&& f) -> decltype(m.mbind(std::forward<F>(f)))
       {
-        return m.when_valued(std::forward<F>(f));
+        return m.mbind(std::forward<F>(f));
       }
 
     };
@@ -167,24 +167,24 @@ namespace boost
 
     template <class M, class F, class Traits = monad_traits<monad_category_t<decay_t<M> > > >
     auto
-    when_ready(M&& m, F&& f) -> decltype(Traits::when_ready(std::forward<M>(m), std::forward<F>(f)))
+    then(M&& m, F&& f) -> decltype(Traits::then(std::forward<M>(m), std::forward<F>(f)))
     {
-      return Traits::when_ready(std::forward<M>(m), std::forward<F>(f));
+      return Traits::then(std::forward<M>(m), std::forward<F>(f));
     }
 
     template <class M, class F, class Traits = monad_traits<monad_category_t<decay_t<M> > > >
     auto
-    when_valued(M&& m, F&& f) -> decltype(Traits::when_valued(std::forward<M>(m), std::forward<F>(f)))
+    mbind(M&& m, F&& f) -> decltype(Traits::mbind(std::forward<M>(m), std::forward<F>(f)))
     {
-      return Traits::when_valued(std::forward<M>(m), std::forward<F>(f));
+      return Traits::mbind(std::forward<M>(m), std::forward<F>(f));
     }
 
     template <class F, class M0, class ...M, class Traits = functor_traits<functor_category_t<decay_t<M0> > > >
     auto
-    when_all_valued(F&& f, M0&& m0, M&& ...m)
-    -> decltype(Traits::when_all_valued(std::forward<F>(f), std::forward<M0>(m0), std::forward<M>(m)...))
+    fmap(F&& f, M0&& m0, M&& ...m)
+    -> decltype(Traits::fmap(std::forward<F>(f), std::forward<M0>(m0), std::forward<M>(m)...))
     {
-      return Traits::when_all_valued(std::forward<F>(f),std::forward<M0>(m0), std::forward<M>(m)...);
+      return Traits::fmap(std::forward<F>(f),std::forward<M0>(m0), std::forward<M>(m)...);
     }
 
     template <class M>
@@ -229,31 +229,31 @@ namespace boost
       M release()
       { return std::move(m);}
 
-      template <class F, class R = decltype(make_monad(monads::when_ready(std::declval<M>(), std::declval<F>())))>
-      auto when_ready(F&& f) -> R
+      template <class F, class R = decltype(make_monad(monads::then(std::declval<M>(), std::declval<F>())))>
+      auto then(F&& f) -> R
       {
-        return make_monad(monads::when_ready(m, std::forward<F>(f)));
+        return make_monad(monads::then(m, std::forward<F>(f)));
       }
 
-      template <class F, class R = decltype(make_monad(monads::when_valued(std::declval<M>(), std::declval<F>())))>
-      auto when_valued(F&& f) -> R
+      template <class F, class R = decltype(make_monad(monads::mbind(std::declval<M>(), std::declval<F>())))>
+      auto mbind(F&& f) -> R
       {
-        return make_monad(monads::when_valued(m, std::forward<F>(f)));
+        return make_monad(monads::mbind(m, std::forward<F>(f)));
       }
     };
 
     template <class T, class F>
     auto operator>>(monad<T>&& m, F&& f)
-    -> decltype(m.when_ready(std::forward<F>(f)))
+    -> decltype(m.then(std::forward<F>(f)))
     {
-      return m.when_ready(std::forward<F>(f));
+      return m.then(std::forward<F>(f));
     }
 
     template <class T, class F>
     auto operator&(monad<T>&& x, F&& f)
-    -> decltype(x.when_valued(std::forward<F>(f)))
+    -> decltype(x.mbind(std::forward<F>(f)))
     {
-      return x.when_valued(std::forward<F>(f));
+      return x.mbind(std::forward<F>(f));
     }
 
     template <class M>
@@ -266,17 +266,17 @@ namespace boost
     struct monad_error_traits : monad_traits<Mo> {
 
       template <class M, class F>
-      M when_unexpected(M&& m, F&& f)
+      M catch_error(M&& m, F&& f)
       {
-        return m.when_unexpected(std::forward<F>(f));
+        return m.catch_error(std::forward<F>(f));
       }
 
     };
 
     template <class M, class F, class Traits = monad_error_traits<monad_error_category_t<decay_t<M> > > >
-    static M when_unexpected(M&& m, F&& f)
+    static M catch_error(M&& m, F&& f)
     {
-      return Traits::when_unexpected(std::forward<M>(m), std::forward<F>(f));
+      return Traits::catch_error(std::forward<M>(m), std::forward<F>(f));
     }
 
     // monad_error
@@ -316,46 +316,46 @@ namespace boost
       }
 
       template <class F>
-      auto when_ready(F&& f) const
-      -> decltype(make_monad_error(monads::when_ready(this->m, std::forward<F>(f))))
+      auto then(F&& f) const
+      -> decltype(make_monad_error(monads::then(this->m, std::forward<F>(f))))
       {
-        return make_monad_error(monads::when_ready(this->m, std::forward<F>(f)));
+        return make_monad_error(monads::then(this->m, std::forward<F>(f)));
       }
 
       template <class F>
-      auto when_valued(F&& f) const
-      -> decltype(make_monad_error(monads::when_valued(this->m, std::forward<F>(f))))
+      auto mbind(F&& f) const
+      -> decltype(make_monad_error(monads::mbind(this->m, std::forward<F>(f))))
       {
-        return make_monad_error(monads::when_valued(this->m, std::forward<F>(f)));
+        return make_monad_error(monads::mbind(this->m, std::forward<F>(f)));
       }
 
       template <class F>
-      auto when_unexpected(F&& f) const
-      -> decltype(make_monad_error(monads::when_unexpected(this->m, std::forward<F>(f))))
+      auto catch_error(F&& f) const
+      -> decltype(make_monad_error(monads::catch_error(this->m, std::forward<F>(f))))
       {
-        return make_monad_error(monads::when_unexpected(this->m, std::forward<F>(f)));
+        return make_monad_error(monads::catch_error(this->m, std::forward<F>(f)));
       }
     };
 
     template <class T, class F>
     auto operator>>(monad_error<T>&& m, F&& f)
-    -> decltype(m.when_ready(std::forward<F>(f)))
+    -> decltype(m.then(std::forward<F>(f)))
     {
-      return m.when_ready(std::forward<F>(f));
+      return m.then(std::forward<F>(f));
     }
 
     template <class T, class F>
     auto operator&(monad_error<T>&& x, F&& f)
-    -> decltype(x.when_valued(std::forward<F>(f)))
+    -> decltype(x.mbind(std::forward<F>(f)))
     {
-      return x.when_valued(std::forward<F>(f));
+      return x.mbind(std::forward<F>(f));
     }
 
     template <class T, class F>
     auto operator|(monad_error<T>&& m, F&& f)
-    -> decltype(m.when_unexpected(std::forward<F>(f)))
+    -> decltype(m.catch_error(std::forward<F>(f)))
     {
-      return m.when_unexpected(std::forward<F>(f));
+      return m.catch_error(std::forward<F>(f));
     }
 
   }

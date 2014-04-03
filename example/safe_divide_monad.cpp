@@ -11,8 +11,8 @@
 
 #include <boost/expected/expected_monad.hpp>
 #include <boost/expected/optional_monad.hpp>
-#include <boost/expected/expected_to_optional.hpp>
-#include <boost/expected/expected_to_future.hpp>
+#include <boost/expected/conversions/expected_to_optional.hpp>
+#include <boost/expected/conversions/expected_to_future.hpp>
 
 #include <iostream>
 #include <exception>
@@ -169,10 +169,10 @@ namespace expected_based
 {
   expected<int> then_f22(int i, int j, int k)
   {
-    return  when_valued(safe_divide(i, k),
+    return  mbind(safe_divide(i, k),
       [=](int q1)
       {
-        return when_valued(safe_divide(j,k), [=](int q2)
+        return mbind(safe_divide(j,k), [=](int q2)
             {
               return q1+q2;
             });
@@ -181,7 +181,7 @@ namespace expected_based
 
   expected<int> then_f23(int i, int j, int k)
   {
-    return when_all_valued([=](int q1, int q2)
+    return fmap([=](int q1, int q2)
         { return q1+q2;},
         safe_divide(i, k), safe_divide(j, k));
   }
@@ -203,10 +203,10 @@ namespace optional_based
 {
   optional<int> then_f22(int i, int j, int k)
   {
-    return  when_valued(safe_divide(i, k),
+    return  mbind(safe_divide(i, k),
       [=](int q1)
       {
-        return when_valued(safe_divide(j,k), [=](int q2)
+        return mbind(safe_divide(j,k), [=](int q2)
             {
               return q1+q2;
             });
@@ -215,7 +215,7 @@ namespace optional_based
 
   optional<int> then_f23(int i, int j, int k)
   {
-    return when_all_valued([=](int q1, int q2)
+    return fmap([=](int q1, int q2)
         { return q1+q2;},
         safe_divide(i, k), safe_divide(j, k));
   }
@@ -225,7 +225,7 @@ namespace optional_based
     return make_monad(safe_divide(i, k))
     & [=](int q1)
     {
-      return make_monad(safe_divide(j,k)).when_valued([=](int q2)
+      return make_monad(safe_divide(j,k)).mbind([=](int q2)
           {
             return q1+q2;
           }).release();
@@ -245,9 +245,9 @@ namespace expected_based
 
   expected<int> operator-(expected<int> i, expected<int> j)
   {
-    return  when_valued(i, [j](int i)
+    return  mbind(i, [j](int i)
       {
-        return when_valued(j, [i](int j)
+        return mbind(j, [i](int j)
             {
               return i-j;
             });
@@ -283,7 +283,7 @@ namespace expected_based
 {
   expected<int> divide0(int i, int j)
   {
-    return  when_unexpected(safe_divide(i,j),
+    return  catch_error(safe_divide(i,j),
       [](std::exception_ptr ex) -> expected<int>
       {
         try
