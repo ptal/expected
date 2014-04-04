@@ -5,8 +5,8 @@
 
 #include "error.hpp"
 
+#include <boost/functional/do.hpp>
 #include <boost/expected/expected.hpp>
-#include <boost/functional/do_yield.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/variant.hpp>
 #include <boost/range/iterator_range.hpp>
@@ -141,7 +141,7 @@ expected<tokens_t> tokenize(Iterator b, Iterator e)
     etokens = DO(
       token_t token, next_token(b, e),
       tokens_t tokens, etokens,
-    YIELD(push_token(token, tokens)));
+      push_token(token, tokens));
   }
   return etokens;
 }
@@ -247,7 +247,7 @@ expected<std::int32_t> parse_operator(std::int32_t left, Iterator b, Iterator e)
       DO(
         operator_token op, parse_operator(*b++),
         std::int32_t right, parse_expr(b, e),
-      YIELD(evaluate(left, op, right)));
+        evaluate(left, op, right));
   }
 }
 
@@ -262,7 +262,7 @@ expected<std::int32_t> parse_expr(Iterator b, Iterator e)
     return
       DO(
         std::int32_t left, parse_integer(*b++),
-      YIELD(parse_operator(left, b, e)));
+        parse_operator(left, b, e));
   }
 }
 
@@ -271,7 +271,7 @@ expected<std::int32_t> compute(const std::string& calculus)
   return
     DO(
       tokens_t tokens, tokenize(calculus.begin(), calculus.end()),
-    YIELD(parse_expr(tokens.begin(), tokens.end())));
+      parse_expr(tokens.begin(), tokens.end()));
 }
 
 } // namespace moca
