@@ -8,6 +8,8 @@
 
 #include <boost/config.hpp>
 #include <boost/functional/monads.hpp>
+#include <boost/functional/monads/categories/pointer_like.hpp>
+#include <boost/functional/monads/algorithms/have_value.hpp>
 #include <boost/expected/unexpected.hpp>
 #include <boost/utility/enable_if.hpp>
 #include <boost/type_traits/is_same.hpp>
@@ -31,32 +33,7 @@ namespace boost
   {
     namespace category
     {
-      struct pointer_like {};
-    }
-    namespace category
-    {
       struct expected_like {};
-    }
-
-    template <>
-    struct value_traits<category::pointer_like> {
-      template <class M>
-      using type = typename M::value_type;
-      template <class M>
-      static constexpr bool has_value(M&& m) { return bool(m); };
-      template <class M>
-      static constexpr auto derreference(M&& m) -> decltype(*m) { return *m; };
-    };
-
-    template< class M >
-    BOOST_CONSTEXPR bool have_value( M&& m )
-    {
-      return has_value(std::forward<M>(m));
-    }
-    template< class M1, class ...Ms >
-    BOOST_CONSTEXPR bool have_value( M1&& m1, Ms&& ...ms )
-    {
-      return has_value(std::forward<M1>(m1)) && have_value( std::forward<Ms>(ms)... );
     }
 
     template< class M >
