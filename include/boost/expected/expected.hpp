@@ -575,6 +575,8 @@ public:
   typedef typename traits_type::error_type error_type;
   typedef ErrorType error_param_type;
   typedef typename traits_type::error_storage_type error_storage_type;
+  using unexpected_type_type = boost::unexpected_type<error_type>;
+
 
 private:
   typedef expected<value_type, ErrorType> this_type;
@@ -1241,6 +1243,7 @@ public:
   typedef typename traits_type::error_type error_type;
   typedef ErrorType error_param_type;
   typedef typename traits_type::error_storage_type error_storage_type;
+  using unexpected_type_type = boost::unexpected_type<error_type>;
 
 private:
   typedef expected<void, error_param_type> this_type;

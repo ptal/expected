@@ -25,7 +25,7 @@ namespace boost
     template <class T>
     struct unexpected_traits {
       template <class M>
-      using type = typename M::unexpected_type;
+      using type = typename M::unexpected_type_type;
       template <class M>
       static constexpr auto get_unexpected(M&& m) -> decltype(m.get_unexpected()) { return m.get_unexpected(); };
       template <class M>

@@ -24,7 +24,7 @@ namespace boost
     template <class T>
     struct monad_category<optional<T> > : mpl::identity<category::expected_like> { };
     template <class T>
-    struct value_category<optional<T> > : mpl::identity<category::expected_like> { };
+    struct value_category<optional<T> > : mpl::identity<category::pointer_like> { };
 
     template <class T>
     struct unexpected_traits< optional<T> > {

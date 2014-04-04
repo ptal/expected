@@ -31,11 +31,15 @@ namespace boost
   {
     namespace category
     {
+      struct pointer_like {};
+    }
+    namespace category
+    {
       struct expected_like {};
     }
 
     template <>
-    struct value_traits<category::expected_like> {
+    struct value_traits<category::pointer_like> {
       template <class M>
       using type = typename M::value_type;
       template <class M>
@@ -54,22 +58,6 @@ namespace boost
     {
       return has_value(std::forward<M1>(m1)) && have_value( std::forward<Ms>(ms)... );
     }
-
-    template <>
-    struct unexpected_traits<category::expected_like > {
-      template< class M >
-      using type = unexpected_type<typename M::error_type>;
-      template< class M >
-      static constexpr auto get_unexpected(M && m) -> decltype(m.get_unexpected())
-      {
-        return m.get_unexpected();
-      }
-      template< class M >
-      static constexpr auto error(M && m) -> decltype(m.error())
-      {
-        return m.error();
-      }
-    };
 
     template< class M >
     BOOST_CONSTEXPR unexpected_type_t<M> first_unexpected( M&& m )
