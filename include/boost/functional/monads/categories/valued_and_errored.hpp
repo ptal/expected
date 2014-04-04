@@ -3,14 +3,14 @@
 // http://www.boost.org/LICENSE_1_0.txt)
 // (C) Copyright 2014 Vicente J. Botet Escriba
 
-#ifndef BOOST_EXPECTED_EXPECTED_LIKE_MONAD_HPP
-#define BOOST_EXPECTED_EXPECTED_LIKE_MONAD_HPP
+#ifndef BOOST_EXPECTED_MONADS_CATEGORIES_VALUED_AND_ERRORED_HPP
+#define BOOST_EXPECTED_MONADS_CATEGORIES_VALUED_AND_ERRORED_HPP
 
 #include <boost/config.hpp>
-#include <boost/functional/monads.hpp>
-#include <boost/functional/monads/categories/pointer_like.hpp>
+#include <boost/functional/monads/functor.hpp>
+#include <boost/functional/monads/monad.hpp>
 #include <boost/functional/monads/algorithms/have_value.hpp>
-#include <boost/expected/unexpected.hpp>
+#include <boost/functional/monads/algorithms/first_unexpected.hpp>
 #include <boost/utility/enable_if.hpp>
 #include <boost/type_traits/is_same.hpp>
 
@@ -33,39 +33,26 @@ namespace boost
   {
     namespace category
     {
-      struct expected_like {};
-    }
-
-    template< class M >
-    BOOST_CONSTEXPR unexpected_type_t<M> first_unexpected( M&& m )
-    {
-      return get_unexpected(std::forward<M>(m));
-    }
-    template< class M1, class ...Ms >
-    BOOST_CONSTEXPR unexpected_type_t<M1> first_unexpected( M1&& m1, Ms&& ...ms )
-    {
-      return has_value(std::forward<M1>(m1))
-          ? first_unexpected( std::forward<Ms>(ms)... )
-              : get_unexpected(std::forward<M1>(m1)) ;
+      struct valued_and_errored {};
     }
 
     template <>
-    struct functor_traits<category::expected_like>
+    struct functor_traits<category::valued_and_errored>
     {
       template <class F, class M0, class ...M,
           class FR = decltype( std::declval<F>()(deref(std::declval<M0>()), deref(std::declval<M>())...) )>
       static BOOST_CONSTEXPR auto fmap(F&& f, M0&& m0, M&& ...m) -> typename bind<decay_t<M0>, FR>::type
       {
-        typedef typename bind<decay_t<M0>, FR>::type expected_type;
+        typedef typename bind<decay_t<M0>, FR>::type result_type;
         return have_value( std::forward<M0>(m0), std::forward<M>(m)... )
-        ? expected_type( std::forward<F>(f)( deref(std::forward<M0>(m0)), deref(std::forward<M>(m))... ) )
+        ? result_type( std::forward<F>(f)( deref(std::forward<M0>(m0)), deref(std::forward<M>(m))... ) )
         : first_unexpected( std::forward<M0>(m0), std::forward<M>(m)... )
         ;
       }
     };
 
     template <>
-    struct monad_traits<category::expected_like>
+    struct monad_traits<category::valued_and_errored>
     {
 
       template <class M, class T>
@@ -81,14 +68,6 @@ namespace boost
         return m.then(std::forward<F>(f));
       }
 
-#ifdef FORWARD_TO_EXPECTED
-      template <class M, class F>
-      static BOOST_CONSTEXPR auto
-      mbind(M&& m, F&& f) -> decltype(m.next(std::forward<F>(f)))
-      {
-        return m.next(std::forward<F>(f));
-      }
-#else
       template <class M, class F, class FR = decltype( std::declval<F>()( deref(std::declval<M>()) ) )>
       static BOOST_CONSTEXPR auto
       mbind(M&& m, F&& f,
@@ -152,32 +131,11 @@ namespace boost
         );
 #endif
       }
-#endif
     };
 
-    template <>
-    struct monad_error_traits<category::expected_like> : monad_traits<category::expected_like>
-    {
-      template <class M>
-      static constexpr auto value(M&& m) -> decltype(m.value()) { return m.value(); };
-
-      template <class M, class E>
-      static M make_error(E&& v)
-      {
-        return M(make_unexpected(std::forward<E>(v)));
-      }
-
-      template <class M, class F>
-      static BOOST_CONSTEXPR auto
-      catch_error(M&& m, F&& f) -> decltype(m.recover(std::forward<F>(f)))
-      {
-        return m.recover(std::forward<F>(f));
-      }
-    };
   }
 }
 
 #undef REQUIRES
 #undef T_REQUIRES
-
-#endif // BOOST_EXPECTED_EXPECTED_LIKE_MONAD_HPP
+#endif // BOOST_EXPECTED_MONADS_CATEGORIES_VALUED_AND_ERRORED_HPP

@@ -6,11 +6,7 @@
 #ifndef BOOST_EXPECTED_MONADS_CATEGORIES_POINTER_LIKE_HPP
 #define BOOST_EXPECTED_MONADS_CATEGORIES_POINTER_LIKE_HPP
 
-#include <boost/config.hpp>
-#include <boost/functional/monads.hpp>
-#include <boost/expected/unexpected.hpp>
-#include <boost/utility/enable_if.hpp>
-#include <boost/type_traits/is_same.hpp>
+#include <boost/functional/monads/valued.hpp>
 
 namespace boost
 {

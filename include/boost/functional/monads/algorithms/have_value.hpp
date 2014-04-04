@@ -7,25 +7,19 @@
 #define BOOST_EXPECTED_MONADS_ALGORITHMS_HAVE_VALUE_HPP
 
 #include <boost/config.hpp>
-#include <boost/functional/monads.hpp>
-#include <boost/expected/unexpected.hpp>
-#include <boost/utility/enable_if.hpp>
-#include <boost/type_traits/is_same.hpp>
-
-#define REQUIRES(...) typename ::boost::enable_if_c<__VA_ARGS__, void*>::type = 0
-#define T_REQUIRES(...) typename = typename ::boost::enable_if_c<(__VA_ARGS__)>::type
+#include <boost/functional/monads/valued.hpp>
 
 namespace boost
 {
   namespace monads
   {
 
-    template< class M >
+    template< class M, class Traits = value_traits<value_category_t<decay_t<M> > >  >
     BOOST_CONSTEXPR bool have_value( M&& m )
     {
       return has_value(std::forward<M>(m));
     }
-    template< class M1, class ...Ms >
+    template< class M1, class ...Ms, class Traits = value_traits<value_category_t<decay_t<M1> > >  >
     BOOST_CONSTEXPR bool have_value( M1&& m1, Ms&& ...ms )
     {
       return has_value(std::forward<M1>(m1)) && have_value( std::forward<Ms>(ms)... );
@@ -33,8 +27,5 @@ namespace boost
 
   }
 }
-
-#undef REQUIRES
-#undef T_REQUIRES
 
 #endif // BOOST_EXPECTED_MONADS_ALGORITHMS_HAVE_VALUE_HPP

@@ -6,9 +6,12 @@
 #ifndef BOOST_EXPECTED_OPTIONAL_MONAD_HPP
 #define BOOST_EXPECTED_OPTIONAL_MONAD_HPP
 
-#include <boost/expected/expected_like_monad.hpp>
+#include <boost/functional/monads/categories/pointer_like.hpp>
+#include <boost/functional/monads/categories/valued_and_errored.hpp>
+#include <boost/functional/monads/monad_error.hpp>
 #include <boost/optional.hpp>
 #include <boost/mpl/identity.hpp>
+#include <type_traits>
 
 namespace boost
 {
@@ -17,15 +20,12 @@ namespace boost
 
     template <class T>
     struct is_monad<optional<T> > : std::true_type {};
+
     template <class T, class U>
     struct bind<optional<T>, U> : mpl::identity<optional<U> > {};
-    template <class T>
-    struct functor_category<optional<T> > : mpl::identity<category::expected_like> { };
-    template <class T>
-    struct monad_category<optional<T> > : mpl::identity<category::expected_like> { };
+
     template <class T>
     struct value_category<optional<T> > : mpl::identity<category::pointer_like> { };
-
     template <class T>
     struct unexpected_traits< optional<T> > {
       template< class M >
@@ -41,9 +41,13 @@ namespace boost
       static constexpr none_t error(M && m) { return none; }
 
     };
+    template <class T>
+    struct functor_category<optional<T> > : mpl::identity<category::valued_and_errored> { };
+    template <class T>
+    struct monad_category<optional<T> > : mpl::identity<category::valued_and_errored> { };
 
     template <class T>
-    struct monad_error_traits<optional<T> > : monad_traits<monad_category<optional<T>>>
+    struct monad_error_traits<optional<T> >
     {
       template <class M>
       static constexpr auto value(M&& m) -> decltype(m.value()) { return m.value(); };
@@ -54,11 +58,27 @@ namespace boost
         return none;
       }
 
-      template <class M, class F>
-      static BOOST_CONSTEXPR auto
-      catch_error(M&& m, F&& f) -> decltype(m.recover(std::forward<F>(f)))
+      // f : E -> T
+      // todo complete with the other prototypes
+      // f : E -> void
+      // f : E -> M
+      template <class M, class F, class FR = decltype( std::declval<F>()( none ) ) >
+      static BOOST_CONSTEXPR M
+      catch_error(M&& m, F&& f)
       {
-        return m.recover(std::forward<F>(f));
+        typedef typename bind<decay_t<M>, FR>::type result_type;
+#if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
+        if(! has_value(m))
+        {
+          result_type(f(none));
+        }
+        return deref(m);
+#else
+        return (! has_value(m)
+        ? result_type(f(none))
+        : deref(m)
+        );
+#endif
       }
     };
 
