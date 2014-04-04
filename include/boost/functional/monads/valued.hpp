@@ -29,7 +29,7 @@ namespace boost
       template <class M>
       static constexpr bool has_value(M&& m) { return m.has_value(); };
       template <class M>
-      static constexpr auto derreference(M&& m) -> decltype(m.derreference()) { return m.derreference(); };
+      static constexpr auto deref(M&& m) -> decltype(m.deref()) { return m.deref(); };
     };
 
     template <class M, class Traits = value_traits<value_category_t<decay_t<M> > > >
@@ -43,9 +43,9 @@ namespace boost
     }
     template <class M, class Traits = value_traits<value_category_t<decay_t<M> > > >
     static constexpr auto
-    derreference(M&& e) -> decltype(Traits::derreference(std::forward<M>(e)))
+    deref(M&& e) -> decltype(Traits::deref(std::forward<M>(e)))
     {
-      return Traits::derreference(std::forward<M>(e));
+      return Traits::deref(std::forward<M>(e));
     }
 
   }

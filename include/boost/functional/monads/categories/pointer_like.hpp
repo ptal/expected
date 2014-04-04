@@ -28,7 +28,7 @@ namespace boost
       template <class M>
       static constexpr bool has_value(M&& m) { return bool(m); };
       template <class M>
-      static constexpr auto derreference(M&& m) -> decltype(*m) { return *m; };
+      static constexpr auto deref(M&& m) -> decltype(*m) { return *m; };
     };
   }
 }
