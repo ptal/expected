@@ -51,6 +51,12 @@ namespace boost
     {
       return Traits::error(std::forward<M>(e));
     }
+//    template <class M, class E, class Traits = unexpected_traits<unexpected_category_t<decay_t<M> > > >
+//    static constexpr M
+//    make_unexpected(E&& e) -> decltype(Traits::make_unexpected(std::forward<M>(e)))
+//    {
+//      return Traits::make_unexpected(std::forward<M>(e));
+//    }
 
 
   }

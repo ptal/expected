@@ -32,9 +32,7 @@ namespace boost
       template <class M>
       static constexpr bool has_value(M&& m) { return m.has_value(); };
       template <class M>
-      static constexpr auto value(M&& m) -> decltype(m.value()) { return m.value(); };
-      template <class M>
-      static constexpr auto value_pre_has_value(M&& m) -> decltype(m.value_pre_has_value()) { return m.value_pre_has_value(); };
+      static constexpr auto derreference(M&& m) -> decltype(m.derreference()) { return m.derreference(); };
     };
 
     template <class M, class Traits = value_traits<value_category_t<decay_t<M> > > >
@@ -48,15 +46,9 @@ namespace boost
     }
     template <class M, class Traits = value_traits<value_category_t<decay_t<M> > > >
     static constexpr auto
-    value(M&& e) -> decltype(Traits::value(std::forward<M>(e)))
+    derreference(M&& e) -> decltype(Traits::derreference(std::forward<M>(e)))
     {
-      return Traits::value(std::forward<M>(e));
-    }
-    template <class M, class Traits = value_traits<value_category_t<decay_t<M> > > >
-    static constexpr auto
-    value_pre_has_value(M&& e) -> decltype(Traits::value_pre_has_value(std::forward<M>(e)))
-    {
-      return Traits::value_pre_has_value(std::forward<M>(e));
+      return Traits::derreference(std::forward<M>(e));
     }
 
   }

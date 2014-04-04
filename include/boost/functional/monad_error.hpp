@@ -21,13 +21,24 @@ namespace boost
   namespace monads
   {
     template <class M>
-    struct monad_error_category : monad_category<M> {};
+    struct monad_error_category {
+      typedef M type;
+    };
 
     template <class M>
     using monad_error_category_t = typename monad_error_category<M>::type;
 
     template <class Mo>
     struct monad_error_traits : monad_traits<Mo> {
+
+      template <class M>
+      static constexpr auto value(M&& m) -> decltype(m.value()) { return m.value(); };
+
+      template <class M, class E>
+      static M make_error(E&& v)
+      {
+        return M(make_unexpected(std::forward<E>(v)));
+      }
 
       template <class M, class F>
       M catch_error(M&& m, F&& f)
@@ -37,6 +48,24 @@ namespace boost
 
     };
 
+    template <class M, class E, class Traits = monad_error_traits<monad_error_category_t<decay_t<M> > > >
+    M make_error(E&& e)
+    {
+      return Traits::template make_error<M>(std::forward<E>(e));
+    }
+
+    template <template <class ...> class M, class T, class E, class Traits = monad_error_traits<monad_error_category_t<M<T> > > >
+    M<T, E> make_error(E&& e)
+    {
+      return Traits::template make_error<M<T,E> >(std::forward<T>(e));
+    }
+
+    template <class M, class Traits = monad_error_traits<monad_error_category_t<decay_t<M> > > >
+    static constexpr auto
+    value(M&& e) -> decltype(Traits::value(std::forward<M>(e)))
+    {
+      return Traits::value(std::forward<M>(e));
+    }
     template <class M, class F, class Traits = monad_error_traits<monad_error_category_t<decay_t<M> > > >
     static M catch_error(M&& m, F&& f)
     {

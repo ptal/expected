@@ -41,9 +41,7 @@ namespace boost
       template <class M>
       static constexpr bool has_value(M&& m) { return bool(m); };
       template <class M>
-      static constexpr auto value(M&& m) -> decltype(m.value()) { return m.value(); };
-      template <class M>
-      static constexpr auto value_pre_has_value(M&& m) -> decltype(*m) { return *m; };
+      static constexpr auto derreference(M&& m) -> decltype(*m) { return *m; };
     };
 
     template< class M >
@@ -90,12 +88,12 @@ namespace boost
     struct functor_traits<category::expected_like>
     {
       template <class F, class M0, class ...M,
-          class FR = decltype( std::declval<F>()(value_pre_has_value(std::declval<M0>()), value_pre_has_value(std::declval<M>())...) )>
+          class FR = decltype( std::declval<F>()(derreference(std::declval<M0>()), derreference(std::declval<M>())...) )>
       static BOOST_CONSTEXPR auto fmap(F&& f, M0&& m0, M&& ...m) -> typename bind<decay_t<M0>, FR>::type
       {
         typedef typename bind<decay_t<M0>, FR>::type expected_type;
         return have_value( std::forward<M0>(m0), std::forward<M>(m)... )
-        ? expected_type( std::forward<F>(f)( value_pre_has_value(std::forward<M0>(m0)), value_pre_has_value(std::forward<M>(m))... ) )
+        ? expected_type( std::forward<F>(f)( derreference(std::forward<M0>(m0)), derreference(std::forward<M>(m))... ) )
         : first_unexpected( std::forward<M0>(m0), std::forward<M>(m)... )
         ;
       }
@@ -126,7 +124,7 @@ namespace boost
         return m.next(std::forward<F>(f));
       }
 #else
-      template <class M, class F, class FR = decltype( std::declval<F>()( value_pre_has_value(std::declval<M>()) ) )>
+      template <class M, class F, class FR = decltype( std::declval<F>()( derreference(std::declval<M>()) ) )>
       static BOOST_CONSTEXPR auto
       mbind(M&& m, F&& f,
           REQUIRES(boost::is_same<FR, void>::value)
@@ -136,19 +134,19 @@ namespace boost
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
         if(has_value(m))
         {
-          f(value_pre_has_value(m));
+          f(derreference(m));
           return result_type();
         }
         return get_unexpected(m);
 #else
         return (has_value(m)
-        ? (f(value_pre_has_value(m)), result_type() )
+        ? (f(derreference(m)), result_type() )
         : result_type( get_unexpected(m) )
         );
 #endif
       }
 
-      template <class M, class F, class FR = decltype( std::declval<F>()( value_pre_has_value(std::declval<M>()) ) )>
+      template <class M, class F, class FR = decltype( std::declval<F>()( derreference(std::declval<M>()) ) )>
       static BOOST_CONSTEXPR auto
       mbind(M&& m, F&& f,
           REQUIRES((! boost::is_same<FR, void>::value
@@ -159,18 +157,18 @@ namespace boost
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
         if(has_value(m))
         {
-            return result_type(f(value_pre_has_value(m)));
+            return result_type(f(derreference(m)));
         }
         return get_unexpected(m);
 #else
         return (has_value(m)
-        ? result_type(f(value_pre_has_value(m)))
+        ? result_type(f(derreference(m)))
         : result_type( get_unexpected(m) )
         );
 #endif
       }
 
-      template <class M, class F, class FR = decltype( std::declval<F>()( value_pre_has_value(std::declval<M>()) ) )>
+      template <class M, class F, class FR = decltype( std::declval<F>()( derreference(std::declval<M>()) ) )>
       static BOOST_CONSTEXPR auto
       mbind(M&& m, F&& f,
           REQUIRES( boost::monads::is_monad<FR>::value )
@@ -179,12 +177,12 @@ namespace boost
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
         if(has_value(m))
         {
-            return f(value_pre_has_value(m));
+            return f(derreference(m));
         }
         return get_unexpected(m);
 #else
         return (has_value(m)
-        ? f(value_pre_has_value(m))
+        ? f(derreference(m))
         : FR( get_unexpected(m) )
         );
 #endif
@@ -195,6 +193,15 @@ namespace boost
     template <>
     struct monad_error_traits<category::expected_like> : monad_traits<category::expected_like>
     {
+      template <class M>
+      static constexpr auto value(M&& m) -> decltype(m.value()) { return m.value(); };
+
+      template <class M, class E>
+      static M make_error(E&& v)
+      {
+        return M(make_unexpected(std::forward<E>(v)));
+      }
+
       template <class M, class F>
       static BOOST_CONSTEXPR auto
       catch_error(M&& m, F&& f) -> decltype(m.recover(std::forward<F>(f)))
