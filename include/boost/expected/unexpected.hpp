@@ -35,12 +35,20 @@ namespace boost
     {
       return error_;
     }
+    BOOST_FORCEINLINE ErrorType& value()
+    {
+      return error_;
+    }
+//    BOOST_FORCEINLINE ErrorType value()
+//    {
+//      return std::move(error_);
+//    }
   };
 
   template <class E>
   BOOST_FORCEINLINE BOOST_CONSTEXPR unexpected_type<decay_t<E> > make_unexpected(E&& ex)
   {
-    return unexpected_type<decay_t<E>> (ex);
+    return unexpected_type<decay_t<E>> (std::forward<E>(ex));
   }
 
   template <>

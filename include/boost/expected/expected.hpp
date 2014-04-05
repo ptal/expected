@@ -274,6 +274,10 @@ union trivial_expected_storage
   : err(e.value())
   {}
 
+  BOOST_CONSTEXPR trivial_expected_storage(unexpected_type<error_storage_type> && e)
+  : err(std::move(e.value()))
+  {}
+
   template <class Err>
   BOOST_CONSTEXPR trivial_expected_storage(unexpected_type<Err> const& e)
   : err(traits_type::from_error(e.value()))
@@ -331,6 +335,11 @@ union no_trivial_expected_storage
 
   BOOST_CONSTEXPR no_trivial_expected_storage(unexpected_type<error_storage_type> const& e)
   : err(e.value())
+
+  {}
+
+  BOOST_CONSTEXPR no_trivial_expected_storage(unexpected_type<error_storage_type> && e)
+  : err(std::move(e.value()))
   {}
 
   template <class Err>
@@ -408,10 +417,20 @@ struct trivial_expected_base
   : has_value(false), storage(e)
   {}
 
+  BOOST_CONSTEXPR trivial_expected_base(unexpected_type<error_type> && e)
+  : has_value(false), storage(std::forward<unexpected_type<error_type>>(e))
+  {}
+
   template <class Err>
   BOOST_CONSTEXPR trivial_expected_base(unexpected_type<Err> const& e)
   : has_value(false), storage(e)
   {}
+  template <class Err>
+  BOOST_CONSTEXPR trivial_expected_base(unexpected_type<Err> && e)
+  : has_value(false), storage(std::forward<unexpected_type<Err>>(e))
+  {}
+
+
 
   template <class... Args>
   explicit BOOST_CONSTEXPR
@@ -487,6 +506,10 @@ struct no_trivial_expected_base
 
   BOOST_CONSTEXPR no_trivial_expected_base(unexpected_type<error_type> const& e)
   : has_value(false), storage(e)
+  {}
+
+  BOOST_CONSTEXPR no_trivial_expected_base(unexpected_type<error_type> && e)
+  : has_value(false), storage(std::forward<unexpected_type<error_type>>(e))
   {}
 
   template <class Err>
@@ -706,12 +729,20 @@ public:
   }
 
   expected(unexpected_type<error_type> const& e
-    , REQUIRES(std::is_copy_constructible<error_type>::value)
+    //, REQUIRES(std::is_copy_constructible<error_type>::value)
   )
   BOOST_NOEXCEPT_IF(
     has_nothrow_copy_constructor<error_type>::value
   )
   : base_type(e)
+  {}
+  expected(unexpected_type<error_type> && e
+    //, REQUIRES(std::is_move_constructible<error_type>::value)
+  )
+  //BOOST_NOEXCEPT_IF(
+  //  has_nothrow_move_constructor<error_type>::value
+  //)
+  : base_type(std::forward<unexpected_type<error_type>>(e))
   {}
 
   template <class Err>
@@ -877,6 +908,29 @@ public:
   }
 #endif
 
+#if 0 && ! defined BOOST_EXPECTED_NO_CXX11_RVALUE_REFERENCE_FOR_THIS
+  BOOST_CONSTEXPR value_type const& value() const&
+  {
+    return valid()
+      ? contained_val()
+      : (
+          traits_type::bad_access(contained_err()),
+          contained_val()
+        )
+      ;
+  }
+  BOOST_CONSTEXPR value_type& value() &
+  {
+    if (!valid()) traits_type::bad_access(contained_err());
+    return contained_val();
+  }
+  BOOST_CONSTEXPR value_type&& value() &&
+  {
+    if (!valid()) traits_type::bad_access(contained_err());
+    return std::move(contained_val());
+  }
+
+#else
   value_type& value()
   {
     if (!valid()) traits_type::bad_access(contained_err());
@@ -893,7 +947,7 @@ public:
         )
       ;
   }
-
+#endif
   BOOST_CONSTEXPR value_type const& operator*() const BOOST_NOEXCEPT
   {
     return contained_val();
@@ -915,6 +969,10 @@ public:
   }
 
   BOOST_CONSTEXPR error_type const& error() const BOOST_NOEXCEPT
+  {
+    return contained_err();
+  }
+  error_type& error() BOOST_NOEXCEPT
   {
     return contained_err();
   }
@@ -1438,6 +1496,10 @@ public:
   }
 
   BOOST_CONSTEXPR error_storage_type const& error() const BOOST_NOEXCEPT
+  {
+    return contained_err();
+  }
+  error_storage_type & error() BOOST_NOEXCEPT
   {
     return contained_err();
   }
