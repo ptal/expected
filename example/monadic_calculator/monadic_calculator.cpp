@@ -5,7 +5,7 @@
 
 #include "error.hpp"
 
-#include <boost/functional/do.hpp>
+#include <boost/functional/monads/do.hpp>
 #include <boost/expected/expected.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/variant.hpp>

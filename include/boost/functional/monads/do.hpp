@@ -3,8 +3,8 @@
 // http://www.boost.org/LICENSE_1_0.txt)
 // (C) Copyright 2014 Pierre Talbot
 
-#ifndef BOOST_FUNCTIONAL_DO_YIELD_HPP
-#define BOOST_FUNCTIONAL_DO_YIELD_HPP
+#ifndef BOOST_FUNCTIONAL_MONAD_DO_HPP
+#define BOOST_FUNCTIONAL_MONAD_DO_HPP
 
 #define BOOST_PP_VARIADICS 1
 #include <boost/preprocessor.hpp>
