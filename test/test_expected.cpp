@@ -31,6 +31,7 @@
 
 #include <boost/expected/expected_monad.hpp>
 #include <boost/expected/error_exception.hpp>
+#include <boost/expected/ensured_read.hpp>
 #include <boost/functional/monads/adaptor.hpp>
 
 enum State
@@ -995,6 +996,27 @@ BOOST_AUTO_TEST_CASE(error_exception_ts)
       BOOST_CHECK (false);
     }
 
+  }
+}
+BOOST_AUTO_TEST_CASE(ensured_read_ts)
+{
+  using namespace std;
+  {
+    ensured_read<int> e = make_ensured_read(1);
+    BOOST_CHECK(e==1);
+  }
+  {
+    ensured_read<int> e = make_ensured_read(1);
+    unexpected_type<ensured_read<int>> ue1 = make_unexpected(std::move(e));
+    BOOST_CHECK(ue1.value()==1);
+  }
+  {
+    expected<int, ensured_read<int> > e = make_unexpected(make_ensured_read(1));
+    BOOST_CHECK(e.error()==1);
+  }
+  {
+    expected<int, ensured_read<int> > e {unexpect, 1};
+    BOOST_CHECK(e.error()==1);
   }
 }
 BOOST_AUTO_TEST_CASE(relational_operators)
