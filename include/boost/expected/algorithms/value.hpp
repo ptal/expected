@@ -43,7 +43,7 @@ namespace expected_alg
   };
 
   // free function value to get the value of an expected or throw.
-  // Note that these function could not be equivalent to the e.value() as it creates a temporary and so
+  // Note that this function could not be equivalent to the e.value() as it creates a temporary and so
   // it can not return the address.
   template <class T, class E>
   BOOST_CONSTEXPR T value(expected<T,E> const& e)

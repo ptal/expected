@@ -37,7 +37,7 @@ namespace expected_alg
   BOOST_CONSTEXPR T value_or(expected<T,E> const& e, BOOST_FWD_REF(T) v)
   {
     // We are sure that e.recover(just(std::forward<T>(v))) will be valid or a exception will be thrown
-    // so the derefference is safe
+    // so the dereference is safe
     return * e.recover(just(std::forward<T>(v)));
   }
 
@@ -45,7 +45,7 @@ namespace expected_alg
   BOOST_CONSTEXPR T value_or(expected<T,E> && e, BOOST_FWD_REF(T) v)
   {
     // We are sure that e.recover(just(std::forward<T>(v))) will be valid or a exception will be thrown
-    // so the derefference is safe
+    // so the dereference is safe
     return * e.recover(just(std::forward<T>(v)));
   }
 
