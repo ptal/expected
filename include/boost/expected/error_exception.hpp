@@ -16,8 +16,8 @@ struct error_exception {
     typedef Exception exception_type;
     error_exception() : value_(){}
     error_exception(Error e) : value_(e){}
-    operator Error() { return value_; }
-    Error value() { return value_; }
+    operator Error() const { return value_; }
+    Error value() const { return value_; }
 private:
     Error value_;
 };
