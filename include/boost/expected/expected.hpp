@@ -9,6 +9,8 @@
 
 #include <boost/expected/config.hpp>
 #include <boost/expected/unexpected.hpp>
+#include <boost/expected/detail/static_addressof.hpp>
+#include <boost/expected/detail/constexpr_utility.hpp>
 
 #include <boost/exception_ptr.hpp>
 #include <boost/move/move.hpp>
@@ -44,35 +46,6 @@
 # define T_REQUIRES(...) typename = typename ::boost::enable_if_c<(__VA_ARGS__)>::type
 
 namespace boost {
-namespace detail {
-
-template <typename T>
-struct has_overloaded_addressof
-{
-  template <class X>
-  static BOOST_CONSTEXPR bool has_overload(...) { return false; }
-
-  template <class X, size_t S = sizeof(std::declval< X&>().operator&()) >
-  static BOOST_CONSTEXPR bool has_overload(bool) { return true; }
-
-  BOOST_CONSTEXPR static bool value = has_overload<T>(true);
-};
-
-template <typename T>
-BOOST_CONSTEXPR T* static_addressof(T& ref,
-  REQUIRES(!has_overloaded_addressof<T>::value))
-{
-  return &ref;
-}
-
-template <typename T>
-BOOST_CONSTEXPR T* static_addressof(T& ref,
-  REQUIRES(has_overloaded_addressof<T>::value))
-{
-  return std::addressof(ref);
-}
-
-} // namespace detail
 
 // bad_expected_access exception class.
 template <class Error>
@@ -180,32 +153,6 @@ BOOST_CONSTEXPR_OR_CONST expect_t expect = {};
 
 struct unexpect_t {};
 BOOST_CONSTEXPR_OR_CONST unexpect_t unexpect = {};
-
-// workaround: std utility functions aren't constexpr yet
-template <class T> inline
-BOOST_CONSTEXPR T&& constexpr_forward(typename std::remove_reference<T>::type& t) BOOST_NOEXCEPT
-{
-  return static_cast<T&&>(t);
-}
-
-template <class T> inline
-BOOST_CONSTEXPR T&& constexpr_forward(typename std::remove_reference<T>::type&& t) BOOST_NOEXCEPT
-{
-    static_assert(!std::is_lvalue_reference<T>::value, "!!");
-    return static_cast<T&&>(t);
-}
-
-template <class T> inline
-BOOST_CONSTEXPR typename std::remove_reference<T>::type&& constexpr_move(T&& t) BOOST_NOEXCEPT
-{
-    return static_cast<typename std::remove_reference<T>::type&&>(t);
-}
-
-template<class T> inline
-BOOST_CONSTEXPR T * constexpr_addressof(T& Val)
-{
-  return ((T *) &(char&)Val);
-}
 
 namespace detail {
 
@@ -739,11 +686,10 @@ public:
   {}
   template <class Err>
   expected(unexpected_type<Err> && e
-//    , REQUIRES(std::is_copy_constructible<error_type>::value)
+//    , REQUIRES(std::is_constructible<error_type, Err&&>::value)
   )
   //BOOST_NOEXCEPT_IF(
-  //has_nothrow_copy_constructor<error_type>::value
-    //std::is_nothrow_copy_constructible<error_type>::value
+    //std::is_nothrow_constructible<error_type, Err&&>::value
   //)
   : base_type(std::forward<unexpected_type<Err>>(e))
   {}
