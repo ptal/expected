@@ -8,7 +8,6 @@
 project
     : requirements
       <toolset>gcc:<cxxflags>-std=c++11
-      <toolset>gcc:<cxxflags>-Wunused-local-typedefs
       <toolset>clang:<cxxflags>-std=c++11
       <toolset>clang:<cxxflags>-fmacro-backtrace-limit=0
       <include>../../include/
