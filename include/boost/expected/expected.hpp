@@ -4,12 +4,12 @@
 // (C) Copyright 2013,2014 Vicente J. Botet Escriba
 // (C) Copyright 2013 Pierre Talbot
 
-#ifndef BOOST_EXPECTED_HPP
-#define BOOST_EXPECTED_HPP
+#ifndef BOOST_EXPECTED_EXPECTED_HPP
+#define BOOST_EXPECTED_EXPECTED_HPP
 
+#include <boost/expected/config.hpp>
 #include <boost/expected/unexpected.hpp>
 
-#include <boost/config.hpp>
 #include <boost/exception_ptr.hpp>
 #include <boost/move/move.hpp>
 #include <boost/throw_exception.hpp>
@@ -21,18 +21,6 @@
 #include <stdexcept>
 #include <utility>
 #include <initializer_list>
-
-
-#if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
-#if defined __clang__
-#if ! __has_feature(cxx_relaxed_constexpr)
-#define BOOST_NO_CXX14_RELAXED_CONSTEXPR
-#endif
-#else
-#define BOOST_NO_CXX14_RELAXED_CONSTEXPR
-#endif
-#endif
-
 
 // TODO: We'd need to check if std::is_default_constructible is there too.
 #ifndef BOOST_NO_CXX11_FUNCTION_TEMPLATE_DEFAULT_ARGS
@@ -54,53 +42,6 @@
 
 # define REQUIRES(...) typename ::boost::enable_if_c<__VA_ARGS__, void*>::type = 0
 # define T_REQUIRES(...) typename = typename ::boost::enable_if_c<(__VA_ARGS__)>::type
-
-# if defined __clang__
-#  if (__clang_major__ < 2) || (__clang_major__ == 2) && (__clang_minor__ < 9)
-#   define BOOST_EXPECTED_NO_CXX11_RVALUE_REFERENCE_FOR_THIS
-#  endif
-# elif defined __GNUC__
-#  if (__GNUC__*10000 + __GNUC_MINOR__*100 + __GNUC_PATCHLEVEL__ < 40801) || !defined(__GXX_EXPERIMENTAL_CXX0X__)
-#   define BOOST_EXPECTED_NO_CXX11_RVALUE_REFERENCE_FOR_THIS
-#  endif
-# else
-#  define BOOST_EXPECTED_NO_CXX11_RVALUE_REFERENCE_FOR_THIS
-# endif
-
-# if defined __clang__
-#  if (__clang_major__ < 3) || (__clang_major__ == 3) && (__clang_minor__ < 5)
-#   define BOOST_EXPECTED_NO_CXX11_MOVE_ACCESSORS
-#  endif
-# else
-#  define BOOST_EXPECTED_NO_CXX11_MOVE_ACCESSORS
-# endif
-
-# if defined BOOST_EXPECTED_NO_CXX11_MOVE_ACCESSORS
-#define BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS
-#else
-#define BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS constexpr
-#endif
-
-// ../../../boost/expected/expected.hpp: In instantiation of ‘class boost::expected<int>’:
-// test_expected.cpp:79:17:   required from here
-// ../../../boost/expected/expected.hpp:596:15: desole, pas implante: use of ‘type_pack_expansion’ in template
-
-#if defined BOOST_NO_CXX11_FUNCTION_TEMPLATE_DEFAULT_ARGS
-# define BOOST_EXPECTED_NO_CXX11_FUNCTION_TEMPLATE_DEFAULT_ARGS
-#else
-# if defined __GNUC__
-#  if __GNUC__ < 4 || (__GNUC__ == 4 && __GNUC_MINOR__ < 8) || !defined(__GXX_EXPERIMENTAL_CXX0X__)
-#   define BOOST_EXPECTED_NO_CXX11_FUNCTION_TEMPLATE_DEFAULT_ARGS
-#  endif
-# endif
-#endif
-
-#if defined __GNUC__
-# if (__GNUC__*10000 + __GNUC_MINOR__*100 + __GNUC_PATCHLEVEL__ < 40800) || !defined(__GXX_EXPERIMENTAL_CXX0X__)
-#  define BOOST_EXPECTED_NO_IF_THEN_ELSE
-# endif
-#endif
-
 
 namespace boost {
 namespace detail {
@@ -2092,4 +2033,4 @@ make_expected_from_call(F funct
 #undef T_REQUIRES
 
 
-#endif // BOOST_EXPECTED_HPP
+#endif // BOOST_EXPECTED_EXPECTED_HPP
