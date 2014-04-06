@@ -6,7 +6,7 @@
 #include "error.hpp"
 
 #include <boost/functional/monads/do.hpp>
-#include <boost/expected/expected.hpp>
+#include <boost/expected/expected_monad.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/variant.hpp>
 #include <boost/range/iterator_range.hpp>

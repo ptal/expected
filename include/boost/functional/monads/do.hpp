@@ -8,6 +8,7 @@
 
 #define BOOST_PP_VARIADICS 1
 #include <boost/preprocessor.hpp>
+#include <boost/functional/monads.hpp>
 
 // Macro helpers.
 
@@ -17,7 +18,7 @@
 // Bind the couple (decl, monad_expr) to a suitable lambda and method call.
 
 #define MONADIC_BIND_0_IV_0(mexpr, decl)
-#define MONADIC_BIND_0_IV_1(mexpr, decl) (mexpr).next BOOST_PP_LPAREN() [&](decl){ return
+#define MONADIC_BIND_0_IV_1(mexpr, decl) boost::monads::mbind BOOST_PP_LPAREN() (mexpr), [&](decl){ return
 
 #define MONADIC_BIND_0_III(bit, mexpr, decl) \
   MONADIC_BIND_0_IV_ ## bit (mexpr, decl)
@@ -96,4 +97,4 @@ The monad expression must be evaluated to a value implementing the Monad concept
 
 #define DO(...) DO_SEQ(BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))
 
-#endif // BOOST_FUNCTIONAL_DO_YIELD_HPP
+#endif // BOOST_FUNCTIONAL_MONAD_DO_HPP
