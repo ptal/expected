@@ -60,7 +60,7 @@ test-suite expected
     : 
       [ run test_expected.cpp  boost_unit_test ]
       [ run test_expected2.cpp  boost_unit_test ]
-      #[ run test_expected_constructor.cpp  boost_unit_test ]
+      [ run test_expected_constructor.cpp  boost_unit_test ]
     ;
 
 test-suite algorithms
@@ -84,6 +84,7 @@ test-suite monads_ex
       [ run ../example/safe_divide_monad.cpp ]
     ;
 
+explicit fix ;
 test-suite fix
     : 
     ;

@@ -20,19 +20,9 @@
 #include <boost/test/unit_test.hpp> // Enhanced for unit_test framework autolink
 #include <boost/test/included/unit_test.hpp>
 
-#include <stdexcept>
-#include <exception>
-#include <system_error>
-#include <initializer_list>
-#include <string>
-#include <iostream>
-#include <system_error>
-
-#include <boost/expected/expected_monad.hpp>
-#include <boost/functional/adaptor.hpp>
+#include <boost/expected/expected.hpp>
 
 using namespace boost;
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 BOOST_AUTO_TEST_SUITE(Expected_DefaultConstructor)
@@ -84,13 +74,13 @@ BOOST_AUTO_TEST_CASE(Expected_ConstructorFromUnexpect_CopyableValueType_DefaultE
   BOOST_CHECK (!ei);
   BOOST_CHECK (ei.error()==std::exception_ptr());
 }
-BOOST_AUTO_TEST_CASE(Expected_ConstructorFromUnexpect1_CopyableValueType_DefaultError)
-{
-  expected<int> ei(unexpect, 1);
-  BOOST_CHECK (!ei);
-  BOOST_CHECK (ei.has_exception<int>());
-  //BOOST_CHECK (ei.error()==std::make_exception_ptr(1));
-}
+//BOOST_AUTO_TEST_CASE(Expected_ConstructorFromUnexpect1_CopyableValueType_DefaultError)
+//{
+//  expected<int> ei(unexpect, 1);
+//  BOOST_CHECK (!ei);
+//  BOOST_CHECK (ei.has_exception<int>());
+//  //BOOST_CHECK (ei.error()==std::make_exception_ptr(1));
+//}
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // expected<void>::expected(unexpect_t)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -100,13 +90,13 @@ BOOST_AUTO_TEST_CASE(Expected_ConstructorFromUnexpect_VoidValueType_DefaultError
   BOOST_CHECK (!ei);
   BOOST_CHECK (ei.error()==std::exception_ptr());
 }
-BOOST_AUTO_TEST_CASE(Expected_ConstructorFromUnexpect1_VoidValueType_DefaultError)
-{
-  expected<void> ei(unexpect, 1);
-  BOOST_CHECK (!ei);
-  BOOST_CHECK (ei.has_exception<int>());
-  //BOOST_CHECK (ei.error()==std::make_exception_ptr(1));
-}
+//BOOST_AUTO_TEST_CASE(Expected_ConstructorFromUnexpect1_VoidValueType_DefaultError)
+//{
+//  expected<void> ei(unexpect, 1);
+//  BOOST_CHECK (!ei);
+//  BOOST_CHECK (ei.has_exception<int>());
+//  //BOOST_CHECK (ei.error()==std::make_exception_ptr(1));
+//}
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // expected<T,E>::expected(unexpect_t)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
