@@ -323,7 +323,7 @@ struct trivial_expected_base
   {}
 
   BOOST_CONSTEXPR trivial_expected_base(unexpected_type<error_type> && e)
-  : has_value(false), storage(std::forward<unexpected_type<error_type>>(e))
+  : has_value(false), storage(constexpr_forward<unexpected_type<error_type>>(e))
   {}
 
   template <class Err>
@@ -332,7 +332,7 @@ struct trivial_expected_base
   {}
   template <class Err>
   BOOST_CONSTEXPR trivial_expected_base(unexpected_type<Err> && e)
-  : has_value(false), storage(std::forward<unexpected_type<Err>>(e))
+  : has_value(false), storage(constexpr_forward<unexpected_type<Err>>(e))
   {}
 
 
@@ -372,7 +372,7 @@ struct trivial_expected_base<void, E, traits_type >
   : has_value(false), storage(e)
   {}
   BOOST_CONSTEXPR trivial_expected_base(unexpected_type<error_type> && e)
-  : has_value(false), storage(std::forward<unexpected_type<error_type>>(e))
+  : has_value(false), storage(constexpr_forward<unexpected_type<error_type>>(e))
   {}
   template <class Err>
   BOOST_CONSTEXPR trivial_expected_base(unexpected_type<Err> const& e)
@@ -380,7 +380,7 @@ struct trivial_expected_base<void, E, traits_type >
   {}
   template <class Err>
   BOOST_CONSTEXPR trivial_expected_base(unexpected_type<Err> && e)
-  : has_value(false), storage(std::forward<unexpected_type<Err>>(e))
+  : has_value(false), storage(constexpr_forward<unexpected_type<Err>>(e))
   {}
   BOOST_CONSTEXPR trivial_expected_base(in_place_t)
   : has_value(true), storage(in_place2)
@@ -421,7 +421,7 @@ struct no_trivial_expected_base
   {}
 
   BOOST_CONSTEXPR no_trivial_expected_base(unexpected_type<error_type> && e)
-  : has_value(false), storage(std::forward<unexpected_type<error_type>>(e))
+  : has_value(false), storage(constexpr_forward<unexpected_type<error_type>>(e))
   {}
 
   template <class Err>
@@ -430,7 +430,7 @@ struct no_trivial_expected_base
   {}
   template <class Err>
   BOOST_CONSTEXPR no_trivial_expected_base(unexpected_type<Err> && e)
-  : has_value(false), storage(std::forward<unexpected_type<Err>>(e))
+  : has_value(false), storage(constexpr_forward<unexpected_type<Err>>(e))
   {}
 
   template <class... Args>
@@ -472,7 +472,7 @@ struct no_trivial_expected_base<void, E, traits_type> {
   : has_value(false), storage(e)
   {}
   BOOST_CONSTEXPR no_trivial_expected_base(unexpected_type<error_type> && e)
-  : has_value(false), storage(std::forward<unexpected_type<error_type>>(e))
+  : has_value(false), storage(constexpr_forward<unexpected_type<error_type>>(e))
   {}
 
   template <class Err>
@@ -481,7 +481,7 @@ struct no_trivial_expected_base<void, E, traits_type> {
   {}
   template <class Err>
   BOOST_CONSTEXPR no_trivial_expected_base(unexpected_type<Err> && e)
-  : has_value(false), storage(std::forward<unexpected_type<Err>>(e))
+  : has_value(false), storage(constexpr_forward<unexpected_type<Err>>(e))
   {}
 
   BOOST_CONSTEXPR no_trivial_expected_base(in_place_t)
@@ -1896,7 +1896,7 @@ void swap(expected<T>& x, expected<T>& y) BOOST_NOEXCEPT_IF(BOOST_NOEXCEPT_EXPR(
 template<typename T>
 BOOST_CONSTEXPR expected<decay_t<T> > make_expected(BOOST_FWD_REF(T) v )
 {
-  return expected<decay_t<T> >(std::forward<T>(v));
+  return expected<decay_t<T> >(constexpr_forward<T>(v));
 }
 
 BOOST_FORCEINLINE expected<void> make_expected()

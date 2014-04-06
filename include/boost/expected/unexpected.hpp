@@ -6,11 +6,16 @@
 #ifndef BOOST_EXPECTED_UNEXPECTED_HPP
 #define BOOST_EXPECTED_UNEXPECTED_HPP
 
+#include <boost/expected/config.hpp>
+#include <boost/expected/detail/constexpr_utility.hpp>
+#include <boost/functional/type_traits_t.hpp>
+
+
+#include <boost/exception_ptr.hpp>
+#include <boost/type_traits.hpp>
+
 #include <exception>
 #include <utility>
-#include <boost/exception_ptr.hpp>
-#include <boost/functional/type_traits_t.hpp>
-#include <boost/type_traits.hpp>
 
 namespace boost
 {
@@ -30,6 +35,23 @@ namespace boost
       error_(std::move(e))
     {
     }
+#if ! defined BOOST_EXPECTED_NO_CXX11_MOVE_ACCESSORS
+    BOOST_CONSTEXPR
+    BOOST_FORCEINLINE ErrorType const& value() const&
+    {
+      return error_;
+    }
+    BOOST_CONSTEXPR
+    BOOST_FORCEINLINE ErrorType& value() &
+    {
+      return error_;
+    }
+    BOOST_CONSTEXPR
+    BOOST_FORCEINLINE ErrorType& value() &
+    {
+      return constexpr_move(error_);
+    }
+#else
     BOOST_CONSTEXPR
     BOOST_FORCEINLINE ErrorType const& value() const
     {
@@ -39,10 +61,7 @@ namespace boost
     {
       return error_;
     }
-//    BOOST_FORCEINLINE ErrorType value()
-//    {
-//      return std::move(error_);
-//    }
+#endif
   };
 
   template <class E>
