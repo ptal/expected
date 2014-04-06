@@ -67,6 +67,19 @@
 #  define BOOST_EXPECTED_NO_CXX11_RVALUE_REFERENCE_FOR_THIS
 # endif
 
+# if defined __clang__
+#  if (__clang_major__ < 3) || (__clang_major__ == 3) && (__clang_minor__ < 5)
+#   define BOOST_EXPECTED_NO_CXX11_MOVE_ACCESSORS
+#  endif
+# else
+#  define BOOST_EXPECTED_NO_CXX11_MOVE_ACCESSORS
+# endif
+
+# if defined BOOST_EXPECTED_NO_CXX11_MOVE_ACCESSORS
+#define BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS
+#else
+#define BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS constexpr
+#endif
 
 // ../../../boost/expected/expected.hpp: In instantiation of ‘class boost::expected<int>’:
 // test_expected.cpp:79:17:   required from here
@@ -652,15 +665,21 @@ private:
 
 #if ! defined BOOST_EXPECTED_NO_CXX11_RVALUE_REFERENCE_FOR_THIS
   BOOST_CONSTEXPR const bool& contained_has_value() const& { return base_type::has_value; }
+  BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS
   bool& contained_has_value() & { return base_type::has_value; }
+  BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS
   bool&& contained_has_value() && { return std::move(base_type::has_value); }
 
   BOOST_CONSTEXPR const value_type& contained_val() const& { return base_type::storage.val; }
+  BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS
   value_type& contained_val() & { return base_type::storage.val; }
+  BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS
   value_type&& contained_val() && { return std::move(base_type::storage.val); }
 
   BOOST_CONSTEXPR const error_storage_type& contained_err() const& { return base_type::storage.err; }
+  BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS
   error_storage_type& contained_err() & { return base_type::storage.err; }
+  BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS
   error_storage_type&& contained_err() && { return std::move(base_type::storage.err); }
 
 #else
@@ -940,7 +959,7 @@ public:
   }
 #endif
 
-#if 0 && ! defined BOOST_EXPECTED_NO_CXX11_RVALUE_REFERENCE_FOR_THIS
+#if ! defined BOOST_EXPECTED_NO_CXX11_MOVE_ACCESSORS
   BOOST_CONSTEXPR value_type const& value() const&
   {
     return valid()
@@ -980,6 +999,21 @@ public:
       ;
   }
 #endif
+#if ! defined BOOST_EXPECTED_NO_CXX11_MOVE_ACCESSORS
+  BOOST_CONSTEXPR value_type const& operator*() const& BOOST_NOEXCEPT
+  {
+    return contained_val();
+  }
+
+  BOOST_CONSTEXPR value_type& operator*() & BOOST_NOEXCEPT
+  {
+    return contained_val();
+  }
+  BOOST_CONSTEXPR value_type&& operator*() && BOOST_NOEXCEPT
+  {
+    return constexpr_move(contained_val());
+  }
+#else
   BOOST_CONSTEXPR value_type const& operator*() const BOOST_NOEXCEPT
   {
     return contained_val();
@@ -989,17 +1023,33 @@ public:
   {
     return contained_val();
   }
+#endif
 
   BOOST_CONSTEXPR value_type const* operator->() const BOOST_NOEXCEPT
   {
     return dataptr();
   }
 
+  BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS
   value_type* operator->() BOOST_NOEXCEPT
   {
     return dataptr();
   }
 
+#if ! defined BOOST_EXPECTED_NO_CXX11_MOVE_ACCESSORS
+  BOOST_CONSTEXPR error_type const& error() const& BOOST_NOEXCEPT
+  {
+    return contained_err();
+  }
+  BOOST_CONSTEXPR error_type& error() & BOOST_NOEXCEPT
+  {
+    return contained_err();
+  }
+  BOOST_CONSTEXPR error_type&& error() && BOOST_NOEXCEPT
+  {
+    return constexpr_move(contained_err());
+  }
+#else
   BOOST_CONSTEXPR error_type const& error() const BOOST_NOEXCEPT
   {
     return contained_err();
@@ -1008,7 +1058,9 @@ public:
   {
     return contained_err();
   }
+#endif
 
+  // TODO
   BOOST_CONSTEXPR unexpected_type<error_type> get_unexpected() const BOOST_NOEXCEPT
   {
     return unexpected_type<error_type>(contained_err());
@@ -1028,10 +1080,10 @@ public:
   }
 
   template <class V>
-  BOOST_CONSTEXPR value_type value_or(BOOST_FWD_REF(V) v) const &&
+  BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS value_type value_or(BOOST_FWD_REF(V) v) &&
   {
     return *this
-      ? std::move(const_cast<bind_t<value_type>&>(*this).contained_val())
+      ? constexpr_move(const_cast<bind_t<value_type>&>(*this).contained_val())
       : static_cast<value_type>(constexpr_forward<V>(v));
   }
 
@@ -1044,10 +1096,10 @@ public:
   }
 
   template <class Exception>
-  BOOST_CONSTEXPR value_type value_or_throw() const &&
+  BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS value_type value_or_throw() &&
   {
     return *this
-      ? std::move(const_cast<bind_t<value_type>&>(*this).contained_val())
+      ? constexpr_move(const_cast<bind_t<value_type>&>(*this).contained_val())
       : throw Exception(contained_err());
   }
 
@@ -1354,11 +1406,15 @@ private:
 
 #if ! defined BOOST_EXPECTED_NO_CXX11_RVALUE_REFERENCE_FOR_THIS
   BOOST_CONSTEXPR const bool& contained_has_value() const& { return base_type::has_value; }
+  BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS
   bool& contained_has_value() & { return base_type::has_value; }
+  BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS
   bool&& contained_has_value() && { return std::move(base_type::has_value); }
 
   BOOST_CONSTEXPR const error_storage_type& contained_err() const& { return base_type::storage.err; }
+  BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS
   error_storage_type& contained_err() & { return base_type::storage.err; }
+  BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS
   error_storage_type&& contained_err() && { return std::move(base_type::storage.err); }
 
 #else
@@ -1544,6 +1600,20 @@ public:
     }
   }
 
+#if ! defined BOOST_EXPECTED_NO_CXX11_MOVE_ACCESSORS
+  BOOST_CONSTEXPR error_storage_type const& error() const& BOOST_NOEXCEPT
+  {
+    return contained_err();
+  }
+  BOOST_CONSTEXPR error_storage_type& error() & BOOST_NOEXCEPT
+  {
+    return contained_err();
+  }
+  BOOST_CONSTEXPR error_storage_type&& error() && BOOST_NOEXCEPT
+  {
+    return constexpr_move(contained_err());
+  }
+#else
   BOOST_CONSTEXPR error_storage_type const& error() const BOOST_NOEXCEPT
   {
     return contained_err();
@@ -1552,6 +1622,8 @@ public:
   {
     return contained_err();
   }
+#endif
+
   BOOST_CONSTEXPR unexpected_type<error_type> get_unexpected() const BOOST_NOEXCEPT
   {
     return unexpected_type<error_type>(contained_err());
