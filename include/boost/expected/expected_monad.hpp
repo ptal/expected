@@ -46,7 +46,7 @@ namespace boost
 
       template <class M, class F>
       static auto
-      mbind(M&& m, F&& f) -> decltype(m.mbind(std::forward<F>(f)))
+      mbind(M&& m, F&& f) -> decltype(m.next(std::forward<F>(f)))
       {
         return m.next(std::forward<F>(f));
       }

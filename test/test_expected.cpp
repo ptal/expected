@@ -1018,6 +1018,14 @@ BOOST_AUTO_TEST_CASE(ensured_read_ts)
     expected<int, ensured_read<int> > e {unexpect, 1};
     BOOST_CHECK(e.error()==1);
   }
+  {
+    ensured_read<std::exception_ptr> e = make_ensured_read(std::make_exception_ptr(1));
+    BOOST_CHECK_THROW(std::rethrow_exception(e.value()), int);
+  }
+  {
+    expected<int, ensured_read<std::exception_ptr> > e = make_unexpected(make_ensured_read(std::make_exception_ptr(1)));
+    BOOST_CHECK_THROW(std::rethrow_exception(e.error().value()), int);
+  }
 }
 BOOST_AUTO_TEST_CASE(relational_operators)
 {

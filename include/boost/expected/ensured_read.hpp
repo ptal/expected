@@ -6,9 +6,9 @@
 #ifndef BOOST_EXPECTED_ENSURED_READ_HPP
 #define BOOST_EXPECTED_ENSURED_READ_HPP
 
-//#include <boost/expected/expected.hpp>
-//#include <boost/expected/unexpected.hpp>
-//#include <exception>
+#include <boost/expected/expected.hpp>
+#include <boost/expected/unexpected.hpp>
+#include <exception>
 #include <utility>
 
 namespace boost {
@@ -62,6 +62,27 @@ namespace boost {
   {
     return x.value() == y;
   }
+
+  // Specialization for error_exception
+  template <>
+  struct expected_traits<ensured_read<std::exception_ptr> >
+  {
+    typedef ensured_read<std::exception_ptr> error_type;
+    typedef ensured_read<std::exception_ptr> error_storage_type;
+
+    template <class E>
+    static error_type from_error(E const& e)
+    {
+      return make_ensured_read(std::make_exception_ptr(e));
+    }
+
+    static void bad_access(const error_type &e)
+    {
+      if (e.value()==std::exception_ptr())
+        throw expected_default_constructed();
+      std::rethrow_exception(e.value());
+    }
+  };
 
 } // namespace boost
 
