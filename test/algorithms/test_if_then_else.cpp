@@ -24,10 +24,10 @@ using namespace boost::expected_alg;
 std::string to_string2(int ) { return std::string("1");}
 std::string to_error(std::exception_ptr ) { return std::string("2");}
 
-expected<std::string,int> to_expected_string_ok(int ) { return expected<std::string,int>(in_place_t{}, "1");}
-expected<std::string,int> to_expected_error_ok(int ) { return expected<std::string,int>(in_place_t{}, "2");}
-expected<std::string, int> to_expected_string_ko(int ) { return expected<std::string,int>{unexpect, 1};}
-expected<std::string, int> to_expected_error_ko(int ) { return expected<std::string,int>{unexpect, 2};}
+expected<int, std::string> to_expected_string_ok(int ) { return expected<int, std::string>(in_place_t{}, "1");}
+expected<int, std::string> to_expected_error_ok(int ) { return expected<int, std::string>(in_place_t{}, "2");}
+expected<int, std::string> to_expected_string_ko(int ) { return expected<int, std::string>{unexpect, 1};}
+expected<int, std::string> to_expected_error_ko(int ) { return expected<int, std::string>{unexpect, 2};}
 
 ///////////////////////////
 BOOST_AUTO_TEST_SUITE(Copyable)
@@ -40,7 +40,7 @@ BOOST_AUTO_TEST_SUITE(Copyable)
     }
     BOOST_AUTO_TEST_CASE(Copyable_NotNested_Unexpected)
     {
-      auto e = if_then_else(expected<int>{make_unexpected(1)}, to_string2, to_error);
+      auto e = if_then_else(expected<std::exception_ptr, int>{make_unexpected(1)}, to_string2, to_error);
       BOOST_CHECK (e);
       BOOST_CHECK (*e == "2");
     }
@@ -73,11 +73,11 @@ BOOST_AUTO_TEST_SUITE(Copyable)
       BOOST_AUTO_TEST_CASE(Copyable_Nested_OkKo_Unexpected)
       {
         expected<int,int> e0{unexpect, 1};
-        expected<expected<std::string,int>, int> e1 = e0.fmap(to_expected_string_ok);
-        expected<expected<std::string,int>, int> e2 = e1.recover(to_expected_error_ko);
-        expected<std::string,int> e3 = unwrap(e2);
+        expected<int, expected<int, std::string>> e1 = e0.fmap(to_expected_string_ok);
+        expected<int, expected<int, std::string>> e2 = e1.recover(to_expected_error_ko);
+        expected<int, std::string> e3 = unwrap(e2);
         BOOST_CHECK (!e3 && (e3.error() == 2));
-        expected<std::string,int> e = if_then_else(expected<int,int>{unexpect, 1}, to_expected_string_ok, to_expected_error_ko);
+        expected<int, std::string> e = if_then_else(expected<int,int>{unexpect, 1}, to_expected_string_ok, to_expected_error_ko);
         BOOST_CHECK (!e);
         BOOST_CHECK (e.error() == 2);
       }

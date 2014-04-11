@@ -59,7 +59,7 @@ public:
    * Type of the expected value.
    */
   template <class Num>
-  using expected_type = boost::expected<Num, std::ios_base::iostate>;
+  using expected_type = boost::expected<std::ios_base::iostate, Num>;
 
   /**
    * Type of the range state.
@@ -103,7 +103,7 @@ std::locale::id NumGet<CharT, InputIterator>::id;
 
 // todo finish this function
 template <class CharT=char, class InputIterator = std::istreambuf_iterator<CharT> >
-boost::expected<void, std::ios_base::iostate>
+boost::expected<std::ios_base::iostate, void>
 matchedString(std::string str, ios_range<CharT, InputIterator>& r) {
   if (*r.begin != str[0]) {
       return boost::make_unexpected(std::ios_base::goodbit);
@@ -140,7 +140,7 @@ public:
    * Type of the expected value.
    */
   template <class Num>
-  using expected_type = boost::expected<std::pair<Num,Num>, std::ios_base::iostate>;
+  using expected_type = boost::expected<std::ios_base::iostate, std::pair<Num,Num>>;
 
   /**
    * Type of the range state.
