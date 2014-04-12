@@ -34,7 +34,7 @@ namespace boost
       }
 
       template <class M, class F>
-      M catch_error(M&& m, F&& f)
+      static M catch_error(M&& m, F&& f)
       {
         return m.catch_error(std::forward<F>(f));
       }

@@ -1265,8 +1265,9 @@ public:
 
 template <typename E>
 class expected<E,holder> {
+public:
   template <class T>
-  using apply = expected<E,T>;
+  using type = expected<E,T>;
 };
 
 template <typename ErrorType>
