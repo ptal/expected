@@ -88,7 +88,7 @@ expected<std::exception_ptr, int> ex_f2(int i, int j, int k)
   return expect safe_divide(i,k) + expect safe_divide(j,k);
 }
 
-expected<std::exception_ptr, int> ex_f2(int i, int j, int k) ensured
+expected<std::exception_ptr, int> ex_f2(int i, int j, int k)
 {
   auto s1 = expect safe_divide(i,k);
   auto s2 = expect safe_divide(j,k);
