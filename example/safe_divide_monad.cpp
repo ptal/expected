@@ -50,11 +50,11 @@ namespace exception_based
 }
 namespace expected_based
 {
-  expected<int> safe_divide(int i, int j)
+  expected<std::exception_ptr, int> safe_divide(int i, int j)
   {
     if (j == 0)
       //return make_unexpected(DivideByZero());
-      return monads::make_error<expected<int>>(DivideByZero());
+      return monads::make_error<expected<std::exception_ptr, int>>(DivideByZero());
     else
       return i / j;
   }
@@ -73,22 +73,22 @@ namespace optional_based
 }
 
 #ifdef expect
-expected<int> ex_f1(int i, int j, int k)
+expected<std::exception_ptr, int> ex_f1(int i, int j, int k)
 {
   return i + expect safe_divide(j,k);
 }
-expected<int> ex_f1(int i, int j, int k)
+expected<std::exception_ptr, int> ex_f1(int i, int j, int k)
 {
   auto q = expect safe_divide(j,k);
   return i + q;
 }
 
-expected<int> ex_f2(int i, int j, int k)
+expected<std::exception_ptr, int> ex_f2(int i, int j, int k)
 {
   return expect safe_divide(i,k) + expect safe_divide(j,k);
 }
 
-expected<int> ex_f2(int i, int j, int k) ensured
+expected<std::exception_ptr, int> ex_f2(int i, int j, int k) ensured
 {
   auto s1 = expect safe_divide(i,k);
   auto s2 = expect safe_divide(j,k);
@@ -98,7 +98,7 @@ expected<int> ex_f2(int i, int j, int k) ensured
 
 namespace expected_based
 {
-  expected<int> ex_f1(int i, int j, int k)
+  expected<std::exception_ptr, int> ex_f1(int i, int j, int k)
   {
     auto eq = safe_divide(j, k);
     if (! monads::has_value(eq)) return monads::get_unexpected(eq);
@@ -107,7 +107,7 @@ namespace expected_based
     return 1 + q;
   }
 
-  expected<int> ex_f2(int i, int j, int k)
+  expected<std::exception_ptr, int> ex_f2(int i, int j, int k)
   {
     auto eq1 = safe_divide(i, k);
     if (! monads::has_value(eq1)) return monads::get_unexpected(eq1);
@@ -151,7 +151,7 @@ auto V = boost::monads::deref(BOOST_JOIN(expected,V))
 
 namespace expected_based
 {
-  expected<int> mex_f2(int i, int j, int k)
+  expected<std::exception_ptr, int> mex_f2(int i, int j, int k)
   {
     EXPECT(q1, safe_divide(i,k));
     EXPECT(q2, safe_divide(j,k));
@@ -169,7 +169,7 @@ namespace optional_based
 }
 namespace expected_based
 {
-  expected<int> then_f22(int i, int j, int k)
+  expected<std::exception_ptr, int> then_f22(int i, int j, int k)
   {
     return  mbind(safe_divide(i, k),
       [=](int q1)
@@ -181,19 +181,19 @@ namespace expected_based
       });
   }
 
-  expected<int> then_f23(int i, int j, int k)
+  expected<std::exception_ptr, int> then_f23(int i, int j, int k)
   {
     return fmap([=](int q1, int q2)
         { return q1+q2;},
         safe_divide(i, k), safe_divide(j, k));
   }
 
-  expected<int> then_f2(int i, int j, int k)
+  expected<std::exception_ptr, int> then_f2(int i, int j, int k)
   {
     return make_monad(safe_divide(i, k))
     & [=](int q1)
     {
-      return expected<int>(make_monad(safe_divide(j,k)) & [=](int q2)
+      return expected<std::exception_ptr, int>(make_monad(safe_divide(j,k)) & [=](int q2)
           {
             return q1+q2;
           });
@@ -238,14 +238,14 @@ namespace optional_based
 namespace expected_based
 {
   template <class T>
-  expected<T> operator+(expected<T> i, expected<T> j)
+  expected<std::exception_ptr, T> operator+(expected<std::exception_ptr, T> i, expected<std::exception_ptr, T> j)
   {
     EXPECT(i_, i);
     EXPECT(j_, j);
     return i_ + j_;
   }
 
-  expected<int> operator-(expected<int> i, expected<int> j)
+  expected<std::exception_ptr, int> operator-(expected<std::exception_ptr, int> i, expected<std::exception_ptr, int> j)
   {
     return  mbind(i, [j](int i)
       {
@@ -256,7 +256,7 @@ namespace expected_based
       });
   }
 
-  expected<int> cex_f2(int i, int j, int k)
+  expected<std::exception_ptr, int> cex_f2(int i, int j, int k)
   {
     return safe_divide(i, k) + safe_divide(j, k);
   }
@@ -283,10 +283,10 @@ namespace exception_based
 
 namespace expected_based
 {
-  expected<int> divide0(int i, int j)
+  expected<std::exception_ptr, int> divide0(int i, int j)
   {
     return  catch_error(safe_divide(i,j),
-      [](std::exception_ptr ex) -> expected<int>
+      [](std::exception_ptr ex) -> expected<std::exception_ptr, int>
       {
         try
         {
@@ -303,10 +303,10 @@ namespace expected_based
       });
   }
 
-  expected<int> divide(int i, int j)
+  expected<std::exception_ptr, int> divide(int i, int j)
   {
     return safe_divide(i,j).
-    recover([](std::exception_ptr ex) -> expected<int>
+    recover([](std::exception_ptr ex) -> expected<std::exception_ptr, int>
         {
           try
           {
@@ -323,16 +323,16 @@ namespace expected_based
         });
   }
 
-  expected<int> divide2(int i, int j)
+  expected<std::exception_ptr, int> divide2(int i, int j)
   {
     return safe_divide(i,j).
-    catch_exception<NotDivisible>([](NotDivisible& e) -> expected<int>
+    catch_exception<NotDivisible>([](NotDivisible& e) -> expected<std::exception_ptr, int>
         {
           return e.i / e.j;
         });
   }
 
-  expected<int> divide3(int i, int j)
+  expected<std::exception_ptr, int> divide3(int i, int j)
   {
     return safe_divide(i,j).
     catch_exception<NotDivisible>([](NotDivisible& e)
@@ -340,7 +340,7 @@ namespace expected_based
           return make_expected(e.i / e.j);
         });
   }
-  expected<int> divide4(int i, int j)
+  expected<std::exception_ptr, int> divide4(int i, int j)
   {
     return safe_divide(i,j).
     catch_exception<NotDivisible>([](NotDivisible& e)

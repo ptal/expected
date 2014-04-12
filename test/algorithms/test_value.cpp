@@ -32,7 +32,7 @@ BOOST_AUTO_TEST_SUITE(Value)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 BOOST_AUTO_TEST_CASE(Value_Valued_RValue)
 {
-  expected<int> ei = 1;
+  expected<std::exception_ptr, int> ei = 1;
   auto ej = ei.recover(thrower<int>());
   BOOST_CHECK (*ej == 1);
   int i = value(std::move(ei));
@@ -43,14 +43,14 @@ BOOST_AUTO_TEST_CASE(Value_Valued_RValue)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 BOOST_AUTO_TEST_CASE(Value_Valued_LValueConst)
 {
-  const expected<int> ei = 1;
+  const expected<std::exception_ptr, int> ei = 1;
   int i = value(ei);
   BOOST_CHECK_EQUAL (i, 1);
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 BOOST_AUTO_TEST_CASE(Value_Valued_LValueAssign)
 {
-  expected<int> ei = 1;
+  expected<std::exception_ptr, int> ei = 1;
   ei.value() = 2;
   //value(ei) = 2; // fails
   BOOST_CHECK_EQUAL (*ei, 2);
@@ -60,14 +60,14 @@ BOOST_AUTO_TEST_CASE(Value_Valued_LValueAssign)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 BOOST_AUTO_TEST_CASE(Value_Valued_LvalueNonConst)
 {
-  expected<int> ei = 1;
+  expected<std::exception_ptr, int> ei = 1;
   int i = value(ei);
   BOOST_CHECK_EQUAL (i, 1);
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 BOOST_AUTO_TEST_CASE(Value_Unexpected_LValue)
 {
-  expected<int> ei;
+  expected<std::exception_ptr, int> ei;
   BOOST_REQUIRE_THROW(value(ei), expected_default_constructed);
 }
 BOOST_AUTO_TEST_SUITE_END()
