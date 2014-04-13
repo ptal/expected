@@ -127,7 +127,7 @@ Iterator eat_spaces(Iterator b, Iterator e)
 tokens_t push_token(const token_t& x, tokens_t& tokens)
 {
   tokens.push_back(x);
-  return std::move(tokens);
+  return tokens;
 }
 
 template <class Iterator>
