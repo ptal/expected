@@ -15,7 +15,7 @@ namespace boost
   namespace functional
   {
     template <class T, class U>
-    struct bind2<optional<T>, U> : mpl::identity<optional<U> >
+    struct bind<optional<T>, U> : mpl::identity<optional<U> >
     {};
 
   }
@@ -136,7 +136,7 @@ namespace boost
         static BOOST_CONSTEXPR M
         catch_error(M&& m, F&& f)
         {
-          typedef typename functional::bind2<decay_t<M>, FR>::type result_type;
+          typedef typename functional::bind<decay_t<M>, FR>::type result_type;
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
           if(! has_value(m))
           {
@@ -172,7 +172,7 @@ namespace boost
         static BOOST_CONSTEXPR M
         catch_error(M&& m, F&& f)
         {
-          typedef typename functional::bind2<decay_t<M>, FR>::type result_type;
+          typedef typename functional::bind<decay_t<M>, FR>::type result_type;
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
           if(! has_value(m))
           {

@@ -31,14 +31,14 @@ namespace boost
     };
 
     template <class M, class T>
-    struct bind2
+    struct bind
     {
       typedef typename M::template bind<T>::type type;
     };
 
     // curry first N args of metafunction
 //    template<class F, class... ArgsN>
-//    struct bind3
+//    struct curryl
 //    {
 //      template<class... ArgsK>
 //      using type = apply<F, ArgsN..., ArgsK...>;

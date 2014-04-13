@@ -34,7 +34,7 @@ namespace boost
 
         template <class F, class M0, class ...M,
             class FR = decltype( std::declval<F>()(*std::declval<M0>(), *std::declval<M>()...) )>
-        static auto fmap(F&& f, M0&& m0, M&& ...ms) -> typename functional::bind2<decay_t<M0>, FR>::type
+        static auto fmap(F&& f, M0&& m0, M&& ...ms) -> typename functional::bind<decay_t<M0>, FR>::type
         {
           return M0::fmap(std::forward<F>(f), std::forward<M0>(m0), std::forward<M>(ms)...);
         }
