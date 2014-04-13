@@ -18,7 +18,9 @@ namespace boost
     struct bind2<optional<T>, U> : mpl::identity<optional<U> >
     {};
 
-}
+  }
+
+  using optional_monad = functional::lift<optional>;
 }
 
 #include <boost/functional/monads/categories/pointer_like2.hpp>
@@ -150,7 +152,7 @@ namespace boost
         }
       };
       template <>
-      struct monad_error_traits<lift<optional> >
+      struct monad_error_traits<optional_monad >
       {
         template <class M>
         static constexpr auto value(M&& m) -> decltype(m.value())
