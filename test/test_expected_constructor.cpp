@@ -27,29 +27,29 @@ using namespace boost;
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 BOOST_AUTO_TEST_SUITE(Expected_DefaultConstructor)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// expected<T>::expected()
+// expected<std::exception_ptr, T>::expected()
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 BOOST_AUTO_TEST_CASE(Expected_DefaultConstructor_CopyableValueType_DefaultError)
 {
-  expected<int> ei;
+  expected<std::exception_ptr, int> ei;
   BOOST_CHECK (!ei);
   BOOST_CHECK (ei.error()==std::exception_ptr());
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// expected<void>::expected()
+// expected<std::exception_ptr, void>::expected()
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 BOOST_AUTO_TEST_CASE(Expected_DefaultConstructor_VoidValueType_DefaultError)
 {
-  expected<void> ei;
+  expected<std::exception_ptr, void> ei;
   BOOST_CHECK (!ei);
   BOOST_CHECK (ei.error()==std::exception_ptr());
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// expected<T,E>::expected()
+// expected<E, T>::expected()
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 BOOST_AUTO_TEST_CASE(Expected_DefaultConstructor_CopyableValueType_UdtError)
 {
-  expected<int,std::string> ei;
+  expected<std::string, int> ei;
   BOOST_CHECK (!ei);
   BOOST_CHECK (ei.error()==std::string());
 }
@@ -58,7 +58,7 @@ BOOST_AUTO_TEST_CASE(Expected_DefaultConstructor_CopyableValueType_UdtError)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 BOOST_AUTO_TEST_CASE(Expected_DefaultConstructor_VoidValueType_UdtError)
 {
-  expected<void,std::string> ei;
+  expected<std::string, void> ei;
   BOOST_CHECK (!ei);
   BOOST_CHECK (ei.error()==std::string());
 }
@@ -70,45 +70,45 @@ BOOST_AUTO_TEST_SUITE(Expected_ConstructorFromUnexpect)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 BOOST_AUTO_TEST_CASE(Expected_ConstructorFromUnexpect_CopyableValueType_DefaultError)
 {
-  expected<int> ei{unexpect};
+  expected<std::exception_ptr, int> ei{unexpect};
   BOOST_CHECK (!ei);
   BOOST_CHECK (ei.error()==std::exception_ptr());
 }
 //BOOST_AUTO_TEST_CASE(Expected_ConstructorFromUnexpect1_CopyableValueType_DefaultError)
 //{
-//  expected<int> ei(unexpect, 1);
+//  expected<std::exception_ptr, int> ei(unexpect, 1);
 //  BOOST_CHECK (!ei);
 //  BOOST_CHECK (ei.has_exception<int>());
 //  //BOOST_CHECK (ei.error()==std::make_exception_ptr(1));
 //}
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// expected<void>::expected(unexpect_t)
+// expected<std::exception_ptr, void>::expected(unexpect_t)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 BOOST_AUTO_TEST_CASE(Expected_ConstructorFromUnexpect_VoidValueType_DefaultError)
 {
-  expected<void> ei{unexpect};
+  expected<std::exception_ptr, void> ei{unexpect};
   BOOST_CHECK (!ei);
   BOOST_CHECK (ei.error()==std::exception_ptr());
 }
 //BOOST_AUTO_TEST_CASE(Expected_ConstructorFromUnexpect1_VoidValueType_DefaultError)
 //{
-//  expected<void> ei(unexpect, 1);
+//  expected<std::exception_ptr, void> ei(unexpect, 1);
 //  BOOST_CHECK (!ei);
 //  BOOST_CHECK (ei.has_exception<int>());
 //  //BOOST_CHECK (ei.error()==std::make_exception_ptr(1));
 //}
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// expected<T,E>::expected(unexpect_t)
+// expected<E, T>::expected(unexpect_t)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 BOOST_AUTO_TEST_CASE(Expected_ConstructorFromUnexpect_CopyableValueType_UdtError)
 {
-  expected<int,std::string> ei{unexpect};
+  expected<std::string, int> ei{unexpect};
   BOOST_CHECK (!ei);
   BOOST_CHECK (ei.error()==std::string());
 }
 BOOST_AUTO_TEST_CASE(Expected_ConstructorFromUnexpectA_CopyableValueType_UdtError)
 {
-  expected<int,std::string> ei(unexpect, "A");
+  expected<std::string, int> ei(unexpect, "A");
   BOOST_CHECK (!ei);
   BOOST_CHECK (ei.error()==std::string("A"));
 }
@@ -117,13 +117,13 @@ BOOST_AUTO_TEST_CASE(Expected_ConstructorFromUnexpectA_CopyableValueType_UdtErro
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 BOOST_AUTO_TEST_CASE(Expected_ConstructorFromUnexpect_VoidValueType_UdtError)
 {
-  expected<void,std::string> ei{unexpect};
+  expected<std::string, void> ei{unexpect};
   BOOST_CHECK (!ei);
   BOOST_CHECK (ei.error()==std::string());
 }
 BOOST_AUTO_TEST_CASE(Expected_ConstructorFromUnexpectA_VoidValueType_UdtError)
 {
-  expected<void,std::string> ei{unexpect, "A"};
+  expected<std::string, void> ei{unexpect, "A"};
   BOOST_CHECK (!ei);
   BOOST_CHECK (ei.error()==std::string("A"));
 }

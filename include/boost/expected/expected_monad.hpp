@@ -19,17 +19,17 @@ namespace boost
   {
 
     template <class T, class E>
-    struct is_monad<expected<T,E> > : std::true_type { };
+    struct is_monad<expected<E,T> > : std::true_type { };
 
     template <class T, class E>
-    struct value_category<expected<T,E> > : mpl::identity<category::pointer_like> { };
+    struct value_category<expected<E,T> > : mpl::identity<category::pointer_like> { };
     template <class T, class E>
-    struct functor_category<expected<T,E> > : mpl::identity<category::valued_and_errored> { };
+    struct functor_category<expected<E,T> > : mpl::identity<category::valued_and_errored> { };
     template <class T, class E>
-    struct monad_category<expected<T,E> > : mpl::identity<category::valued_and_errored> { };
+    struct monad_category<expected<E,T> > : mpl::identity<category::valued_and_errored> { };
 
     template <class T1, class E1>
-    struct monad_traits<expected<T1, E1>> {
+    struct monad_traits<expected<E1,T1>> {
 
       template <class M, class T>
       static M make(T&& v)
@@ -54,7 +54,7 @@ namespace boost
     };
 
     template <class T1, class E1>
-    struct monad_error_traits<expected<T1,E1> >
+    struct monad_error_traits<expected<E1,T1> >
     {
       template <class M>
       static constexpr auto value(M&& m) -> decltype(m.value()) { return m.value(); };

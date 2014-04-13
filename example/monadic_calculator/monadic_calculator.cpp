@@ -28,7 +28,7 @@ Output& operator<<(Output& out, const std::error_condition& e)
 /* Print an expected, the value and error of this expected
 must implement the << operator. */
 template <class Output, class T, class E>
-Output& operator<<(Output& out, const boost::expected<T, E>& v)
+Output& operator<<(Output& out, const boost::expected<E, T>& v)
 {
   if(v.valid())
     return out << *v;
@@ -41,7 +41,7 @@ namespace moca{
 
 // Expected helpers for the std::error_condition error type.
 template <class T>
-using expected = boost::expected<T, std::error_condition>;
+using expected = boost::expected<std::error_condition, T>;
 
 boost::unexpected_type<std::error_condition> make_unexpected_condition(error e)
 {
@@ -70,7 +70,7 @@ expected<token_t> safe_string_to_int32(Iterator b, Iterator e)
   try
   {
     return token_t(boost::lexical_cast<std::int32_t>(boost::iterator_range<Iterator>(b, e)));
-  } 
+  }
   catch (const boost::bad_lexical_cast&)
   {
     return make_unexpected_condition(integer_overflow);
@@ -134,7 +134,7 @@ template <class Iterator>
 expected<tokens_t> tokenize(Iterator b, Iterator e)
 {
   expected<tokens_t> etokens = tokens_t();
-  for(b = eat_spaces(b, e); 
+  for(b = eat_spaces(b, e);
       b != e && etokens.valid();
       b = eat_spaces(b,e))
   {

@@ -41,7 +41,7 @@ public:
 
   template <typename Num>
   struct get_result_type {
-    typedef boost::expected<std::pair<iter_type, Num>, std::pair<iter_type, std::ios_base::iostate> > type;
+    typedef boost::expected<std::pair<iter_type, std::ios_base::iostate>, std::pair<iter_type, Num>  > type;
   };
   /**
    *
@@ -84,11 +84,11 @@ std::locale::id NumGet<CharT, InputIterator>::id;
 
 // todo finish this function
 template <class CharT=char, class InputIterator = std::istreambuf_iterator<CharT> >
-boost::expected<InputIterator, // todo solve the issues when using InputIterator instead of std::pair<InputIterator, int>
-                std::pair<InputIterator, std::ios_base::iostate>>
+boost::expected<std::pair<InputIterator, std::ios_base::iostate>,
+                InputIterator> // todo solve the issues when using InputIterator instead of std::pair<InputIterator, int>
 matchedString(std::string, InputIterator s, InputIterator e) {
-  return boost::expected<InputIterator,
-               std::pair<InputIterator, std::ios_base::iostate>>(s); // todo check the match
+  return boost::expected<std::pair<InputIterator, std::ios_base::iostate>,
+                         InputIterator>(s); // todo check the match
 }
 
 /**
@@ -118,8 +118,8 @@ public:
 
   template <typename Num>
   struct get_result_type {
-    typedef boost::expected<std::pair<iter_type, std::pair<Num, Num>>,
-                            std::pair<iter_type, std::ios_base::iostate>
+    typedef boost::expected<std::pair<iter_type, std::ios_base::iostate>,
+                            std::pair<iter_type, std::pair<Num, Num>>
             > type;
   };
 

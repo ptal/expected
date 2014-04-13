@@ -44,7 +44,7 @@ namespace exception_based
   }
 }
 
-boost::expected<int> safe_divide(int i, int j)
+boost::expected<std::exception_ptr, int> safe_divide(int i, int j)
 {
   if (j == 0)
     return make_unexpected(DivideByZero());
@@ -53,22 +53,22 @@ boost::expected<int> safe_divide(int i, int j)
 }
 
 #ifdef expect
-boost::expected<int> ex_f1(int i, int j, int k)
+boost::expected<std::exception_ptr, int> ex_f1(int i, int j, int k)
 {
   return i + expect safe_divide(j,k);
 }
-boost::expected<int> ex_f1(int i, int j, int k)
+boost::expected<std::exception_ptr, int> ex_f1(int i, int j, int k)
 {
   auto q = expect safe_divide(j,k);
   return i + q;
 }
 
-boost::expected<int> ex_f2(int i, int j, int k)
+boost::expected<std::exception_ptr, int> ex_f2(int i, int j, int k)
 {
   return expect safe_divide(i,k) + expect safe_divide(j,k);
 }
 
-boost::expected<int> ex_f2(int i, int j, int k)
+boost::expected<std::exception_ptr, int> ex_f2(int i, int j, int k)
 {
   auto s1 = expect safe_divide(i,k);
   auto s2 = expect safe_divide(j,k);
@@ -76,7 +76,7 @@ boost::expected<int> ex_f2(int i, int j, int k)
 }
 #endif
 
-boost::expected<int> ex_f1(int i, int j, int k)
+boost::expected<std::exception_ptr, int> ex_f1(int i, int j, int k)
 {
   auto eq = safe_divide(j, k);
   if (!eq.valid()) return eq.get_unexpected();
@@ -85,7 +85,7 @@ boost::expected<int> ex_f1(int i, int j, int k)
   return 1 + q;
 }
 
-boost::expected<int> ex_f2(int i, int j, int k)
+boost::expected<std::exception_ptr, int> ex_f2(int i, int j, int k)
 {
   auto eq1 = safe_divide(i, k);
   if (!eq1.valid()) return eq1.get_unexpected();
@@ -103,14 +103,14 @@ auto BOOST_JOIN(expected,V) = EXPR; \
 if (! BOOST_JOIN(expected,V).valid()) return BOOST_JOIN(expected,V).get_unexpected(); \
 auto V =*BOOST_JOIN(expected,V)
 
-boost::expected<int> mex_f2(int i, int j, int k)
+boost::expected<std::exception_ptr, int> mex_f2(int i, int j, int k)
 {
   EXPECT(q1, safe_divide(i,k));
   EXPECT(q2, safe_divide(j,k));
   return q1 + q2;
 }
 
-boost::expected<int> then_f2(int i, int j, int k)
+boost::expected<std::exception_ptr, int> then_f2(int i, int j, int k)
 {
   auto q1 = safe_divide(i, k);
   return q1.next([j,k](int q1)
@@ -122,14 +122,14 @@ boost::expected<int> then_f2(int i, int j, int k)
 }
 
 template <class T>
-expected<T> operator+(expected<T> i, expected<T> j)
+expected<std::exception_ptr, T> operator+(expected<std::exception_ptr, T> i, expected<std::exception_ptr, T> j)
 {
   EXPECT(i_, i);
   EXPECT(j_, j);
   return i_ + j_;
 }
 
-//expected<int> operator+(expected<int> i, expected<int> j) {
+//expected<std::exception_ptr, int> operator+(expected<std::exception_ptr, int> i, expected<std::exception_ptr, int> j) {
 //  return i.next([j](int i) {
 //    return j.next([i](int j) {
 //      return i+j;
@@ -137,7 +137,7 @@ expected<T> operator+(expected<T> i, expected<T> j)
 //  });
 //}
 
-boost::expected<int> cex_f2(int i, int j, int k)
+boost::expected<std::exception_ptr, int> cex_f2(int i, int j, int k)
 {
   return safe_divide(i, k) + safe_divide(j, k);
 }
@@ -161,10 +161,10 @@ namespace exception_based
   }
 }
 
-boost::expected<int> divide(int i, int j)
+boost::expected<std::exception_ptr, int> divide(int i, int j)
 {
 return safe_divide(i,j).
-recover([](std::exception_ptr ex) -> boost::expected<int>
+recover([](std::exception_ptr ex) -> boost::expected<std::exception_ptr, int>
     {
       try
       {
@@ -185,16 +185,16 @@ recover([](std::exception_ptr ex) -> boost::expected<int>
     });
 }
 
-boost::expected<int> divide2(int i, int j)
+boost::expected<std::exception_ptr, int> divide2(int i, int j)
 {
 return safe_divide(i,j).
-catch_exception<NotDivisible>([](NotDivisible& e) -> expected<int>
+catch_exception<NotDivisible>([](NotDivisible& e) -> expected<std::exception_ptr, int>
     {
       return e.i / e.j;
     });
 }
 
-boost::expected<int> divide3(int i, int j)
+boost::expected<std::exception_ptr, int> divide3(int i, int j)
 {
 return safe_divide(i,j).
 catch_exception<NotDivisible>([](NotDivisible& e)
