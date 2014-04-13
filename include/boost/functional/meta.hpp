@@ -16,24 +16,19 @@ namespace boost
     template<class F, class... Args>
     using apply = typename F::template type<Args...>;
 
-    // transforms a template class into a metafunction, optionally partially curries it
+    // transforms a template class into a meta-function, optionally partially curries it
     template <template <class ...> class F, class... Args>
-    struct liftx
+    struct lift
     {
       template<class... Args2>
       using type = F<Args..., Args2...>;
     };
-    template <template <class ...> class F>
-    struct lift
-    {
-      template<class... Args>
-      using type = F<Args...>;
-    };
 
+    // transforms a class template C<U> into C<T>
     template <class M, class T>
-    struct bind
+    struct rebind
     {
-      typedef typename M::template bind<T>::type type;
+      typedef typename M::template rebind<T>::type type;
     };
 
     // curry first N args of metafunction

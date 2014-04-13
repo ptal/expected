@@ -7,18 +7,13 @@
 #define BOOST_FUNCTIONAL_FUNCTOR_HPP
 
 #include <boost/functional/type_traits_t.hpp>
+#include <boost/functional/meta.hpp>
 #include <utility>
 
 namespace boost
 {
   namespace monads
   {
-
-    template <class M, class T>
-    struct bind
-    {
-      typedef typename M::template bind<T>::type type;
-    };
 
     template <class M>
     struct functor_category {
@@ -33,7 +28,7 @@ namespace boost
 
       template <class F, class M0, class ...M, class FR = decltype( std::declval<F>()(*std::declval<M0>(), *std::declval<M>()...) )>
       static auto
-      fmap(F&& f, M0&& m0, M&& ...ms) -> typename bind<decay_t<M0>, FR>::type
+      fmap(F&& f, M0&& m0, M&& ...ms) -> typename functional::rebind<decay_t<M0>, FR>::type
       {
         return M0::fmap(std::forward<F>(f), std::forward<M0>(m0), std::forward<M>(ms)...);
       }

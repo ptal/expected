@@ -9,13 +9,6 @@
 
 #define BOOST_RESULT_OF_USE_DECLTYPE
 
-//#include <boost/optional.hpp>
-//#include <boost/mpl/identity.hpp>
-//#include <type_traits>
-//#include <boost/functional/monads/categories/pointer_like2.hpp>
-//#include <boost/functional/monads/categories/valued_and_errored2.hpp>
-//#include <boost/functional/monads/monad_error2.hpp>
-
 #include <boost/expected/optional_monad2.hpp>
 #include <boost/expected/expected_monad2.hpp>
 #include <boost/expected/conversions/expected_to_optional.hpp>
@@ -440,7 +433,6 @@ namespace expected_based
         catch (...)
         {
           return make_error<expected<>>(std::current_exception());
-          //return make_unexpected(std::current_exception());
         }
       });
   }

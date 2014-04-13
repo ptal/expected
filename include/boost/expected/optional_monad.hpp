@@ -15,14 +15,16 @@
 
 namespace boost
 {
+  namespace functional
+  {
+    template <class T, class U>
+    struct rebind<optional<T>, U> : mpl::identity<optional<U> > {};
+  }
   namespace monads
   {
 
     template <class T>
     struct is_monad<optional<T> > : std::true_type {};
-
-    template <class T, class U>
-    struct bind<optional<T>, U> : mpl::identity<optional<U> > {};
 
     template <class T>
     struct value_category<optional<T> > : mpl::identity<category::pointer_like> { };
@@ -66,7 +68,7 @@ namespace boost
       static BOOST_CONSTEXPR M
       catch_error(M&& m, F&& f)
       {
-        typedef typename bind<decay_t<M>, FR>::type result_type;
+        typedef typename functional::rebind<decay_t<M>, FR>::type result_type;
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
         if(! has_value(m))
         {
