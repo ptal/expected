@@ -15,10 +15,12 @@ namespace boost
   namespace functional
   {
     template <class T, class U>
-    struct bind2<optional<T>, U> : mpl::identity<optional<U> >
+    struct bind<optional<T>, U> : mpl::identity<optional<U> >
     {};
 
-}
+  }
+
+  using optional_monad = functional::lift<optional>;
 }
 
 #include <boost/functional/monads/categories/pointer_like2.hpp>
@@ -134,7 +136,7 @@ namespace boost
         static BOOST_CONSTEXPR M
         catch_error(M&& m, F&& f)
         {
-          typedef typename functional::bind2<decay_t<M>, FR>::type result_type;
+          typedef typename functional::bind<decay_t<M>, FR>::type result_type;
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
           if(! has_value(m))
           {
@@ -150,7 +152,7 @@ namespace boost
         }
       };
       template <>
-      struct monad_error_traits<lift<optional> >
+      struct monad_error_traits<optional_monad >
       {
         template <class M>
         static constexpr auto value(M&& m) -> decltype(m.value())
@@ -170,7 +172,7 @@ namespace boost
         static BOOST_CONSTEXPR M
         catch_error(M&& m, F&& f)
         {
-          typedef typename functional::bind2<decay_t<M>, FR>::type result_type;
+          typedef typename functional::bind<decay_t<M>, FR>::type result_type;
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
           if(! has_value(m))
           {

@@ -73,9 +73,9 @@ namespace optional_based
   {
     using namespace boost::functional::monad_error;
     if (j == 0)
-      return make_error<lift<optional> >(DivideByZero());
+      return make_error<optional_monad >(DivideByZero());
     else
-      return make<lift<optional>>(i / j);
+      return make<optional_monad>(i / j);
   }
 
 }
@@ -491,7 +491,7 @@ namespace optional_based
 //        catch (...)
 //        {
 //          using namespace boost::functional::monad_error;
-//          return make_error<lift<optional>>(std::current_exception());
+//          return make_error<optional_monad>(std::current_exception());
 //        }
 //      });
 //  }
@@ -585,6 +585,6 @@ int main()
   expected_test();
   optional_test();
   generic_test<expected<>>();
-  generic_test<lift<optional>>();
+  generic_test<optional_monad>();
   return 0;
 }

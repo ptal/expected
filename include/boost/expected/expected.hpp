@@ -1270,6 +1270,9 @@ public:
   using type = expected<E,T>;
 };
 
+template <typename T>
+using exception_or = expected<std::exception_ptr,T>;
+
 template <typename ErrorType>
 class expected<ErrorType,void>
 : detail::expected_base<void, ErrorType, expected_traits<ErrorType> >
