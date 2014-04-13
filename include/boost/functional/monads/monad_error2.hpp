@@ -29,24 +29,23 @@ namespace boost
       using monad_error_category_t = typename monad_error_category<M>::type;
 
       template <class Mo>
-      struct monad_error_traits;
-//      : monad_traits<Mo> {
-//
-//        template <class M>
-//        static constexpr auto value(M&& m) -> decltype(m.value()) { return m.value(); };
-//
-//        template <class M, class E>
-//        static auto make_error(E&& e) -> decltype(make_unexpected(std::forward<E>(e)))
-//        {
-//          return make_unexpected(std::forward<E>(e));
-//        }
-//
-//        template <class M, class F>
-//        static M catch_error(M&& m, F&& f)
-//        {
-//          return m.catch_error(std::forward<F>(f));
-//        }
-//      };
+      struct monad_error_traits : monad_traits<Mo> {
+
+        template <class M>
+        static constexpr auto value(M&& m) -> decltype(m.value()) { return m.value(); };
+
+        template <class M, class E>
+        static auto make_error(E&& e) -> decltype(make_unexpected(std::forward<E>(e)))
+        {
+          return make_unexpected(std::forward<E>(e));
+        }
+
+        template <class M, class F>
+        static M catch_error(M&& m, F&& f)
+        {
+          return m.catch_error(std::forward<F>(f));
+        }
+      };
 
       template <class M, class T>
       using monad_error_traits_t = monad_error_traits<monad_error_category_t<decay_t<apply<M, T> > > >;
