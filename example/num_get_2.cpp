@@ -34,14 +34,18 @@ pair_expected<I, T, E> make_pair_expected_from_error(I i, E e)
 
 namespace boost
 {
-  namespace monads
+  namespace functional
   {
-
     template <class T, class I, typename E, class U>
-    struct bind<pair_expected<I, T, E>, U>
+    struct rebind<pair_expected<I, T, E>, U>
     {
       typedef pair_expected<I, U, E> type;
     };
+  }
+  namespace monads
+  {
+
+
 
     template <class T, class I, typename E>
     struct monad_traits<pair_expected<I, T, E> >
@@ -89,7 +93,7 @@ namespace boost
         }
         return make_pair(m.first, expected_type(get_unexpected(m)));
 #else
-        typedef typename bind<monad_type, result_type>::type monad_result_type;
+        typedef typename functional::rebind<monad_type, result_type>::type monad_result_type;
         return ( valid(m)
                ?  f(get(m))
                : make_pair(m.first, expected_type(get_unexpected(m)))
