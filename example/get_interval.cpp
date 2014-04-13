@@ -114,13 +114,13 @@ template <class Num, class CharT=char, class InputIterator = std::istreambuf_ite
 boost::expected<std::ios_base::iostate, std::pair<Num,Num>> get_interval3(ios_range<CharT, InputIterator>& r)
 {
   return get_num<Num>(r)
-   .next( [&r](Num f)
+   .mbind( [&r](Num f)
     {
-      return matchedString("..", r).next([f]() { return f; });
+      return matchedString("..", r).mbind([f]() { return f; });
     }
-  ).next( [&r](Num f)
+  ).mbind( [&r](Num f)
     {
-      return get_num<Num>(r).next([f](Num l) { return std::make_pair(f,l); });
+      return get_num<Num>(r).mbind([f](Num l) { return std::make_pair(f,l); });
     }
   );
 }
@@ -168,8 +168,8 @@ boost::expected<std::ios_base::iostate, std::pair<Num,Num>> get_interval4(ios_ra
           std::cout << __FILE__ << "[" << __LINE__ << "] " << st << std::endl;
           return boost::make_unexpected(st);
         }
-    ).next( [&r](Num f) { return matchedString("..", r).next( identity(f) ); }
-    ).next( [&r](Num f) { return get_num<Num>(r).next( lpair(f) ); }
+    ).mbind( [&r](Num f) { return matchedString("..", r).mbind( identity(f) ); }
+    ).mbind( [&r](Num f) { return get_num<Num>(r).mbind( lpair(f) ); }
     );
 }
 

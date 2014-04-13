@@ -29,31 +29,6 @@ namespace boost
     struct monad_category<expected<E,T> > : mpl::identity<category::valued_and_errored> { };
 
     template <class T1, class E1>
-    struct monad_traits<expected<E1,T1>> {
-
-      template <class M, class T>
-      static M make(T&& v)
-      {
-        return M(std::forward<T>(v));
-      }
-
-      template <class M, class F>
-      static auto
-      then(M&& m, F&& f) -> decltype(m.then(std::forward<F>(f)))
-      {
-        m.then(std::forward<F>(f));
-      }
-
-      template <class M, class F>
-      static auto
-      mbind(M&& m, F&& f) -> decltype(m.next(std::forward<F>(f)))
-      {
-        return m.next(std::forward<F>(f));
-      }
-
-    };
-
-    template <class T1, class E1>
     struct monad_error_traits<expected<E1,T1> >
     {
       template <class M>

@@ -36,7 +36,6 @@ namespace boost
       template <class Mo>
       struct monad_traits
       {
-
         // make use of constructor
         template <class M, class T>
         static apply<M, T> make(T&& v)
@@ -77,9 +76,6 @@ namespace boost
       {
         return Traits::mbind(std::forward<M>(m), std::forward<F>(f));
       }
-
-
-
     }
   }
 }

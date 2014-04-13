@@ -68,7 +68,7 @@ YIELD(i+4))
 
 ===>
 
-monad_expr.next([&](int i){
+monad_expr.mbind([&](int i){
   return i + 4;
 })
 
@@ -81,8 +81,8 @@ YIELD(i+j))
 
 ===>
 
-monad_expr_1.next([&](int i){
-monad_expr_2.next([&](int j){
+monad_expr_1.mbind([&](int i){
+monad_expr_2.mbind([&](int j){
   return i + j;
 })})
 

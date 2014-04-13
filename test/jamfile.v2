@@ -34,13 +34,13 @@ alias boost_unit_test : /boost/test//boost_unit_test_framework/<link>static ;
 	
 project expected
     : requirements
-      <include>$(BOOST_ROOT)
       <include>. # .cpp files in expected/test.
       <include>../include/ # expected .hpp files.
-      <library>$(BOOST_ROOT/boost/test//boost_unit_test_framework
+      <library>boost_unit_test
       
       <link>static
       <toolset>gcc:<cxxflags>-std=c++11
+      <toolset>gcc:<cxxflags>-Wno-unused-local-typedefs
       <toolset>clang:<cxxflags>-std=c++11
       <toolset>msvc:<asynch-exceptions>on # Needed for Boost.Test
       <toolset>msvc:<warnings>all
