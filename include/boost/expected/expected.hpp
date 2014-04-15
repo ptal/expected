@@ -948,11 +948,23 @@ public:
   }
 #endif
 
-  // TODO
+
+#if ! defined BOOST_EXPECTED_NO_CXX11_MOVE_ACCESSORS
+  BOOST_CONSTEXPR unexpected_type<error_type> get_unexpected() const& BOOST_NOEXCEPT
+  {
+    return unexpected_type<error_type>(contained_err());
+  }
+
+  BOOST_CONSTEXPR unexpected_type<error_type> get_unexpected() && BOOST_NOEXCEPT
+  {
+    return unexpected_type<error_type>(constexpr_move(contained_err()));
+  }
+#else
   BOOST_CONSTEXPR unexpected_type<error_type> get_unexpected() const BOOST_NOEXCEPT
   {
     return unexpected_type<error_type>(contained_err());
   }
+#endif
 
 
   // Utilities
@@ -1522,10 +1534,22 @@ public:
   }
 #endif
 
+#if ! defined BOOST_EXPECTED_NO_CXX11_MOVE_ACCESSORS
+  BOOST_CONSTEXPR unexpected_type<error_type> get_unexpected() const& BOOST_NOEXCEPT
+  {
+    return unexpected_type<error_type>(contained_err());
+  }
+
+  BOOST_CONSTEXPR unexpected_type<error_type> get_unexpected() && BOOST_NOEXCEPT
+  {
+    return unexpected_type<error_type>(constexpr_move(contained_err()));
+  }
+#else
   BOOST_CONSTEXPR unexpected_type<error_type> get_unexpected() const BOOST_NOEXCEPT
   {
     return unexpected_type<error_type>(contained_err());
   }
+#endif
 
   // mbind factory
 

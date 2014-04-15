@@ -967,8 +967,8 @@ BOOST_AUTO_TEST_CASE(make_unexpected_fact)
     expected<int,string> opt1 = make_unexpected(1);
     expected<int,string> opt2 = {unexpect, 1};
 
-    opt1 =   make_unexpected(1);
-    opt2 =  {unexpect, 1};
+    opt1 = make_unexpected(1);
+    opt2 = {unexpect, 1};
   }
 }
 BOOST_AUTO_TEST_CASE(error_exception_ts)
