@@ -21,27 +21,17 @@ namespace boost
     namespace valued
     {
       template <class T, class E>
-      struct value_category<expected<E, T> > : mpl::identity<category::pointer_like>
-      {
-      };
+      struct value_category<expected<E, T> > : mpl::identity<category::pointer_like> {};
     }
     namespace functor
     {
       template <class T, class E>
-      struct functor_category<expected<E, T> > : mpl::identity<category::valued_and_errored>
-      {
-      };
-      static_assert(std::is_same<
-          functor_category_t<expected<std::exception_ptr,int>>,
-          category::valued_and_errored>::value, "");
+      struct functor_category<expected<E, T> > : mpl::identity<category::valued_and_errored> {};
     }
     namespace monad
     {
-
       template <class T, class E>
-      struct is_monad<expected<E, T> > : std::true_type
-      {
-      };
+      struct is_monad<expected<E, T> > : std::true_type {};
 
       //    template <class T, class E>
       //    struct monad_category<expected<E,T> > : mpl::identity<category::valued_and_errored> { };
@@ -49,7 +39,6 @@ namespace boost
       template <class T1, class E1>
       struct monad_traits<expected<E1, T1>>
       {
-
         template <class M, class T>
         static apply<M, T> make(T&& v)
         {
@@ -62,7 +51,6 @@ namespace boost
         {
           return m.mbind(std::forward<F>(f));
         }
-
       };
     }
     namespace monad_error

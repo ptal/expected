@@ -29,9 +29,13 @@ namespace boost
       struct value_traits
       {
         template <class M>
-        using type = typename M::value_type;template <class M>
+        using type = typename M::value_type;
+
+        template <class M>
         static constexpr bool has_value(M&& m)
-        { return m.has_value();};template <class M>
+        { return m.has_value();}
+
+        template <class M>
         static constexpr auto deref(M&& m) -> decltype(m.deref())
         { return m.deref();};
       };
