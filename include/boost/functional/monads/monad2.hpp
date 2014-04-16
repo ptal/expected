@@ -20,9 +20,7 @@ namespace boost
       using namespace ::boost::functional::functor;
 
       template <class M>
-      struct is_monad: std::false_type
-      {
-      };
+      struct is_monad: std::false_type {};
 
       template <class M>
       struct monad_category
@@ -79,6 +77,7 @@ namespace boost
     }
   }
 }
+
 template <class M, class F>
 auto operator&(M&& m, F&& f)
 -> decltype(::boost::functional::monad::mbind(std::forward<M>(m), std::forward<F>(f)))
