@@ -14,22 +14,23 @@ namespace boost
   {
     namespace category
     {
-      struct pointer_like
-      {
-      };
+      struct pointer_like {};
     }
-
     namespace valued
     {
       template <>
       struct value_traits<category::pointer_like>
       {
         template <class M>
-        using type = typename M::value_type;template <class M>
+        using type = typename M::value_type;
+
+        template <class M>
         static constexpr bool has_value(M&& m)
-        { return bool(m);};template <class M>
+        { return bool(m); }
+
+        template <class M>
         static constexpr auto deref(M&& m) -> decltype(*m)
-        { return *m;};
+        { return *m; }
       };
     }
   }

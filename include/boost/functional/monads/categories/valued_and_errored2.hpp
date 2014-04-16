@@ -36,9 +36,7 @@ namespace boost
   {
     namespace category
     {
-      struct valued_and_errored
-      {
-      };
+      struct valued_and_errored {};
     }
     namespace functor
     {

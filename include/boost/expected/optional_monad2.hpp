@@ -10,25 +10,24 @@
 #include <boost/functional/meta.hpp>
 #include <boost/optional.hpp>
 #include <boost/mpl/identity.hpp>
+#include <boost/functional/monads/categories/pointer_like2.hpp>
+#include <boost/functional/monads/errored2.hpp>
+#include <boost/functional/monads/functor2.hpp>
+#include <boost/functional/monads/categories/valued_and_errored2.hpp>
+#include <boost/functional/monads/monad2.hpp>
+#include <boost/functional/monads/monad_error2.hpp>
+#include <type_traits>
+
 namespace boost
 {
+  using optional_monad = functional::lift<optional>;
+
   namespace functional
   {
     template <class T, class U>
     struct rebind<optional<T>, U> : mpl::identity<optional<U> >
     {};
 
-  }
-
-  using optional_monad = functional::lift<optional>;
-}
-
-#include <boost/functional/monads/categories/pointer_like2.hpp>
-
-namespace boost
-{
-  namespace functional
-  {
     namespace valued
     {
       template <class T>
@@ -37,14 +36,6 @@ namespace boost
       };
 
     }
-  }
-}
-#include <boost/functional/monads/errored2.hpp>
-
-namespace boost
-{
-  namespace functional
-  {
     namespace errored
     {
       template <class T>
@@ -55,60 +46,32 @@ namespace boost
 
         template <class M, class E>
         static M make_error(E&&)
-        {
-          return none;
-        }
+        { return none; }
+
         static constexpr none_t get_unexpected(optional<T> const& )
-        { return none;}
+        { return none; }
+
         template< class M >
         static constexpr none_t error(M && m)
-        { return none;}
+        { return none; }
 
       };
     }
-  }
-}
-#include <boost/functional/monads/functor2.hpp>
-#include <boost/functional/monads/categories/valued_and_errored2.hpp>
-
-namespace boost
-{
-  namespace functional
-  {
     namespace functor
     {
       template <class T>
-      struct functor_category<optional<T> > : mpl::identity<category::valued_and_errored>
-      {};
+      struct functor_category<optional<T> > : mpl::identity<category::valued_and_errored> {};
     }
-  }
-}
-#include <boost/functional/monads/monad2.hpp>
-#include <type_traits>
-
-namespace boost
-{
-  namespace functional
-  {
     namespace monad
     {
 
       template <class T>
-      struct is_monad<optional<T> > : std::true_type
-      {};
+      struct is_monad<optional<T> > : std::true_type {};
+
       template <class T>
-      struct monad_category<optional<T> > : mpl::identity<category::valued_and_errored>
-      {};
+      struct monad_category<optional<T> > : mpl::identity<category::valued_and_errored> {};
 
     }
-  }
-}
-#include <boost/functional/monads/monad_error2.hpp>
-
-namespace boost
-{
-  namespace functional
-  {
     namespace monad_error
     {
 
