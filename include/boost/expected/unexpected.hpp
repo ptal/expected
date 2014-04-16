@@ -47,7 +47,7 @@ namespace boost
       return error_;
     }
     BOOST_CONSTEXPR
-    BOOST_FORCEINLINE ErrorType& value() &
+    BOOST_FORCEINLINE ErrorType& value() &&
     {
       return constexpr_move(error_);
     }

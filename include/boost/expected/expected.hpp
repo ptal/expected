@@ -512,9 +512,120 @@ struct is_expected : false_type {};
 template <typename E, typename T>
 struct is_expected<expected<E,T> > : true_type {};
 
+namespace detail{
+
+template <typename T>
+struct is_unwrappable : false_type {};
+template <typename E, typename T, typename E2>
+struct is_unwrappable<expected<E, expected<T, E2> > >
+: is_convertible<E, E2> {};
+
+template <class E, class T>
+class unwrap_expected_base
+{
+ public:
+  typedef expected<E,T> expected_type;
+ private:
+#if ! defined BOOST_EXPECTED_NO_CXX11_MOVE_ACCESSORS
+  expected_type const& base() const&
+  { 
+    return static_cast<const expected_type&>(*this); 
+  }
+  expected_type& base() &
+  { 
+    return static_cast<expected_type&>(*this);
+  }
+  expected_type&& base() &&
+  {
+    return static_cast<expected_type&&>(*this);
+  }
+#else
+  expected_type const& base() const
+  {
+    return static_cast<expected_type const&>(*this);
+  }
+#endif
+};
+
+// Unwrap: [T] -> [T]
+template <class E, class T, bool unwrappable = is_unwrappable<expected<E, T>>::value>
+class unwrap_expected
+: unwrap_expected_base<E, T>
+{
+ public:
+  typedef expected<E,T> expected_type;
+#if ! defined BOOST_EXPECTED_NO_CXX11_MOVE_ACCESSORS
+  // Unwrap: [T] -> [T]
+  BOOST_CONSTEXPR expected_type const& unwrap() const&
+  {
+    return this->base();
+  }
+
+  BOOST_CONSTEXPR expected_type& unwrap() &
+  {
+    return this->base();
+  }
+
+  BOOST_CONSTEXPR expected_type&& unwrap() &&
+  {
+    return this->base();
+  }
+
+#else
+  BOOST_CONSTEXPR expected_type unwrap() const
+  {
+    return this->base();
+  }
+#endif
+};
+
+
+// Unwrap: [[T]] -> [T]
+template <class E, class T>
+class unwrap_expected<E, T, true>
+: unwrap_expected_base<E, T>
+{
+ public:
+  typedef T value_type;
+
+#if ! defined BOOST_EXPECTED_NO_CXX11_MOVE_ACCESSORS
+  BOOST_CONSTEXPR value_type const& unwrap() const&
+  {
+    return this->base()
+      ? *(this->base())
+      : this->base().get_unexpected();
+  }
+
+  BOOST_CONSTEXPR value_type& unwrap() &
+  {
+    return this->base()
+      ? *(this->base())
+      : this->base().get_unexpected();
+  }
+
+  BOOST_CONSTEXPR value_type&& unwrap() &&
+  {
+    return this->base()
+      ? constexpr_move(this->base().contained_val())
+      : this->base().get_unexpected();
+  }
+
+#else
+  BOOST_CONSTEXPR value_type unwrap() const
+  {
+    return this->base()
+      ? this->base().contained_val()
+      : this->base().get_unexpected();
+  }
+#endif
+};
+
+}
+
 template <typename ErrorType, typename ValueType>
 class expected
-: detail::expected_base<ValueType, ErrorType, expected_traits<ErrorType> >
+: public detail::unwrap_expected<ErrorType, ValueType>
+, private detail::expected_base<ValueType, ErrorType, expected_traits<ErrorType> >
 {
 public:
   typedef ValueType value_type;
@@ -965,7 +1076,6 @@ public:
     return unexpected_type<error_type>(contained_err());
   }
 #endif
-
 
   // Utilities
 
@@ -1550,6 +1660,30 @@ public:
     return unexpected_type<error_type>(contained_err());
   }
 #endif
+
+// Unwrap ([Void] -> [Void])
+#if ! defined BOOST_EXPECTED_NO_CXX11_MOVE_ACCESSORS
+  BOOST_CONSTEXPR expected const& unwrap() const& BOOST_NOEXCEPT
+  {
+    return *this;
+  }
+
+  BOOST_CONSTEXPR expected& unwrap() & BOOST_NOEXCEPT
+  {
+    return *this;
+  }
+
+  BOOST_CONSTEXPR expected unwrap() && BOOST_NOEXCEPT
+  {
+    return *this;
+  }
+#else
+  BOOST_CONSTEXPR expected unwrap() const BOOST_NOEXCEPT
+  {
+    return *this;
+  }
+#endif
+
 
   // mbind factory
 
