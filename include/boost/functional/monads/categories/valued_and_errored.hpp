@@ -7,10 +7,13 @@
 #define BOOST_EXPECTED_MONADS_CATEGORIES_VALUED_AND_ERRORED_HPP
 
 #include <boost/config.hpp>
+#include <boost/functional/monads/valued.hpp>
+#include <boost/functional/monads/errored.hpp>
 #include <boost/functional/monads/functor.hpp>
 #include <boost/functional/monads/monad.hpp>
 #include <boost/functional/monads/algorithms/have_value.hpp>
 #include <boost/functional/monads/algorithms/first_unexpected.hpp>
+#include <boost/functional/meta.hpp>
 #include <boost/utility/enable_if.hpp>
 #include <boost/type_traits/is_same.hpp>
 
@@ -29,111 +32,112 @@
 
 namespace boost
 {
-  namespace monads
+namespace functional
+{
+namespace category
+{
+  struct valued_and_errored {};
+}
+namespace functor
+{
+
+  using namespace ::boost::functional::valued;
+  using namespace ::boost::functional::errored;
+  template <>
+  struct functor_traits<category::valued_and_errored>
   {
-    namespace category
+
+    template <class F, class M0, class ...M,
+    class FR = decltype( std::declval<F>()(deref(std::declval<M0>()), deref(std::declval<M>())...) )>
+    static BOOST_CONSTEXPR auto fmap(F&& f, M0&& m0, M&& ...m) -> typename functional::rebind<decay_t<M0>, FR>::type
     {
-      struct valued_and_errored {};
+      typedef typename functional::rebind<decay_t<M0>, FR>::type result_type;
+      return have_value( std::forward<M0>(m0), std::forward<M>(m)... )
+      ? result_type( std::forward<F>(f)( deref(std::forward<M0>(m0)), deref(std::forward<M>(m))... ) )
+      : first_unexpected( std::forward<M0>(m0), std::forward<M>(m)... )
+      ;
+    }
+  };
+}
+namespace monad
+{
+
+  template <>
+  struct monad_traits<category::valued_and_errored>
+  {
+
+    template <class M, class T>
+    static BOOST_CONSTEXPR apply<M, T> make(T&& v)
+    {
+      return apply<M, T>(std::forward<T>(v));
     }
 
-    template <>
-    struct functor_traits<category::valued_and_errored>
+    template <class M, class F, class FR = decltype( std::declval<F>()( deref(std::declval<M>()) ) )>
+    static BOOST_CONSTEXPR auto
+    mbind(M&& m, F&& f,
+        REQUIRES(boost::is_same<FR, void>::value)
+    ) -> typename functional::rebind<decay_t<M>, FR>::type
     {
-      template <class F, class M0, class ...M,
-          class FR = decltype( std::declval<F>()(deref(std::declval<M0>()), deref(std::declval<M>())...) )>
-      static BOOST_CONSTEXPR auto fmap(F&& f, M0&& m0, M&& ...m) -> typename functional::rebind<decay_t<M0>, FR>::type
+      typedef typename functional::rebind<decay_t<M>, FR>::type result_type;
+#if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
+      if(has_value(m))
       {
-        typedef typename functional::rebind<decay_t<M0>, FR>::type result_type;
-        return have_value( std::forward<M0>(m0), std::forward<M>(m)... )
-        ? result_type( std::forward<F>(f)( deref(std::forward<M0>(m0)), deref(std::forward<M>(m))... ) )
-        : first_unexpected( std::forward<M0>(m0), std::forward<M>(m)... )
-        ;
+        f(deref(m));
+        return result_type();
       }
-    };
+      return get_unexpected(m);
+#else
+      return (has_value(m)
+          ? (f(deref(m)), result_type() )
+          : result_type( get_unexpected(m) )
+      );
+#endif
+    }
 
-    template <>
-    struct monad_traits<category::valued_and_errored>
+    template <class M, class F, class FR = decltype( std::declval<F>()( deref(std::declval<M>()) ) )>
+    static BOOST_CONSTEXPR auto
+    mbind(M&& m, F&& f,
+        REQUIRES((! boost::is_same<FR, void>::value
+                && ! boost::functional::monad::is_monad<FR>::value)
+        )) -> typename functional::rebind<decay_t<M>, FR>::type
     {
-
-      template <class M, class T>
-      static BOOST_CONSTEXPR M make(T&& v)
-      {
-        return M(std::forward<T>(v));
-      }
-
-      template <class M, class F>
-      static BOOST_CONSTEXPR auto
-      then(M&& m, F&& f) -> decltype(m.then(std::forward<F>(f)))
-      {
-        return m.then(std::forward<F>(f));
-      }
-
-      template <class M, class F, class FR = decltype( std::declval<F>()( deref(std::declval<M>()) ) )>
-      static BOOST_CONSTEXPR auto
-      mbind(M&& m, F&& f,
-          REQUIRES(boost::is_same<FR, void>::value)
-      ) -> typename functional::rebind<decay_t<M>, FR>::type
-      {
-        typedef typename functional::rebind<decay_t<M>, FR>::type result_type;
+      typedef typename functional::rebind<decay_t<M>, FR>::type result_type;
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
-        if(has_value(m))
-        {
-          f(deref(m));
-          return result_type();
-        }
-        return get_unexpected(m);
-#else
-        return (has_value(m)
-        ? (f(deref(m)), result_type() )
-        : result_type( get_unexpected(m) )
-        );
-#endif
-      }
-
-      template <class M, class F, class FR = decltype( std::declval<F>()( deref(std::declval<M>()) ) )>
-      static BOOST_CONSTEXPR auto
-      mbind(M&& m, F&& f,
-          REQUIRES((! boost::is_same<FR, void>::value
-              &&    ! boost::monads::is_monad<FR>::value)
-      )) -> typename functional::rebind<decay_t<M>, FR>::type
+      if(has_value(m))
       {
-        typedef typename functional::rebind<decay_t<M>, FR>::type result_type;
-#if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
-        if(has_value(m))
-        {
-            return result_type(f(deref(m)));
-        }
-        return get_unexpected(m);
-#else
-        return (has_value(m)
-        ? result_type(f(deref(m)))
-        : result_type( get_unexpected(m) )
-        );
-#endif
+        return result_type(f(deref(m)));
       }
+      return get_unexpected(m);
+#else
+      return (has_value(m)
+          ? result_type(f(deref(m)))
+          : result_type( get_unexpected(m) )
+      );
+#endif
+    }
 
-      template <class M, class F, class FR = decltype( std::declval<F>()( deref(std::declval<M>()) ) )>
-      static BOOST_CONSTEXPR auto
-      mbind(M&& m, F&& f,
-          REQUIRES( boost::monads::is_monad<FR>::value )
-      ) -> FR
+    template <class M, class F, class FR = decltype( std::declval<F>()( deref(std::declval<M>()) ) )>
+    static BOOST_CONSTEXPR auto
+    mbind(M&& m, F&& f,
+        REQUIRES( boost::functional::monad::is_monad<FR>::value )
+    ) -> FR
+    {
+#if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
+      if(has_value(m))
       {
-#if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
-        if(has_value(m))
-        {
-            return f(deref(m));
-        }
-        return get_unexpected(m);
-#else
-        return (has_value(m)
-        ? f(deref(m))
-        : FR( get_unexpected(m) )
-        );
-#endif
+        return f(deref(m));
       }
-    };
-
-  }
+      return get_unexpected(m);
+#else
+      return (has_value(m)
+          ? f(deref(m))
+          : FR( get_unexpected(m) )
+      );
+#endif
+    }
+  };
+}
+}
 }
 
 #undef REQUIRES

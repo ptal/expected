@@ -121,6 +121,7 @@ struct MoveAware
 };
 
 using namespace boost;
+using namespace boost::functional;
 
 class test_exception : public std::exception
 {

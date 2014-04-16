@@ -13,6 +13,8 @@
 
 namespace boost
 {
+namespace functional
+{
 
   template <class H>
   class adaptor_holder
@@ -40,110 +42,114 @@ namespace boost
     funct_type fct_;
   };
 
-  namespace detail
+namespace detail
+{
+
+  template <class E, class F, class V>
+  class if_valued
+  {
+    F fct_;
+  public:
+    explicit if_valued(F f) :
+      fct_(f)
+    {
+    }
+
+    typedef typename E::value_type value_type;
+    typedef typename E::template rebind<typename result_of<F(value_type)>::type>::type result_type;
+
+    result_type operator()(E e)
+    {
+      using namespace ::boost::functional::errored;
+      using namespace ::boost::functional::monad_error;
+      if (has_value(e))
+      {
+        return result_type(fct_(value(e)));
+      }
+      else
+      {
+        return result_type(get_unexpected(e));
+      }
+    }
+  };
+
+  template <class E, class F, class R>
+  class if_valued2
+  {
+    F fct_;
+  public:
+    explicit if_valued2(F f) :
+      fct_(f)
+    {
+    }
+
+    typedef void value_type;
+    typedef typename E::template rebind<R>::type result_type;
+
+    result_type operator()(E e)
+    {
+      using namespace ::boost::functional::errored;
+      if (has_value(e))
+      {
+        return result_type(fct_());
+      }
+      else
+      {
+        return result_type(get_unexpected(e));
+      }
+    }
+  };
+
+  template <class E, class F>
+  class if_valued2<E, F, void>
+  {
+    F fct_;
+  public:
+    explicit if_valued2(F f) :
+      fct_(f)
+    {
+    }
+
+    typedef void value_type;
+    typedef typename E::template rebind<void>::type result_type;
+
+    result_type operator()(E e)
+    {
+      using namespace ::boost::functional::errored;
+      if (has_value(e))
+      {
+        fct_();
+        return result_type(in_place2);
+      }
+      else
+      {
+        return result_type(get_unexpected(e));
+      }
+    }
+  };
+
+  template <class E, class F>
+  struct if_valued<E, F, void> : if_valued2<E, F, typename result_of<F()>::type>
   {
 
-    template <class E, class F, class V>
-    class if_valued
+    explicit if_valued(F f) :
+      if_valued2<E, F, typename result_of<F()>::type> (f)
     {
-      F fct_;
-    public:
-      explicit if_valued(F f) :
-        fct_(f)
-      {
-      }
+    }
 
-      typedef typename E::value_type value_type;
-      typedef typename E::template rebind<typename result_of<F(value_type)>::type>::type result_type;
+  };
 
-      result_type operator()(E e)
-      {
-        if (monads::has_value(e))
-        {
-          return result_type(fct_(monads::value(e)));
-        }
-        else
-        {
-          return result_type(monads::get_unexpected(e));
-        }
-      }
-    };
-
-    template <class E, class F, class R>
-    class if_valued2
+  template <class F>
+  struct if_valued_adaptor
+  {
+    typedef F funct_type;
+    template <class E>
+    struct rebind
     {
-      F fct_;
-    public:
-      explicit if_valued2(F f) :
-        fct_(f)
-      {
-      }
-
-      typedef void value_type;
-      typedef typename E::template rebind<R>::type result_type;
-
-      result_type operator()(E e)
-      {
-        if (monads::has_value(e))
-        {
-          return result_type(fct_());
-        }
-        else
-        {
-          return result_type(monads::get_unexpected(e));
-        }
-      }
+      typedef if_valued<E, funct_type, typename E::value_type> type;
     };
-
-    template <class E, class F>
-    class if_valued2<E, F, void>
-    {
-      F fct_;
-    public:
-      explicit if_valued2(F f) :
-        fct_(f)
-      {
-      }
-
-      typedef void value_type;
-      typedef typename E::template rebind<void>::type result_type;
-
-      result_type operator()(E e)
-      {
-        if (monads::has_value(e))
-        {
-          fct_();
-          return result_type(in_place2);
-        }
-        else
-        {
-          return result_type(monads::get_unexpected(e));
-        }
-      }
-    };
-
-    template <class E, class F>
-    struct if_valued<E, F, void> : if_valued2<E, F, typename result_of<F()>::type>
-    {
-
-      explicit if_valued(F f) :
-        if_valued2<E, F, typename result_of<F()>::type> (f)
-      {
-      }
-
-    };
-
-    template <class F>
-    struct if_valued_adaptor
-    {
-      typedef F funct_type;
-      template <class E>
-      struct rebind
-      {
-        typedef if_valued<E, funct_type, typename E::value_type> type;
-      };
-    };
-  }
+  };
+}
 
   template <class F>
   inline adaptor_holder<detail::if_valued_adaptor<F> > if_valued(F f)
@@ -151,29 +157,29 @@ namespace boost
     return adaptor_holder<detail::if_valued_adaptor<F> > (f);
   }
 
-  namespace detail
+namespace detail
+{
+
+  template <class F>
+  class ident_t
   {
+    F fct_;
+  public:
 
-    template <class F>
-    class ident_t
+    explicit ident_t(F f) :
+      fct_(f)
     {
-      F fct_;
-    public:
+    }
 
-      explicit ident_t(F f) :
-        fct_(f)
-      {
-      }
+    typedef typename result_of<F()>::type result_type;
 
-      typedef typename result_of<F()>::type result_type;
-
-      template <class G>
-      result_type operator()(G e)
-      {
-        return fct_();
-      }
-    };
-  }
+    template <class G>
+    result_type operator()(G e)
+    {
+      return fct_();
+    }
+  };
+}
 
   template <class F>
   inline detail::ident_t<F> ident(F f)
@@ -181,52 +187,54 @@ namespace boost
     return detail::ident_t<F>(f);
   }
 
-  namespace detail
+namespace detail
+{
+
+  template <class E, class F, class V>
+  class if_unexpected
   {
+    F fct_;
+  public:
+    typedef F funct_type;
+    typedef E result_type;
 
-    template <class E, class F, class V>
-    class if_unexpected
+    explicit if_unexpected(funct_type f) :
+      fct_(f)
     {
-      F fct_;
-    public:
-      typedef F funct_type;
-      typedef E result_type;
+    }
 
-      explicit if_unexpected(funct_type f) :
-        fct_(f)
-      {
-      }
-
-      E operator()(E e)
-      {
-        if (!monads::has_value(e))
-        {
-          return result_type(fct_(monads::error(e)));
-        }
-        else
-        {
-          return boost::move(e);
-        }
-      }
-    };
-
-    template <class F>
-    struct if_unexpected_adaptor
+    E operator()(E e)
     {
-      typedef F funct_type;
-      template <class E>
-      struct rebind
+      using namespace ::boost::functional::errored;
+      if (!has_value(e))
       {
-        typedef if_unexpected<E, funct_type, typename E::value_type> type;
-      };
+        return result_type(fct_(error(e)));
+      }
+      else
+      {
+        return boost::move(e);
+      }
+    }
+  };
+
+  template <class F>
+  struct if_unexpected_adaptor
+  {
+    typedef F funct_type;
+    template <class E>
+    struct rebind
+    {
+      typedef if_unexpected<E, funct_type, typename E::value_type> type;
     };
-  }
+  };
+}
 
   template <class F>
   inline adaptor_holder<detail::if_unexpected_adaptor<F> > if_unexpected(F f)
   {
     return adaptor_holder<detail::if_unexpected_adaptor<F> > (f);
   }
+}
 } // namespace boost
 
 #endif // BOOST_FUNCTIONAL_ADAPTOR_HPP
