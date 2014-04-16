@@ -10,23 +10,28 @@
 
 namespace boost
 {
-  namespace monads
+namespace functional
+{
+namespace category
+{
+  struct pointer_like {};
+}
+namespace valued
+{
+  template <>
+  struct value_traits<category::pointer_like>
   {
-    namespace category
-    {
-      struct pointer_like {};
-    }
+    template <class M>
+    using type = typename M::value_type;
 
-    template <>
-    struct value_traits<category::pointer_like> {
-      template <class M>
-      using type = typename M::value_type;
-      template <class M>
-      static constexpr bool has_value(M&& m) { return bool(m); };
-      template <class M>
-      static constexpr auto deref(M&& m) -> decltype(*m) { return *m; };
-    };
-  }
+    template <class M>
+    static constexpr bool has_value(M&& m) { return bool(m); }
+
+    template <class M>
+    static constexpr auto deref(M&& m) -> decltype(*m) { return *m; }
+  };
+}
+}
 }
 
 #endif // BOOST_EXPECTED_MONADS_CATEGORIES_POINTER_LIKE_HPP

@@ -10,46 +10,77 @@
 #include <boost/functional/monads/categories/valued_and_errored.hpp>
 #include <boost/functional/monads/monad_error.hpp>
 #include <boost/expected/expected.hpp>
+#include <boost/expected/unexpected.hpp>
 #include <boost/mpl/identity.hpp>
 #include <type_traits>
 
 namespace boost
 {
-  namespace monads
+  namespace functional
   {
-
-    template <class T, class E>
-    struct is_monad<expected<E,T> > : std::true_type { };
-
-    template <class T, class E>
-    struct value_category<expected<E,T> > : mpl::identity<category::pointer_like> { };
-    template <class T, class E>
-    struct functor_category<expected<E,T> > : mpl::identity<category::valued_and_errored> { };
-    template <class T, class E>
-    struct monad_category<expected<E,T> > : mpl::identity<category::valued_and_errored> { };
-
-    template <class T1, class E1>
-    struct monad_error_traits<expected<E1,T1> >
+    namespace valued
     {
-      template <class M>
-      static constexpr auto value(M&& m) -> decltype(m.value()) { return m.value(); };
+      template <class T, class E>
+      struct value_category<expected<E, T> > : mpl::identity<category::pointer_like> {};
+    }
+    namespace functor
+    {
+      template <class T, class E>
+      struct functor_category<expected<E, T> > : mpl::identity<category::valued_and_errored> {};
+    }
+    namespace monad
+    {
+      template <class T, class E>
+      struct is_monad<expected<E, T> > : std::true_type {};
 
-      template <class M, class E>
-      static M make_error(E&& v)
-      {
-        return make_unexpected(std::forward<E>(v));
-      }
+      //    template <class T, class E>
+      //    struct monad_category<expected<E,T> > : mpl::identity<category::valued_and_errored> { };
 
-      template <class M, class F>
-      static BOOST_CONSTEXPR auto
-      catch_error(M&& m, F&& f) -> decltype(m.recover(std::forward<F>(f)))
+//      template <class T1, class E1>
+//      struct monad_traits<expected<E1, T1>>
+//      {
+//        template <class M, class T>
+//        static apply<M, T> make(T&& v)
+//        {
+//          return apply<M, T>(std::forward<T>(v));
+//        }
+//
+//        template <class M, class F>
+//        static auto
+//        mbind(M&& m, F&& f) -> decltype(m.mbind(std::forward<F>(f)))
+//        {
+//          return m.mbind(std::forward<F>(f));
+//        }
+//      };
+    }
+    namespace monad_error
+    {
+      static_assert(std::is_same<
+          monad_error_category_t<expected<std::exception_ptr,int>>,
+          expected<std::exception_ptr,int>>::value, "");
+
+      template <class T1, class E1>
+      struct monad_error_traits<expected<E1,T1> >
       {
-        return m.recover(std::forward<F>(f));
-      }
-    };
+        template <class M>
+        static constexpr auto value(M&& m) -> decltype(m.value())
+        { return m.value();};
+
+        template <class M, class E>
+        static auto make_error(E&& e) -> decltype(make_unexpected(std::forward<E>(e)))
+        {
+          return make_unexpected(std::forward<E>(e));
+        }
+
+        template <class M, class F>
+        static M catch_error(M&& m, F&& f)
+        {
+          return m.recover(std::forward<F>(f));
+        }
+      };
+    }
   }
 }
-
 #undef REQUIRES
 #undef T_REQUIRES
 
