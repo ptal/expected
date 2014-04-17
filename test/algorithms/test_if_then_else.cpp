@@ -75,7 +75,8 @@ BOOST_AUTO_TEST_SUITE(Copyable)
         expected<int,int> e0{unexpect, 1};
         expected<int, expected<int, std::string>> e1 = e0.fmap(to_expected_string_ok);
         expected<int, expected<int, std::string>> e2 = e1.recover(to_expected_error_ko);
-        expected<int, std::string> e3 = unwrap(e2);
+        //expected<int, std::string> e3 = unwrap(e2);
+        expected<int, std::string> e3 = e2.unwrap();
         BOOST_CHECK (!e3 && (e3.error() == 2));
         expected<int, std::string> e = if_then_else(expected<int,int>{unexpect, 1}, to_expected_string_ok, to_expected_error_ko);
         BOOST_CHECK (!e);

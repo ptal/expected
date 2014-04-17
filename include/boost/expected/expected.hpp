@@ -507,6 +507,27 @@ struct holder;
 template <typename ErrorType=std::exception_ptr, typename ValueType=holder>
 class expected;
 
+namespace expected_detail
+{
+
+  template <class C>
+  struct unwrap_result_type;
+
+  template <class E, class T>
+  struct unwrap_result_type<expected<E,T>> {
+    using type = expected<E, T>;
+  };
+
+  template <class E, class T>
+  struct unwrap_result_type<expected<E,expected<E,T>>> {
+    using type = expected<E, T>;
+  };
+
+  template <class C>
+  using unwrap_result_type_t = typename unwrap_result_type<C>::type;
+
+}
+
 template <typename T>
 struct is_expected : false_type {};
 template <typename E, typename T>
@@ -1020,6 +1041,9 @@ public:
   }
 
 # endif
+
+
+  inline expected_detail::unwrap_result_type_t<expected> unwrap();
 
   template <typename F>
   BOOST_CONSTEXPR rebind_t<void>
@@ -1551,6 +1575,8 @@ public:
   }
 #endif
 
+  inline expected_detail::unwrap_result_type_t<expected> unwrap();
+
   // mbind factory
 
   template <typename F>
@@ -2003,6 +2029,29 @@ make_expected_from_call(F funct
   }
 }
 
+namespace expected_detail
+{
+
+  // Factories
+  // unwrap and if_then_else factories could be added as member functions
+  template <class E, class T>
+  expected<E,T> unwrap(expected<E, expected<E,T> > ee) {
+    if (ee) return *ee;
+    return ee.get_unexpected();
+  }
+  template <class E, class T>
+  expected<E,T> unwrap(expected<E,T> e) {
+    return e;
+  }
+
+} // namespace expected_detail
+
+  template <typename E, typename T>
+  inline expected_detail::unwrap_result_type_t<expected<E, T>>
+  expected<E, T>::unwrap()
+  {
+    return expected_detail::unwrap(*this);
+  }
 } // namespace boost
 
 #if defined BOOST_NO_CXX11_VARIADIC_TEMPLATES
