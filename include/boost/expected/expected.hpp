@@ -1043,8 +1043,12 @@ public:
 # endif
 
 
-  inline expected_detail::unwrap_result_type_t<expected> unwrap();
-
+#if ! defined BOOST_EXPECTED_NO_CXX11_RVALUE_REFERENCE_FOR_THIS
+  inline BOOST_CONSTEXPR expected_detail::unwrap_result_type_t<expected> unwrap() const&;
+  inline BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS expected_detail::unwrap_result_type_t<expected> unwrap() &&;
+#else
+  inline BOOST_CONSTEXPR expected_detail::unwrap_result_type_t<expected> unwrap() const;
+#endif
   template <typename F>
   BOOST_CONSTEXPR rebind_t<void>
   fmap(BOOST_RV_REF(F) f,
@@ -1575,7 +1579,12 @@ public:
   }
 #endif
 
-  inline expected_detail::unwrap_result_type_t<expected> unwrap();
+#if ! defined BOOST_EXPECTED_NO_CXX11_RVALUE_REFERENCE_FOR_THIS
+  inline BOOST_CONSTEXPR expected_detail::unwrap_result_type_t<expected> unwrap() const&;
+  inline BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS expected_detail::unwrap_result_type_t<expected> unwrap() &&;
+#else
+  inline BOOST_CONSTEXPR expected_detail::unwrap_result_type_t<expected> unwrap() const;
+#endif
 
   // mbind factory
 
@@ -2033,25 +2042,51 @@ namespace expected_detail
 {
 
   // Factories
-  // unwrap and if_then_else factories could be added as member functions
+
   template <class E, class T>
-  expected<E,T> unwrap(expected<E, expected<E,T> > ee) {
-    if (ee) return *ee;
-    return ee.get_unexpected();
+  inline BOOST_CONSTEXPR expected<E,T> unwrap(expected<E, expected<E,T> > const& ee)
+  {
+     return (ee) ? *ee : ee.get_unexpected();
   }
   template <class E, class T>
-  expected<E,T> unwrap(expected<E,T> e) {
+  inline BOOST_CONSTEXPR expected<E,T> unwrap(expected<E, expected<E,T> >&& ee)
+  {
+    return (ee) ? std::move(*ee) : ee.get_unexpected();
+  }
+  template <class E, class T>
+  inline BOOST_CONSTEXPR expected<E,T> unwrap(expected<E, T> const& e)
+  {
     return e;
+  }
+  template <class E, class T>
+  inline BOOST_CONSTEXPR expected<E,T> unwrap(expected<E, T> && e)
+  {
+    return std::move(e);
   }
 
 } // namespace expected_detail
 
+#if ! defined BOOST_EXPECTED_NO_CXX11_RVALUE_REFERENCE_FOR_THIS
   template <typename E, typename T>
-  inline expected_detail::unwrap_result_type_t<expected<E, T>>
-  expected<E, T>::unwrap()
+  inline BOOST_CONSTEXPR expected_detail::unwrap_result_type_t<expected<E, T>>
+  expected<E, T>::unwrap() const&
   {
     return expected_detail::unwrap(*this);
   }
+  template <typename E, typename T>
+  inline BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS expected_detail::unwrap_result_type_t<expected<E, T>>
+  expected<E, T>::unwrap() &&
+  {
+    return expected_detail::unwrap(*this);
+  }
+#else
+  template <typename E, typename T>
+  inline BOOST_CONSTEXPR expected_detail::unwrap_result_type_t<expected<E, T>>
+  expected<E, T>::unwrap() const
+  {
+    return expected_detail::unwrap(*this);
+  }
+#endif
 } // namespace boost
 
 #if defined BOOST_NO_CXX11_VARIADIC_TEMPLATES
