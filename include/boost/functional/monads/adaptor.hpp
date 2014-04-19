@@ -212,7 +212,7 @@ namespace detail
       }
       else
       {
-        return boost::move(e);
+        return std::move(e);
       }
     }
   };
