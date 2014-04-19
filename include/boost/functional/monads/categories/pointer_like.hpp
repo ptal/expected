@@ -21,8 +21,10 @@ namespace valued
   template <>
   struct value_traits<category::pointer_like>
   {
+    constexpr static bool value = true;
+
     template <class M>
-    using type = typename M::value_type;
+    using value_type = typename M::value_type;
 
     template <class M>
     static constexpr bool has_value(M&& m) { return bool(m); }
