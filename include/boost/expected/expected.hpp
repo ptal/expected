@@ -507,6 +507,27 @@ struct holder;
 template <typename ErrorType=std::exception_ptr, typename ValueType=holder>
 class expected;
 
+namespace expected_detail
+{
+
+  template <class C>
+  struct unwrap_result_type;
+
+  template <class E, class T>
+  struct unwrap_result_type<expected<E,T>> {
+    using type = expected<E, T>;
+  };
+
+  template <class E, class T>
+  struct unwrap_result_type<expected<E,expected<E,T>>> {
+    using type = expected<E, T>;
+  };
+
+  template <class C>
+  using unwrap_result_type_t = typename unwrap_result_type<C>::type;
+
+}
+
 template <typename T>
 struct is_expected : false_type {};
 template <typename E, typename T>
@@ -585,11 +606,7 @@ private:
 public:
 
   template <class T>
-  struct rebind {
-    typedef expected<error_param_type, T> type;
-  };
-  template <class T>
-  using rebind_t = typename rebind<T>::type;
+  using rebind = expected<error_param_type, T>;
 
   // Constructors/Destructors/Assignments
 
@@ -981,7 +998,7 @@ public:
   BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS value_type value_or(BOOST_FWD_REF(V) v) &&
   {
     return *this
-      ? constexpr_move(const_cast<rebind_t<value_type>&>(*this).contained_val())
+      ? constexpr_move(const_cast<rebind<value_type>&>(*this).contained_val())
       : static_cast<value_type>(constexpr_forward<V>(v));
   }
 
@@ -997,7 +1014,7 @@ public:
   BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS value_type value_or_throw() &&
   {
     return *this
-      ? constexpr_move(const_cast<rebind_t<value_type>&>(*this).contained_val())
+      ? constexpr_move(const_cast<rebind<value_type>&>(*this).contained_val())
       : throw Exception(contained_err());
   }
 
@@ -1019,12 +1036,19 @@ public:
 
 # endif
 
+
+#if ! defined BOOST_EXPECTED_NO_CXX11_RVALUE_REFERENCE_FOR_THIS
+  inline BOOST_CONSTEXPR expected_detail::unwrap_result_type_t<expected> unwrap() const&;
+  inline BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS expected_detail::unwrap_result_type_t<expected> unwrap() &&;
+#else
+  inline BOOST_CONSTEXPR expected_detail::unwrap_result_type_t<expected> unwrap() const;
+#endif
   template <typename F>
-  BOOST_CONSTEXPR rebind_t<void>
+  BOOST_CONSTEXPR rebind<void>
   fmap(BOOST_RV_REF(F) f,
     REQUIRES(boost::is_same<typename result_of<F(value_type)>::type, void>::value)) const
   {
-    typedef rebind_t<void> result_type;
+    typedef rebind<void> result_type;
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
     if(valid())
     {
@@ -1041,11 +1065,11 @@ public:
   }
 
   template <typename F>
-  BOOST_CONSTEXPR rebind_t<typename result_of<F(value_type)>::type>
+  BOOST_CONSTEXPR rebind<typename result_of<F(value_type)>::type>
   fmap(BOOST_RV_REF(F) f,
     REQUIRES(!boost::is_same<typename result_of<F(value_type)>::type, void>::value)) const
   {
-    typedef rebind_t<typename result_of<F(value_type)>::type> result_type;
+    typedef rebind<typename result_of<F(value_type)>::type> result_type;
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
     if(valid())
     {
@@ -1061,11 +1085,11 @@ public:
   }
 
   template <typename F>
-  BOOST_CONSTEXPR rebind_t<void>
+  BOOST_CONSTEXPR rebind<void>
   mbind(BOOST_RV_REF(F) f,
     REQUIRES(boost::is_same<typename result_of<F(value_type)>::type, void>::value)) const
   {
-    typedef rebind_t<void> result_type;
+    typedef rebind<void> result_type;
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
     if(valid())
     {
@@ -1082,13 +1106,13 @@ public:
   }
 
   template <typename F>
-  BOOST_CONSTEXPR rebind_t<typename result_of<F(value_type)>::type>
+  BOOST_CONSTEXPR rebind<typename result_of<F(value_type)>::type>
   mbind(BOOST_RV_REF(F) f,
     REQUIRES(!boost::is_same<typename result_of<F(value_type)>::type, void>::value
         && !boost::is_expected<typename result_of<F(value_type)>::type>::value
         )) const
   {
-    typedef rebind_t<typename result_of<F(value_type)>::type> result_type;
+    typedef rebind<typename result_of<F(value_type)>::type> result_type;
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
     if(valid())
     {
@@ -1125,11 +1149,11 @@ public:
   }
 
   template <typename F>
-  BOOST_CONSTEXPR rebind_t<void>
+  BOOST_CONSTEXPR rebind<void>
   then(BOOST_RV_REF(F) f,
     REQUIRES(boost::is_same<typename result_of<F(expected)>::type, void>::value)) const
   {
-    typedef rebind_t<void> result_type;
+    typedef rebind<void> result_type;
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
     f(boost::move(*this));
     return result_type(in_place_t{});
@@ -1139,13 +1163,13 @@ public:
   }
 
   template <typename F>
-  BOOST_CONSTEXPR rebind_t<typename result_of<F(expected)>::type>
+  BOOST_CONSTEXPR rebind<typename result_of<F(expected)>::type>
   then(BOOST_RV_REF(F) f,
     REQUIRES(!boost::is_same<typename result_of<F(expected)>::type, void>::value
         && !boost::is_expected<typename result_of<F(expected)>::type>::value
         )) const
   {
-    typedef rebind_t<typename result_of<F(value_type)>::type> result_type;
+    typedef rebind<typename result_of<F(value_type)>::type> result_type;
     return result_type(f(boost::move(*this)));
   }
 
@@ -1338,11 +1362,7 @@ private:
 public:
 
   template <class T>
-  struct rebind {
-    typedef expected<error_param_type, T> type;
-  };
-  template <class T>
-  using rebind_t = typename rebind<T>::type;
+  using rebind = expected<error_param_type, T>;
 
   // Constructors/Destructors/Assignments
 
@@ -1549,13 +1569,20 @@ public:
   }
 #endif
 
+#if ! defined BOOST_EXPECTED_NO_CXX11_RVALUE_REFERENCE_FOR_THIS
+  inline BOOST_CONSTEXPR expected_detail::unwrap_result_type_t<expected> unwrap() const&;
+  inline BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS expected_detail::unwrap_result_type_t<expected> unwrap() &&;
+#else
+  inline BOOST_CONSTEXPR expected_detail::unwrap_result_type_t<expected> unwrap() const;
+#endif
+
   // mbind factory
 
   template <typename F>
-  BOOST_CONSTEXPR rebind_t<void> mbind(BOOST_RV_REF(F) f,
+  BOOST_CONSTEXPR rebind<void> mbind(BOOST_RV_REF(F) f,
     REQUIRES(boost::is_same<typename result_of<F()>::type, void>::value)) const
   {
-    typedef rebind_t<void> result_type;
+    typedef rebind<void> result_type;
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
     if(valid())
     {
@@ -1572,11 +1599,11 @@ public:
   }
 
   template <typename F>
-  BOOST_CONSTEXPR rebind_t<typename result_of<F()>::type>
+  BOOST_CONSTEXPR rebind<typename result_of<F()>::type>
   mbind(BOOST_RV_REF(F) f,
     REQUIRES( ! boost::is_same<typename result_of<F()>::type, void>::value) ) const
   {
-    typedef rebind_t<typename result_of<F()>::type> result_type;
+    typedef rebind<typename result_of<F()>::type> result_type;
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
     if(valid())
     {
@@ -1592,11 +1619,11 @@ public:
   }
 
   template <typename F>
-  BOOST_CONSTEXPR rebind_t<void>
+  BOOST_CONSTEXPR rebind<void>
   then(BOOST_RV_REF(F) f,
     REQUIRES(boost::is_same<typename result_of<F(expected)>::type, void>::value)) const
   {
-    typedef rebind_t<void> result_type;
+    typedef rebind<void> result_type;
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
     f(boost::move(*this));
     return result_type(in_place_t{});
@@ -1607,13 +1634,13 @@ public:
 
   // then factory
   template <typename F>
-  BOOST_CONSTEXPR rebind_t<typename result_of<F(expected)>::type>
+  BOOST_CONSTEXPR rebind<typename result_of<F(expected)>::type>
   then(BOOST_RV_REF(F) f,
     REQUIRES(!boost::is_same<typename result_of<F(expected)>::type, void>::value
         && !boost::is_expected<typename result_of<F(expected)>::type>::value
         )) const
   {
-    typedef rebind_t<typename result_of<F(expected)>::type> result_type;
+    typedef rebind<typename result_of<F(expected)>::type> result_type;
     return result_type(f(boost::move(*this)));
   }
 
@@ -2001,6 +2028,55 @@ make_expected_from_call(F funct
   }
 }
 
+namespace expected_detail
+{
+
+  // Factories
+
+  template <class E, class T>
+  inline BOOST_CONSTEXPR expected<E,T> unwrap(expected<E, expected<E,T> > const& ee)
+  {
+     return (ee) ? *ee : ee.get_unexpected();
+  }
+  template <class E, class T>
+  inline BOOST_CONSTEXPR expected<E,T> unwrap(expected<E, expected<E,T> >&& ee)
+  {
+    return (ee) ? std::move(*ee) : ee.get_unexpected();
+  }
+  template <class E, class T>
+  inline BOOST_CONSTEXPR expected<E,T> unwrap(expected<E, T> const& e)
+  {
+    return e;
+  }
+  template <class E, class T>
+  inline BOOST_CONSTEXPR expected<E,T> unwrap(expected<E, T> && e)
+  {
+    return std::move(e);
+  }
+
+} // namespace expected_detail
+
+#if ! defined BOOST_EXPECTED_NO_CXX11_RVALUE_REFERENCE_FOR_THIS
+  template <typename E, typename T>
+  inline BOOST_CONSTEXPR expected_detail::unwrap_result_type_t<expected<E, T>>
+  expected<E, T>::unwrap() const&
+  {
+    return expected_detail::unwrap(*this);
+  }
+  template <typename E, typename T>
+  inline BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS expected_detail::unwrap_result_type_t<expected<E, T>>
+  expected<E, T>::unwrap() &&
+  {
+    return expected_detail::unwrap(*this);
+  }
+#else
+  template <typename E, typename T>
+  inline BOOST_CONSTEXPR expected_detail::unwrap_result_type_t<expected<E, T>>
+  expected<E, T>::unwrap() const
+  {
+    return expected_detail::unwrap(*this);
+  }
+#endif
 } // namespace boost
 
 #if defined BOOST_NO_CXX11_VARIADIC_TEMPLATES

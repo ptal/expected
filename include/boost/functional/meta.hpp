@@ -24,13 +24,6 @@ namespace boost
       using type = F<Args..., Args2...>;
     };
 
-    // transforms a class template C<U> into C<T>
-    template <class M, class T>
-    struct rebind
-    {
-      typedef typename M::template rebind<T>::type type;
-    };
-
     // curry first N args of metafunction
 //    template<class F, class... ArgsN>
 //    struct curryl

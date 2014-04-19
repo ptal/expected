@@ -6,7 +6,6 @@
 #ifndef BOOST_EXPECTED_EXPECTED_MONAD_HPP
 #define BOOST_EXPECTED_EXPECTED_MONAD_HPP
 
-#include <boost/functional/monads/categories/pointer_like.hpp>
 #include <boost/functional/monads/categories/valued_and_errored.hpp>
 #include <boost/functional/monads/monad_error.hpp>
 #include <boost/expected/expected.hpp>
@@ -20,8 +19,20 @@ namespace boost
   {
     namespace valued
     {
-      template <class T, class E>
-      struct value_category<expected<E, T> > : mpl::identity<category::pointer_like> {};
+      template <class E, class T>
+      struct value_traits<expected<E, T>>
+      {
+        constexpr static bool value = true;
+
+        template <class M>
+        static constexpr bool has_value(M&& m) { return bool(m); }
+
+        template <class M>
+        static constexpr auto deref(M&& m) -> decltype(*m) { return *m; }
+
+        template <class M>
+        static constexpr value_type_t<M> get_value(M&& m) { return m.value(); };
+      };
     }
     namespace functor
     {
@@ -81,7 +92,5 @@ namespace boost
     }
   }
 }
-#undef REQUIRES
-#undef T_REQUIRES
 
 #endif // BOOST_EXPECTED_EXPECTED_MONAD_HPP

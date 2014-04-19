@@ -7,7 +7,6 @@
 #define BOOST_EXPECTED_MONADS_CATEGORIES_VALUED_AND_ERRORED_HPP
 
 #include <boost/config.hpp>
-#include <boost/functional/monads/valued.hpp>
 #include <boost/functional/monads/errored.hpp>
 #include <boost/functional/monads/functor.hpp>
 #include <boost/functional/monads/monad.hpp>
@@ -41,7 +40,6 @@ namespace category
 namespace functor
 {
 
-  using namespace ::boost::functional::valued;
   using namespace ::boost::functional::errored;
   template <>
   struct functor_traits<category::valued_and_errored>
@@ -49,9 +47,9 @@ namespace functor
 
     template <class F, class M0, class ...M,
     class FR = decltype( std::declval<F>()(deref(std::declval<M0>()), deref(std::declval<M>())...) )>
-    static BOOST_CONSTEXPR auto fmap(F&& f, M0&& m0, M&& ...m) -> typename functional::rebind<decay_t<M0>, FR>::type
+    static BOOST_CONSTEXPR auto fmap(F&& f, M0&& m0, M&& ...m) -> rebind<decay_t<M0>, FR>
     {
-      typedef typename functional::rebind<decay_t<M0>, FR>::type result_type;
+      typedef rebind<decay_t<M0>, FR> result_type;
       return have_value( std::forward<M0>(m0), std::forward<M>(m)... )
       ? result_type( std::forward<F>(f)( deref(std::forward<M0>(m0)), deref(std::forward<M>(m))... ) )
       : first_unexpected( std::forward<M0>(m0), std::forward<M>(m)... )
@@ -76,9 +74,9 @@ namespace monad
     static BOOST_CONSTEXPR auto
     mbind(M&& m, F&& f,
         REQUIRES(boost::is_same<FR, void>::value)
-    ) -> typename functional::rebind<decay_t<M>, FR>::type
+    ) -> rebind<decay_t<M>, FR>
     {
-      typedef typename functional::rebind<decay_t<M>, FR>::type result_type;
+      typedef rebind<decay_t<M>, FR> result_type;
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
       if(has_value(m))
       {
@@ -99,9 +97,9 @@ namespace monad
     mbind(M&& m, F&& f,
         REQUIRES((! boost::is_same<FR, void>::value
                 && ! boost::functional::monad::is_monad<FR>::value)
-        )) -> typename functional::rebind<decay_t<M>, FR>::type
+        )) -> rebind<decay_t<M>, FR>
     {
-      typedef typename functional::rebind<decay_t<M>, FR>::type result_type;
+      typedef rebind<decay_t<M>, FR> result_type;
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
       if(has_value(m))
       {

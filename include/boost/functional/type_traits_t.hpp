@@ -14,6 +14,13 @@ namespace boost
   template <class M>
   using decay_t = typename std::decay<M>::type;
 
+#if 0
+    template< class... > using void_t = void;
+#else
+    template< class... > struct voider { using type = void; };
+    template< class... T0toN > using void_t = typename voider<T0toN...>::type;
+#endif
+
 }
 
-#endif // BOOST_FUNCTIONAL_MONAD_HPP
+#endif // BOOST_FUNCTIONAL_TYPE_TRAITS_T_HPP

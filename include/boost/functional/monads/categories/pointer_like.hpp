@@ -16,19 +16,38 @@ namespace category
 {
   struct pointer_like {};
 }
+namespace rebindable
+{
+  template <class T>
+  struct rebindable_traits<T*>
+  {
+    constexpr static bool value = true;
+
+    template <class M>
+    using value_type = T;
+
+    template <class M, class U>
+    using rebind = U*;
+  };
+}
 namespace valued
 {
   template <>
   struct value_traits<category::pointer_like>
   {
-    template <class M>
-    using type = typename M::value_type;
+    constexpr static bool value = true;
 
     template <class M>
     static constexpr bool has_value(M&& m) { return bool(m); }
 
     template <class M>
     static constexpr auto deref(M&& m) -> decltype(*m) { return *m; }
+
+    template <class M>
+    static constexpr value_type_t<M> get_value(M&& m)
+    {
+      return (m) ? *m : throw bad_access(),*m;
+    }
   };
 }
 }

@@ -7,6 +7,7 @@
 #define BOOST_EXPECTED_ALGORITHMS_VALUE_OR_CALL_HPP
 
 #include <boost/expected/expected.hpp>
+#include <utility>
 
 namespace boost
 {
@@ -43,11 +44,11 @@ namespace expected_alg
   }
 
   template <class T, class E, class F>
-  BOOST_CONSTEXPR T value_or(expected<E,T> && e, BOOST_FWD_REF(F) f)
+  BOOST_CONSTEXPR T value_or_call(expected<E,T> && e, BOOST_FWD_REF(F) f)
   {
     // We are sure that e.recover(just(std::forward<T>(v))) will be valid or a exception will be thrown
     // so the derefference is safe
-    return * e.recover(defer(std::forward<T>(f)));
+    return * e.recover(defer(std::forward<F>(f)));
   }
 
 } // namespace expected_alg
