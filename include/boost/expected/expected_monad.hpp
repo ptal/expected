@@ -81,7 +81,5 @@ namespace boost
     }
   }
 }
-#undef REQUIRES
-#undef T_REQUIRES
 
 #endif // BOOST_EXPECTED_EXPECTED_MONAD_HPP
