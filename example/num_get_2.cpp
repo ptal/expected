@@ -36,11 +36,22 @@ namespace boost
 {
   namespace functional
   {
-    template <class T, class I, typename E, class U>
-    struct rebind<pair_expected<I, T, E>, U>
+    namespace rebindable
     {
-      typedef pair_expected<I, U, E> type;
-    };
+      template <class T, class I, typename E>
+      struct rebindable_traits<pair_expected<I, T, E>>
+      {
+        constexpr static bool value = true;
+
+        template <class M>
+        using value_type = typename M::value_type;
+
+        template <class M, class U>
+        using rebind = pair_expected<I, U, E>;
+
+      };
+    }
+
   namespace monad
   {
 
@@ -90,7 +101,7 @@ namespace boost
         }
         return make_pair(m.first, expected_type(get_unexpected(m)));
 #else
-        typedef typename functional::rebind<monad_type, result_type>::type monad_result_type;
+        typedef rebindable::rebind<monad_type, result_type> monad_result_type;
         return ( valid(m)
                ?  f(get(m))
                : make_pair(m.first, expected_type(get_unexpected(m)))

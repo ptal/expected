@@ -23,10 +23,21 @@ namespace boost
 
   namespace functional
   {
-    template <class T, class U>
-    struct rebind<optional<T>, U> : mpl::identity<optional<U> >
-    {};
+    namespace rebindable
+    {
+      template <class T>
+      struct rebindable_traits<optional<T>>
+      {
+        constexpr static bool value = true;
 
+        template <class M>
+        using value_type = typename M::value_type;
+
+        template <class M, class U>
+        using rebind = optional<U>;
+
+      };
+    }
     namespace valued
     {
       template <class T>
@@ -49,8 +60,10 @@ namespace boost
       template <class T>
       struct unexpected_traits<optional<T> >
       {
+        constexpr static bool value = true;
+
         template< class M >
-        using type = none_t;
+        using unexpected_type_type = none_t;
 
         template <class M, class E>
         static M make_error(E&&)
@@ -83,7 +96,6 @@ namespace boost
     namespace monad_error
     {
 
-      using namespace ::boost::functional::valued;
       using namespace ::boost::functional::errored;
 
       template <class T>
@@ -107,7 +119,7 @@ namespace boost
         static BOOST_CONSTEXPR M
         catch_error(M&& m, F&& f)
         {
-          typedef typename functional::rebind<decay_t<M>, FR>::type result_type;
+          typedef rebind<decay_t<M>, FR> result_type;
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
           if(! has_value(m))
           {
@@ -143,7 +155,7 @@ namespace boost
         static BOOST_CONSTEXPR M
         catch_error(M&& m, F&& f)
         {
-          typedef typename functional::rebind<decay_t<M>, FR>::type result_type;
+          typedef rebind<decay_t<M>, FR> result_type;
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
           if(! has_value(m))
           {

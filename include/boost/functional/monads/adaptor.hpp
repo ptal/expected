@@ -23,9 +23,9 @@ namespace functional
     typedef H holder_type;
     typedef typename H::funct_type funct_type;
     template <class E>
-    struct rebind
+    struct rebind_right
     {
-      typedef typename H::template rebind<E>::type type;
+      typedef typename H::template rebind_right<E>::type type;
     };
 
     explicit adaptor_holder(funct_type f) :
@@ -34,9 +34,9 @@ namespace functional
     }
 
     template <class E>
-    typename H::template rebind<E>::type::result_type operator()(E e)
+    typename H::template rebind_right<E>::type::result_type operator()(E e)
     {
-      return typename H::template rebind<E>::type(fct_)(e);
+      return typename H::template rebind_right<E>::type(fct_)(e);
     }
   private:
     funct_type fct_;
@@ -56,7 +56,7 @@ namespace detail
     }
 
     typedef typename E::value_type value_type;
-    typedef typename E::template rebind<typename result_of<F(value_type)>::type>::type result_type;
+    typedef rebindable::rebind<E, typename result_of<F(value_type)>::type> result_type;
 
     result_type operator()(E e)
     {
@@ -84,7 +84,7 @@ namespace detail
     }
 
     typedef void value_type;
-    typedef typename E::template rebind<R>::type result_type;
+    typedef rebindable::rebind<E, R> result_type;
 
     result_type operator()(E e)
     {
@@ -111,7 +111,7 @@ namespace detail
     }
 
     typedef void value_type;
-    typedef typename E::template rebind<void>::type result_type;
+    typedef rebindable::rebind<E, void> result_type;
 
     result_type operator()(E e)
     {
@@ -144,7 +144,7 @@ namespace detail
   {
     typedef F funct_type;
     template <class E>
-    struct rebind
+    struct rebind_right
     {
       typedef if_valued<E, funct_type, typename E::value_type> type;
     };
@@ -222,7 +222,7 @@ namespace detail
   {
     typedef F funct_type;
     template <class E>
-    struct rebind
+    struct rebind_right
     {
       typedef if_unexpected<E, funct_type, typename E::value_type> type;
     };

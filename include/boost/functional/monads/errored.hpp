@@ -34,8 +34,10 @@ namespace errored
   template <class T>
   struct unexpected_traits
   {
+    constexpr static bool value = true;
+
     template <class M>
-    using type = typename M::unexpected_type_type;
+    using unexpected_type_type = typename M::unexpected_type_type;
 
     template <class M>
     static constexpr auto get_unexpected(M&& m) -> decltype(m.get_unexpected())
@@ -47,7 +49,7 @@ namespace errored
   };
 
   template    <class M, class Traits = unexpected_traits<unexpected_category_t<decay_t<M> > > >
-  using unexpected_type_t = typename Traits::template type<M>;
+  using unexpected_type_t = typename Traits::template unexpected_type_type<M>;
 
   template <class M, class Traits = unexpected_traits<unexpected_category_t<decay_t<M> > > >
   static constexpr auto

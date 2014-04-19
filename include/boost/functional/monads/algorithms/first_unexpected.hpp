@@ -7,6 +7,7 @@
 #define BOOST_EXPECTED_MONADS_ALGORITHMS_FIRST_UNEXPECTED_HPP
 
 #include <boost/functional/monads/errored.hpp>
+#include <utility>
 
 namespace boost
 {
@@ -15,14 +16,15 @@ namespace functional
 namespace errored
 {
 
-  template< class M, class Traits = unexpected_traits<unexpected_category_t<decay_t<M> > > >
+  template< class M, class = std::enable_if<unexpected_traits<unexpected_category_t<decay_t<M> > >::value> >
   BOOST_CONSTEXPR unexpected_type_t<M> first_unexpected( M&& m )
   {
     return get_unexpected(std::forward<M>(m));
   }
   template< class M1, class ...Ms
-    , class TraitsValued = unexpected_traits<unexpected_category_t<decay_t<M1> > >
-    , class TraitsUnexpected = unexpected_traits<unexpected_category_t<decay_t<M1> > > >
+    , class = std::enable_if<value_traits_t<M1>::value &&
+                             unexpected_traits<unexpected_category_t<decay_t<M1> > >::value>
+    >
   BOOST_CONSTEXPR unexpected_type_t<M1> first_unexpected( M1&& m1, Ms&& ...ms )
   {
     return has_value(std::forward<M1>(m1))
