@@ -84,11 +84,6 @@ test-suite monads_ex
       [ run ../example/safe_divide_monad.cpp ]
     ;
 
-test-suite monads2_ex
-    : 
-      [ run ../example/safe_divide_monad2.cpp ]
-    ;
-
 explicit fix ;
 test-suite fix
     : 
