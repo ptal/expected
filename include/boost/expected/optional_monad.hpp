@@ -10,7 +10,6 @@
 #include <boost/functional/meta.hpp>
 #include <boost/optional.hpp>
 #include <boost/mpl/identity.hpp>
-#include <boost/functional/monads/categories/pointer_like.hpp>
 #include <boost/functional/monads/errored.hpp>
 #include <boost/functional/monads/functor.hpp>
 #include <boost/functional/monads/categories/valued_and_errored.hpp>
@@ -31,10 +30,19 @@ namespace boost
     namespace valued
     {
       template <class T>
-      struct value_category<optional<T> > : mpl::identity<category::pointer_like>
+      struct value_traits<optional<T>>
       {
-      };
+        constexpr static bool value = true;
 
+        template <class M>
+        static constexpr bool has_value(M&& m) { return bool(m); }
+
+        template <class M>
+        static constexpr auto deref(M&& m) -> decltype(*m) { return *m; }
+
+        template <class M>
+        static constexpr value_type_t<M> get_value(M&& m) { return m.value(); };
+      };
     }
     namespace errored
     {
