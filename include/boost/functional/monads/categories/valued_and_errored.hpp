@@ -7,7 +7,6 @@
 #define BOOST_EXPECTED_MONADS_CATEGORIES_VALUED_AND_ERRORED_HPP
 
 #include <boost/config.hpp>
-#include <boost/functional/monads/valued.hpp>
 #include <boost/functional/monads/errored.hpp>
 #include <boost/functional/monads/functor.hpp>
 #include <boost/functional/monads/monad.hpp>
@@ -41,7 +40,6 @@ namespace category
 namespace functor
 {
 
-  using namespace ::boost::functional::valued;
   using namespace ::boost::functional::errored;
   template <>
   struct functor_traits<category::valued_and_errored>

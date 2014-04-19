@@ -13,6 +13,10 @@ namespace boost
 {
 namespace functional
 {
+namespace category
+{
+  struct valued {};
+}
 namespace valued
 {
 

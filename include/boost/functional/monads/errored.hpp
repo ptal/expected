@@ -7,14 +7,20 @@
 #define BOOST_FUNCTIONAL_ERRORED_HPP
 
 #include <boost/functional/type_traits_t.hpp>
+#include <boost/functional/monads/valued.hpp>
 #include <utility>
 
 namespace boost
 {
 namespace functional
 {
+namespace category
+{
+  struct errored {};
+}
 namespace errored
 {
+  using namespace ::boost::functional::valued;
 
   template <class M>
   struct unexpected_category
