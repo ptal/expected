@@ -36,24 +36,19 @@ namespace boost
 {
   namespace functional
   {
-    namespace rebindable
+    template <class T, class I, typename E>
+    struct rebindable_traits<pair_expected<I, T, E>>
     {
-      template <class T, class I, typename E>
-      struct rebindable_traits<pair_expected<I, T, E>>
-      {
-        constexpr static bool value = true;
+      constexpr static bool value = true;
 
-        template <class M>
-        using value_type = typename M::value_type;
+      template <class M>
+      using value_type = typename M::value_type;
 
-        template <class M, class U>
-        using rebind = pair_expected<I, U, E>;
+      template <class M, class U>
+      using rebind = pair_expected<I, U, E>;
 
-      };
-    }
+    };
 
-  namespace monad
-  {
 
     template <class T, class I, typename E>
     struct monad_traits<pair_expected<I, T, E> >
@@ -109,7 +104,6 @@ namespace boost
 #endif
       }
     };
-    }
   }
 } // boost
 

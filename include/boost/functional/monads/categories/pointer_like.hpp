@@ -13,12 +13,11 @@ namespace boost
 {
 namespace functional
 {
-namespace category
-{
-  struct pointer_like {};
-}
-namespace rebindable
-{
+  namespace category
+  {
+    struct pointer_like {};
+  }
+
   template <class T>
   struct rebindable_traits<T*> : std::true_type
   {
@@ -28,9 +27,7 @@ namespace rebindable
     template <class M, class U>
     using rebind = U*;
   };
-}
-namespace valued
-{
+
   template <>
   struct valued_traits<category::pointer_like> : std::true_type
   {
@@ -46,7 +43,7 @@ namespace valued
       return (m) ? *m : throw bad_access(),*m;
     }
   };
-}
+
 }
 }
 

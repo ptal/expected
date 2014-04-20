@@ -18,10 +18,6 @@ namespace boost
 {
 namespace functional
 {
-namespace monad_error
-{
-  using namespace ::boost::functional::monad;
-
   template <class M>
   struct monad_error_category {
     typedef M type;
@@ -56,6 +52,10 @@ namespace monad_error
 
   template <class M>
   using monad_error_traits_t0 = monad_error_traits<monad_error_category_t<decay_t<M> > > ;
+
+namespace monad_error
+{
+  using namespace ::boost::functional::monad;
 
   template <class M, class E, class Traits = monad_error_traits_t0<M> >
   auto make_error(E&& e) -> decltype(Traits::template make_error<M>(std::forward<E>(e)))

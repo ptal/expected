@@ -17,9 +17,6 @@ namespace boost
 {
 namespace functional
 {
-namespace monad
-{
-  using namespace ::boost::functional::functor;
 
   template <class M>
   struct monad_category
@@ -60,6 +57,10 @@ namespace monad
 
   template <class M>
   struct is_monad : monad_traits<monad_category_t<M>> {};
+
+namespace monad
+{
+  using namespace ::boost::functional::functor;
 
   template <class M, class T, class Traits = monad_traits_t<M,T> >
   apply<M,T> make(T&& v)

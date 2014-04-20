@@ -16,10 +16,6 @@ namespace boost
 {
 namespace functional
 {
-namespace errored
-{
-  using namespace ::boost::functional::valued;
-
   template <class M>
   struct unexpected_category
   {
@@ -47,7 +43,11 @@ namespace errored
     { return m.error();};
   };
 
-  template    <class M, class Traits = unexpected_traits<unexpected_category_t<decay_t<M> > > >
+namespace errored
+{
+  using namespace ::boost::functional::valued;
+
+  template <class M, class Traits = unexpected_traits<unexpected_category_t<decay_t<M> > > >
   using unexpected_type_t = typename Traits::template unexpected_type_type<M>;
 
   template <class M, class Traits = unexpected_traits<unexpected_category_t<decay_t<M> > > >

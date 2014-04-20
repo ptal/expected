@@ -19,9 +19,6 @@ namespace category
 {
   struct rebindable {};
 }
-namespace rebindable
-{
-
   template <class M>
   struct rebindable_category
   {
@@ -45,6 +42,9 @@ namespace rebindable
 
   template <class M>
   struct rebindable_traits_t : rebindable_traits<rebindable_category_t<decay_t<M> > > {};
+
+namespace rebindable
+{
 
   template <class M, class Traits = rebindable_traits_t<M> >
   using value_type_t = typename Traits::template value_type<M>;

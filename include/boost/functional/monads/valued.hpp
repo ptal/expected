@@ -17,13 +17,10 @@ namespace boost
 {
 namespace functional
 {
-namespace category
-{
-  struct valued {};
-}
-namespace valued
-{
-  using namespace ::boost::functional::rebindable;
+  namespace category
+  {
+    struct valued {};
+  }
 
   template <class M>
   struct value_category
@@ -33,17 +30,6 @@ namespace valued
 
   template <class M>
   using value_category_t = typename value_category<M>::type;
-
-  // bad_access exception class.
-  class bad_access : public std::logic_error
-  {
-    public:
-      bad_access()
-      : std::logic_error("Bad access on PossibleValued object.")
-      {}
-
-      // todo - Add implicit/explicit conversion to error_type ?
-  };
 
   template <class T>
   struct valued_traits  : std::false_type {};
@@ -66,6 +52,20 @@ namespace valued
   template <class M>
   struct valued_traits_t : valued_traits<value_category_t<decay_t<M> > > {};
 
+namespace valued
+{
+  using namespace ::boost::functional::rebindable;
+  // bad_access exception class.
+  class bad_access : public std::logic_error
+  {
+    public:
+      bad_access()
+      : std::logic_error("Bad access on PossibleValued object.")
+      {}
+
+      // todo - Add implicit/explicit conversion to error_type ?
+  };
+
   template <class M, class Traits = valued_traits_t<M> >
   constexpr auto
   has_value(M&& e) -> decltype(Traits::has_value(std::forward<M>(e)))
@@ -79,6 +79,7 @@ namespace valued
   {
     return Traits::deref(std::forward<M>(e));
   }
+
 
 //  template <class M, class Traits = valued_traits_t<M> >
 //  static constexpr auto

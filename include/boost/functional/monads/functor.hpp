@@ -16,8 +16,6 @@ namespace boost
 {
 namespace functional
 {
-namespace functor
-{
   template <class M>
   struct functor_category
   {
@@ -41,6 +39,8 @@ namespace functor
     }
   };
 
+namespace functor
+{
   template <class F, class M0, class ...M, class Traits = functor_traits<functor_category_t<decay_t<M0> > > >
   auto
   fmap(F&& f, M0&& m0, M&& ...m)

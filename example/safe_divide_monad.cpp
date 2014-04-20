@@ -227,11 +227,10 @@ namespace expected_based
 {
   expected<std::exception_ptr, int> then_f22(int i, int j, int k)
   {
-    using namespace boost::functional::monad_error;
+    using namespace ::boost::functional::monad_error;
     return mbind(safe_divide(i, k),
       [=](int q1)
       {
-        using namespace boost::functional::monad_error;
         return mbind(safe_divide(j,k), [=](int q2)
             {
               return q1+q2;
@@ -241,7 +240,7 @@ namespace expected_based
 
   expected<std::exception_ptr, int> then_f23(int i, int j, int k)
   {
-    using namespace boost::functional::functor;
+    using namespace ::boost::functional::functor;
     return fmap([=](int q1, int q2)
         { return q1+q2;},
         safe_divide(i, k), safe_divide(j, k));
