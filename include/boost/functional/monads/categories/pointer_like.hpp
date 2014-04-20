@@ -32,7 +32,7 @@ namespace rebindable
 namespace valued
 {
   template <>
-  struct value_traits<category::pointer_like> : std::true_type
+  struct valued_traits<category::pointer_like> : std::true_type
   {
     template <class M>
     static constexpr bool has_value(M&& m) { return bool(m); }

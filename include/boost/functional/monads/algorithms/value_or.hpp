@@ -15,7 +15,7 @@ namespace functional {
 namespace valued {
 
 #if defined __clang
-  template <class PV, class U, class = std::enable_if<value_traits_t< PV >::value> >
+  template <class PV, class U, class = std::enable_if<valued_traits_t< PV >::value> >
   constexpr value_type_t<PV> value_or(PV const& e, U&& v)
   {
     return has_value(e)
@@ -23,7 +23,7 @@ namespace valued {
       : static_cast<value_type_t<PV>>(std::forward<U>(v));
   }
 
-  template <class PV, class U, class = std::enable_if<value_traits_t< PV >::value> >
+  template <class PV, class U, class = std::enable_if<valued_traits_t< PV >::value> >
   value_type_t<PV> value_or(PV && e, U&& v)
   {
     return has_value(e)
@@ -31,7 +31,7 @@ namespace valued {
       : static_cast<value_type_t<PV>>(std::forward<U>(v));
   }
 #else
-  template <class PV, class U, class = std::enable_if<value_traits_t< PV >::value> >
+  template <class PV, class U, class = std::enable_if<valued_traits_t< PV >::value> >
   constexpr U value_or(PV const& e, U&& v)
   {
     return has_value(e)
@@ -39,7 +39,7 @@ namespace valued {
       : static_cast<value_type_t<PV>>(std::forward<U>(v));
   }
 
-  template <class PV, class U, class = std::enable_if<value_traits_t< PV >::value> >
+  template <class PV, class U, class = std::enable_if<valued_traits_t< PV >::value> >
   U value_or(PV && e, U&& v)
   {
     return has_value(e)

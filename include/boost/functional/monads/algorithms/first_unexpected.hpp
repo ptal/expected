@@ -22,7 +22,7 @@ namespace errored
     return get_unexpected(std::forward<M>(m));
   }
   template< class M1, class ...Ms
-    , class = std::enable_if<value_traits_t<M1>::value &&
+    , class = std::enable_if<valued_traits_t<M1>::value &&
                              unexpected_traits<unexpected_category_t<decay_t<M1> > >::value>
     >
   BOOST_CONSTEXPR unexpected_type_t<M1> first_unexpected( M1&& m1, Ms&& ...ms )

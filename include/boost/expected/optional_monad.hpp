@@ -39,7 +39,7 @@ namespace boost
     namespace valued
     {
       template <class T>
-      struct value_traits<optional<T>> : std::true_type
+      struct valued_traits<optional<T>> : std::true_type
       {
         template <class M>
         static constexpr bool has_value(M&& m) { return bool(m); }

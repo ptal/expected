@@ -46,9 +46,9 @@ namespace valued
   };
 
   template <class T>
-  struct value_traits  : std::false_type {};
+  struct valued_traits  : std::false_type {};
   template <>
-  struct value_traits<category::forward> : std::true_type
+  struct valued_traits<category::forward> : std::true_type
   {
     template <class M>
     static constexpr bool has_value(M&& m)
@@ -64,23 +64,23 @@ namespace valued
   };
 
   template <class M>
-  struct value_traits_t : value_traits<value_category_t<decay_t<M> > > {};
+  struct valued_traits_t : valued_traits<value_category_t<decay_t<M> > > {};
 
-  template <class M, class Traits = value_traits_t<M> >
+  template <class M, class Traits = valued_traits_t<M> >
   constexpr auto
   has_value(M&& e) -> decltype(Traits::has_value(std::forward<M>(e)))
   {
     return Traits::has_value(std::forward<M>(e));
   }
 
-  template <class M, class Traits = value_traits_t<M> >
+  template <class M, class Traits = valued_traits_t<M> >
   constexpr auto
   deref(M&& e) -> decltype(Traits::deref(std::forward<M>(e)))
   {
     return Traits::deref(std::forward<M>(e));
   }
 
-//  template <class M, class Traits = value_traits_t<M> >
+//  template <class M, class Traits = valued_traits_t<M> >
 //  static constexpr auto
 //  value(M&& e) -> decltype(Traits::get_value(std::forward<M>(e)))
 //  {
