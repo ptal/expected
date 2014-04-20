@@ -9,6 +9,7 @@
 #include <boost/functional/type_traits_t.hpp>
 #include <boost/functional/meta.hpp>
 #include <boost/functional/monads/functor.hpp>
+#include <boost/functional/monads/categories/forward.hpp>
 #include <utility>
 #include <type_traits>
 
@@ -21,9 +22,6 @@ namespace monad
   using namespace ::boost::functional::functor;
 
   template <class M>
-  struct is_monad: std::false_type {};
-
-  template <class M>
   struct monad_category
   {
     typedef M type;
@@ -33,7 +31,9 @@ namespace monad
   using monad_category_t = typename monad_category<M>::type;
 
   template <class Mo>
-  struct monad_traits : std::true_type
+  struct monad_traits : std::false_type {};
+  template <>
+  struct monad_traits<category::forward> : std::true_type
   {
     // make use of constructor
     template <class M, class T>
@@ -57,6 +57,9 @@ namespace monad
 
   template <class M>
   using monad_traits_t0 = monad_traits<monad_category_t<decay_t<M> > >;
+
+  template <class M>
+  struct is_monad : monad_traits<monad_category_t<M>> {};
 
   template <class M, class T, class Traits = monad_traits_t<M,T> >
   apply<M,T> make(T&& v)

@@ -8,6 +8,7 @@
 
 #include <boost/functional/type_traits_t.hpp>
 #include <boost/functional/monads/valued.hpp>
+#include <boost/functional/monads/categories/forward.hpp>
 #include <utility>
 #include <type_traits>
 
@@ -29,7 +30,10 @@ namespace errored
   using unexpected_category_t = typename unexpected_category<M>::type;
 
   template <class T>
-  struct unexpected_traits  : std::true_type
+  struct unexpected_traits  : std::false_type {};
+
+  template <>
+  struct unexpected_traits<category::forward>  : std::true_type
   {
     template <class M>
     using unexpected_type_type = typename M::unexpected_type_type;

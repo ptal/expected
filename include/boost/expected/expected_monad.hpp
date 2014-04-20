@@ -17,6 +17,11 @@ namespace boost
 {
   namespace functional
   {
+    namespace rebindable
+    {
+      template <class T, class E>
+      struct rebindable_category<expected<E, T> > : mpl::identity<category::forward> {};
+    }
     namespace valued
     {
       template <class E, class T>
@@ -32,6 +37,11 @@ namespace boost
         static constexpr value_type_t<M> get_value(M&& m) { return m.value(); };
       };
     }
+    namespace errored
+    {
+      template <class T, class E>
+      struct unexpected_category<expected<E, T> > : mpl::identity<category::forward> {};
+    }
     namespace functor
     {
       template <class T, class E>
@@ -40,27 +50,7 @@ namespace boost
     namespace monad
     {
       template <class T, class E>
-      struct is_monad<expected<E, T> > : std::true_type {};
-
-      //    template <class T, class E>
-      //    struct monad_category<expected<E,T> > : mpl::identity<category::errored> { };
-
-//      template <class T1, class E1>
-//      struct monad_traits<expected<E1, T1>>
-//      {
-//        template <class M, class T>
-//        static apply<M, T> make(T&& v)
-//        {
-//          return apply<M, T>(std::forward<T>(v));
-//        }
-//
-//        template <class M, class F>
-//        static auto
-//        mbind(M&& m, F&& f) -> decltype(m.mbind(std::forward<F>(f)))
-//        {
-//          return m.mbind(std::forward<F>(f));
-//        }
-//      };
+      struct monad_category<expected<E,T> > : mpl::identity<category::forward> { };
     }
     namespace monad_error
     {

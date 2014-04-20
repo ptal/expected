@@ -8,6 +8,7 @@
 
 #include <boost/functional/type_traits_t.hpp>
 #include <boost/functional/monads/rebindable.hpp>
+#include <boost/functional/monads/categories/forward.hpp>
 #include <utility>
 #include <stdexcept>
 #include <type_traits>
@@ -44,19 +45,10 @@ namespace valued
       // todo - Add implicit/explicit conversion to error_type ?
   };
 
-namespace detail
-{
-  template <class T, class = void>
-  struct value_traits_h  : std::false_type {};
   template <class T>
-  struct value_traits_h<T,
-    void_t<
-      typename T::value_type,
-      decltype(std::declval<T>().has_value()),
-      decltype(std::declval<T>().deref()),
-      decltype(std::declval<T>().value())
-    >
-  > : std::true_type
+  struct value_traits  : std::false_type {};
+  template <>
+  struct value_traits<category::forward> : std::true_type
   {
     template <class M>
     static constexpr bool has_value(M&& m)
@@ -69,13 +61,7 @@ namespace detail
     template <class M>
     static constexpr auto get_value(M&& m) -> decltype(m.value())
     { return m.value(); };
-
   };
-
-}
-
-  template <class T>
-  struct value_traits : detail::value_traits_h<T> {};
 
   template <class M>
   struct value_traits_t : value_traits<value_category_t<decay_t<M> > > {};

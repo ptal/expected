@@ -7,6 +7,7 @@
 #define BOOST_FUNCTIONAL_REBINDABLE_HPP
 
 #include <boost/functional/type_traits_t.hpp>
+#include <boost/functional/monads/categories/forward.hpp>
 #include <utility>
 #include <type_traits>
 
@@ -30,32 +31,17 @@ namespace rebindable
   template <class M>
   using rebindable_category_t = typename rebindable_category<M>::type;
 
-namespace detail
-{
-  template <class T, class = void>
-  struct rebindable_traits_h : std::false_type {};
   template <class T>
-  struct rebindable_traits_h<T,
-    void_t<
-      typename T::value_type,
-      typename T::template rebind<void>
-    >
-  >  : std::true_type
+  struct rebindable_traits : std::false_type {};
+  template <>
+  struct rebindable_traits<category::forward>  : std::true_type
   {
-    constexpr static bool value = true;
-
     template <class M>
     using value_type = typename M::value_type;
 
     template <class M, class U>
     using rebind = typename M::template rebind<U>;
-
   };
-
-}
-
-  template <class T>
-  struct rebindable_traits : detail::rebindable_traits_h<T> {};
 
   template <class M>
   struct rebindable_traits_t : rebindable_traits<rebindable_category_t<decay_t<M> > > {};
