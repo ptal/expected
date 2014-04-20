@@ -81,7 +81,7 @@ namespace boost
     namespace functor
     {
       template <class T>
-      struct functor_category<optional<T> > : mpl::identity<category::valued_and_errored> {};
+      struct functor_category<optional<T> > : mpl::identity<category::errored> {};
     }
     namespace monad
     {
@@ -90,7 +90,7 @@ namespace boost
       struct is_monad<optional<T> > : std::true_type {};
 
       template <class T>
-      struct monad_category<optional<T> > : mpl::identity<category::valued_and_errored> {};
+      struct monad_category<optional<T> > : mpl::identity<category::errored> {};
 
     }
     namespace monad_error

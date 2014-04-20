@@ -37,7 +37,7 @@ namespace boost
     namespace functor
     {
       template <class T, class E>
-      struct functor_category<expected<E, T> > : mpl::identity<category::valued_and_errored> {};
+      struct functor_category<expected<E, T> > : mpl::identity<category::errored> {};
     }
     namespace monad
     {
@@ -45,7 +45,7 @@ namespace boost
       struct is_monad<expected<E, T> > : std::true_type {};
 
       //    template <class T, class E>
-      //    struct monad_category<expected<E,T> > : mpl::identity<category::valued_and_errored> { };
+      //    struct monad_category<expected<E,T> > : mpl::identity<category::errored> { };
 
 //      template <class T1, class E1>
 //      struct monad_traits<expected<E1, T1>>

@@ -14,10 +14,6 @@ namespace boost
 {
 namespace functional
 {
-namespace category
-{
-  struct errored {};
-}
 namespace errored
 {
   using namespace ::boost::functional::valued;

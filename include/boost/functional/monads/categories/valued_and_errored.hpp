@@ -35,14 +35,14 @@ namespace functional
 {
 namespace category
 {
-  struct valued_and_errored {};
+  struct errored {};
 }
 namespace functor
 {
 
   using namespace ::boost::functional::errored;
   template <>
-  struct functor_traits<category::valued_and_errored>
+  struct functor_traits<category::errored>
   {
 
     template <class F, class M0, class ...M,
@@ -61,7 +61,7 @@ namespace monad
 {
 
   template <>
-  struct monad_traits<category::valued_and_errored>
+  struct monad_traits<category::errored>
   {
 
     template <class M, class T>
