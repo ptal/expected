@@ -6,7 +6,7 @@
 #ifndef BOOST_EXPECTED_EXPECTED_MONAD_HPP
 #define BOOST_EXPECTED_EXPECTED_MONAD_HPP
 
-#include <boost/functional/monads/categories/valued_and_errored.hpp>
+#include <boost/functional/monads/categories/errored.hpp>
 #include <boost/functional/monads/monad_error.hpp>
 #include <boost/expected/expected.hpp>
 #include <boost/expected/unexpected.hpp>
@@ -20,10 +20,8 @@ namespace boost
     namespace valued
     {
       template <class E, class T>
-      struct value_traits<expected<E, T>>
+      struct value_traits<expected<E, T>> : std::true_type
       {
-        constexpr static bool value = true;
-
         template <class M>
         static constexpr bool has_value(M&& m) { return bool(m); }
 
@@ -71,7 +69,7 @@ namespace boost
           expected<std::exception_ptr,int>>::value, "");
 
       template <class T1, class E1>
-      struct monad_error_traits<expected<E1,T1> >
+      struct monad_error_traits<expected<E1,T1> > : std::true_type
       {
         template <class M>
         static constexpr auto value(M&& m) -> decltype(m.value())

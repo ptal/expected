@@ -9,6 +9,7 @@
 #include <boost/functional/type_traits_t.hpp>
 #include <boost/functional/monads/valued.hpp>
 #include <utility>
+#include <type_traits>
 
 namespace boost
 {
@@ -28,10 +29,8 @@ namespace errored
   using unexpected_category_t = typename unexpected_category<M>::type;
 
   template <class T>
-  struct unexpected_traits
+  struct unexpected_traits  : std::true_type
   {
-    constexpr static bool value = true;
-
     template <class M>
     using unexpected_type_type = typename M::unexpected_type_type;
 

@@ -7,6 +7,7 @@
 #define BOOST_EXPECTED_MONADS_CATEGORIES_POINTER_LIKE_HPP
 
 #include <boost/functional/monads/valued.hpp>
+#include <type_traits>
 
 namespace boost
 {
@@ -19,10 +20,8 @@ namespace category
 namespace rebindable
 {
   template <class T>
-  struct rebindable_traits<T*>
+  struct rebindable_traits<T*> : std::true_type
   {
-    constexpr static bool value = true;
-
     template <class M>
     using value_type = T;
 
@@ -33,10 +32,8 @@ namespace rebindable
 namespace valued
 {
   template <>
-  struct value_traits<category::pointer_like>
+  struct value_traits<category::pointer_like> : std::true_type
   {
-    constexpr static bool value = true;
-
     template <class M>
     static constexpr bool has_value(M&& m) { return bool(m); }
 

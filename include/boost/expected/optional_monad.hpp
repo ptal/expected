@@ -12,7 +12,7 @@
 #include <boost/mpl/identity.hpp>
 #include <boost/functional/monads/errored.hpp>
 #include <boost/functional/monads/functor.hpp>
-#include <boost/functional/monads/categories/valued_and_errored.hpp>
+#include <boost/functional/monads/categories/errored.hpp>
 #include <boost/functional/monads/monad.hpp>
 #include <boost/functional/monads/monad_error.hpp>
 #include <type_traits>
@@ -26,10 +26,8 @@ namespace boost
     namespace rebindable
     {
       template <class T>
-      struct rebindable_traits<optional<T>>
+      struct rebindable_traits<optional<T>> : std::true_type
       {
-        constexpr static bool value = true;
-
         template <class M>
         using value_type = typename M::value_type;
 
@@ -41,10 +39,8 @@ namespace boost
     namespace valued
     {
       template <class T>
-      struct value_traits<optional<T>>
+      struct value_traits<optional<T>> : std::true_type
       {
-        constexpr static bool value = true;
-
         template <class M>
         static constexpr bool has_value(M&& m) { return bool(m); }
 
@@ -58,10 +54,8 @@ namespace boost
     namespace errored
     {
       template <class T>
-      struct unexpected_traits<optional<T> >
+      struct unexpected_traits<optional<T> > : std::true_type
       {
-        constexpr static bool value = true;
-
         template< class M >
         using unexpected_type_type = none_t;
 
@@ -95,11 +89,10 @@ namespace boost
     }
     namespace monad_error
     {
-
       using namespace ::boost::functional::errored;
 
       template <class T>
-      struct monad_error_traits<optional<T> >
+      struct monad_error_traits<optional<T> > : std::true_type
       {
         template <class M>
         static constexpr auto value(M&& m) -> decltype(m.value())
@@ -135,7 +128,7 @@ namespace boost
         }
       };
       template <>
-      struct monad_error_traits<optional_monad >
+      struct monad_error_traits<optional_monad > : std::true_type
       {
         template <class M>
         static constexpr auto value(M&& m) -> decltype(m.value())

@@ -9,6 +9,7 @@
 #include <boost/functional/type_traits_t.hpp>
 #include <boost/functional/meta.hpp>
 #include <utility>
+#include <type_traits>
 
 namespace boost
 {
@@ -26,7 +27,7 @@ namespace functor
   using functor_category_t = typename functor_category<M>::type;
 
   template <class Mo>
-  struct functor_traits
+  struct functor_traits : std::true_type
   {
 
     template <class F, class M0, class ...M, class FR = decltype( std::declval<F>()(*std::declval<M0>(), *std::declval<M>()...) )>

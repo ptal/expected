@@ -8,6 +8,7 @@
 
 #include <boost/functional/type_traits_t.hpp>
 #include <utility>
+#include <type_traits>
 
 namespace boost
 {
@@ -32,14 +33,14 @@ namespace rebindable
 namespace detail
 {
   template <class T, class = void>
-  struct rebindable_traits_h {};
+  struct rebindable_traits_h : std::false_type {};
   template <class T>
   struct rebindable_traits_h<T,
     void_t<
       typename T::value_type,
       typename T::template rebind<void>
     >
-  >
+  >  : std::true_type
   {
     constexpr static bool value = true;
 

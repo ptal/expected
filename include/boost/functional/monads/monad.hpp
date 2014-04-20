@@ -10,6 +10,7 @@
 #include <boost/functional/meta.hpp>
 #include <boost/functional/monads/functor.hpp>
 #include <utility>
+#include <type_traits>
 
 namespace boost
 {
@@ -32,7 +33,7 @@ namespace monad
   using monad_category_t = typename monad_category<M>::type;
 
   template <class Mo>
-  struct monad_traits
+  struct monad_traits : std::true_type
   {
     // make use of constructor
     template <class M, class T>

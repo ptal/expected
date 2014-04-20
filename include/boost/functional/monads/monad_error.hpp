@@ -11,6 +11,7 @@
 #include <boost/functional/monads/monad.hpp>
 #include <boost/expected/unexpected.hpp>
 #include <utility>
+#include <type_traits>
 
 namespace boost
 {
@@ -29,7 +30,7 @@ namespace monad_error
   using monad_error_category_t = typename monad_error_category<M>::type;
 
   template <class Mo>
-  struct monad_error_traits : monad_traits<Mo> {
+  struct monad_error_traits : std::true_type {
 
     template <class M>
     static constexpr auto value(M&& m) -> decltype(m.value()) { return m.value(); };

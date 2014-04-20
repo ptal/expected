@@ -10,6 +10,7 @@
 #include <boost/functional/monads/rebindable.hpp>
 #include <utility>
 #include <stdexcept>
+#include <type_traits>
 
 namespace boost
 {
@@ -46,7 +47,7 @@ namespace valued
 namespace detail
 {
   template <class T, class = void>
-  struct value_traits_h {};
+  struct value_traits_h  : std::false_type {};
   template <class T>
   struct value_traits_h<T,
     void_t<
@@ -55,10 +56,8 @@ namespace detail
       decltype(std::declval<T>().deref()),
       decltype(std::declval<T>().value())
     >
-  >
+  > : std::true_type
   {
-    constexpr static bool value = true;
-
     template <class M>
     static constexpr bool has_value(M&& m)
     { return m.has_value();}
@@ -70,7 +69,6 @@ namespace detail
     template <class M>
     static constexpr auto get_value(M&& m) -> decltype(m.value())
     { return m.value(); };
-
 
   };
 
