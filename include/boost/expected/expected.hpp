@@ -1302,6 +1302,10 @@ class expected<E,holder> {
 public:
   template <class T>
   using type = expected<E,T>;
+  template <class T>
+  expected<E,T> make(T&& v) {
+    return expected<E,T>(std::forward(v));
+  }
 };
 
 template <typename T>
