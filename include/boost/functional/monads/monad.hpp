@@ -80,15 +80,16 @@ namespace monad
   {
     return Traits::mbind(std::forward<M>(m), std::forward<F>(f));
   }
-}
-}
-}
 
-template <class M, class F>
-auto operator&(M&& m, F&& f)
--> decltype(::boost::functional::monad::mbind(std::forward<M>(m), std::forward<F>(f)))
-{
-  return ::boost::functional::monad::mbind(std::forward<M>(m),std::forward<F>(f));
+  template <class M, class F>
+  auto operator&(M&& m, F&& f)
+  -> decltype(::boost::functional::monad::mbind(std::forward<M>(m), std::forward<F>(f)))
+  {
+    return ::boost::functional::monad::mbind(std::forward<M>(m),std::forward<F>(f));
+  }
+
+}
+}
 }
 
 #endif // BOOST_FUNCTIONAL_MONAD_HPP

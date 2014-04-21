@@ -248,6 +248,7 @@ namespace expected_based
 
   expected<std::exception_ptr, int> then_f2(int i, int j, int k)
   {
+    using namespace ::boost::functional::monad_error;
     return safe_divide(i, k) & [=](int q1)
     {
       return safe_divide(j,k) & [=](int q2)
@@ -325,6 +326,7 @@ namespace generic_based
   template <class M>
   apply<M, int> then_f2(int i, int j, int k)
   {
+    using namespace boost::functional::monad_error;
     return safe_divide<M>(i, k) & [=](int q1)
     {
       return safe_divide<M>(j,k) & [=](int q2)

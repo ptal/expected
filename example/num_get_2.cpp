@@ -154,6 +154,7 @@ public:
   {
     using namespace boost;
     using namespace std;
+    using namespace ::boost::functional::monad_error;
 
     ios_base::iostate err = std::ios_base::goodbit;
     Num v;
@@ -316,6 +317,7 @@ pair_expected<iter_type, std::pair<Num,Num>, std::ios_base::iostate> get5(InputI
     InputIterator e, std::ios_base& ios) const
 {
   using namespace boost;
+  using namespace ::boost::functional::monad_error;
   typedef std::pair<Num, Num> value_type;
 
   //auto  f = std::use_facet< ::NumGet<char_type, iter_type> >(ios.getloc()).template get<Num>(s, e, ios);
