@@ -185,10 +185,18 @@ recover([](std::exception_ptr ex) -> boost::expected<std::exception_ptr, int>
     });
 }
 
+boost::expected<std::exception_ptr, int> divide1(int i, int j)
+{
+  auto e=  safe_divide(i,j);
+  if (e.has_exception<NotDivisible>())
+        return i / j;
+  else return e;
+}
+
 boost::expected<std::exception_ptr, int> divide2(int i, int j)
 {
-return safe_divide(i,j).
-catch_exception<NotDivisible>([](NotDivisible& e) -> expected<std::exception_ptr, int>
+  return safe_divide(i,j).
+  catch_exception<NotDivisible>([](NotDivisible& e) -> expected<std::exception_ptr, int>
     {
       return e.i / e.j;
     });
@@ -196,8 +204,8 @@ catch_exception<NotDivisible>([](NotDivisible& e) -> expected<std::exception_ptr
 
 boost::expected<std::exception_ptr, int> divide3(int i, int j)
 {
-return safe_divide(i,j).
-catch_exception<NotDivisible>([](NotDivisible& e)
+  return safe_divide(i,j).
+  catch_exception<NotDivisible>([](NotDivisible& e)
     {
       return make_expected(e.i / e.j);
     });
@@ -212,7 +220,9 @@ int main()
   auto tr2 = then_f2(1, 2, 0);
   auto r3 = cex_f2(1, 2, 0);
   auto a = divide(1, 0);
+  auto a1 = divide1(1, 0);
   auto a2 = divide2(1, 0);
+  auto a3 = divide3(1, 0);
   return 0;
 }
 

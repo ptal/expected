@@ -84,10 +84,10 @@ namespace monad_exception
   {
     return Traits::template has_exception<E>(std::forward<M>(m));
   }
-  template <class E, class M, class Traits = monad_exception_traits_t0<M> >
-  static M catch_exception(M&& m)
+  template <class E, class M, class F, class Traits = monad_exception_traits_t0<M> >
+  static M catch_exception(M&& m, F&& f)
   {
-    return Traits::template catch_exception<E>(std::forward<M>(m));
+    return Traits::template catch_exception<E>(std::forward<M>(m), std::forward<F>(f));
   }
 
 }

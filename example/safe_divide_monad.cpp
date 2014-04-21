@@ -415,7 +415,7 @@ namespace expected_based
   expected<std::exception_ptr, int> divide0(int i, int j)
   {
     using namespace boost::functional::monad_error;
-    return  catch_error(safe_divide(i,j),
+    return safe_divide(i,j).recover(
       [](std::exception_ptr ex) -> expected<std::exception_ptr, int>
       {
         try
@@ -433,31 +433,107 @@ namespace expected_based
       });
   }
 
-//  expected<std::exception_ptr, int> divide2(int i, int j)
-//  {
-//    return safe_divide(i,j).
-//    catch_exception<NotDivisible>([](NotDivisible& e) -> expected<std::exception_ptr, int>
-//        {
-//          return e.i / e.j;
-//        });
-//  }
+  expected<std::exception_ptr, int> divide1(int i, int j)
+  {
+    auto e=  safe_divide(i,j);
+    if (e.has_exception<NotDivisible>())
+          return i / j;
+    else return e;
+  }
 
-//  expected<std::exception_ptr, int> divide3(int i, int j)
-//  {
-//    return safe_divide(i,j).
-//    catch_exception<NotDivisible>([](NotDivisible& e)
-//        {
-//          return make_expected(e.i / e.j);
-//        });
-//  }
-//  expected<std::exception_ptr, int> divide4(int i, int j)
-//  {
-//    return safe_divide(i,j).
-//    catch_exception<NotDivisible>([](NotDivisible& e)
-//        {
-//          return e.i / e.j;
-//        });
-//  }
+  expected<std::exception_ptr, int> divide2(int i, int j)
+  {
+    return safe_divide(i,j).
+    catch_exception<NotDivisible>([](NotDivisible& e) -> expected<std::exception_ptr, int>
+        {
+          return e.i / e.j;
+        });
+  }
+
+  expected<std::exception_ptr, int> divide3(int i, int j)
+  {
+    return safe_divide(i,j).
+    catch_exception<NotDivisible>([](NotDivisible& e)
+        {
+          return make_expected(e.i / e.j);
+        });
+  }
+  expected<std::exception_ptr, int> divide4(int i, int j)
+  {
+    return safe_divide(i,j).
+    catch_exception<NotDivisible>([](NotDivisible& e)
+        {
+          return e.i / e.j;
+        });
+  }
+}
+
+namespace generic_based
+{
+  template <class M>
+  apply<M, int> divide0(int i, int j)
+  {
+    using namespace boost::functional::monad_exception;
+
+    return  catch_error(safe_divide<M>(i,j),
+      [](std::exception_ptr ex) -> apply<M, int>
+      {
+        try
+        {
+          std::rethrow_exception(ex);
+        }
+        catch(NotDivisible& e)
+        {
+          return e.i / e.j;
+        }
+        catch (...)
+        {
+          return make_error<M>(std::current_exception());
+        }
+      });
+  }
+
+  template <class M>
+    apply<M, int> divide1(int i, int j)
+  {
+    using namespace boost::functional::monad_exception;
+    auto e=  safe_divide<M>(i,j);
+    if (has_exception<NotDivisible>(e))
+          return i / j;
+    else return e;
+  }
+
+  template <class M>
+    apply<M, int> divide2(int i, int j)
+  {
+    using namespace boost::functional::monad_exception;
+    return
+    catch_exception<NotDivisible>(safe_divide<M>(i,j), [](NotDivisible& e) -> apply<M, int>
+        {
+          return e.i / e.j;
+        });
+  }
+
+  template <class M>
+    apply<M, int> divide3(int i, int j)
+  {
+    using namespace boost::functional::monad_exception;
+    return
+    catch_exception<NotDivisible>(safe_divide<M>(i,j), [](NotDivisible& e)
+        {
+          return make_expected(e.i / e.j);
+        });
+  }
+  template <class M>
+    apply<M, int> divide4(int i, int j)
+  {
+    using namespace boost::functional::monad_exception;
+    return
+    catch_exception<NotDivisible>(safe_divide<M>(i,j), [](NotDivisible& e)
+        {
+          return e.i / e.j;
+        });
+  }
 }
 
 namespace optional_based
@@ -527,9 +603,10 @@ void expected_test()
   std::cout << *tr2 << std::endl;
   auto r3 = cex_f2(1, 2, 0);
   auto a0 = divide0(1, 0);
-  //auto a2 = divide2(1, 0);
-  //auto a3 = divide3(1, 0);
-  //auto a4 = divide4(1, 0);
+  auto a1 = divide1(1, 0);
+  auto a2 = divide2(1, 0);
+  auto a3 = divide3(1, 0);
+  auto a4 = divide4(1, 0);
 }
 
 template <class M>
@@ -546,6 +623,17 @@ void generic_test()
   std::cout << *tr23 << std::endl;
   auto tr2 = then_f2<M>(1, 2, 1);
   std::cout << *tr2 << std::endl;
+
+}
+template <class M>
+void generic_monad_exception_test()
+{
+  using namespace generic_based;
+  auto a0 = divide0<M>(1, 0);
+  auto a1 = divide1<M>(1, 0);
+  auto a2 = divide2<M>(1, 0);
+  auto a3 = divide3<M>(1, 0);
+  auto a4 = divide4<M>(1, 0);
 
 }
 void optional_test()
@@ -574,5 +662,6 @@ int main()
   optional_test();
   generic_test<expected<>>();
   generic_test<optional_monad>();
+  generic_monad_exception_test<expected<>>();
   return 0;
 }
