@@ -48,17 +48,17 @@ namespace expected_alg
   template <class T, class E>
   BOOST_CONSTEXPR T value(expected<E,T> const& e)
   {
-    // We are sure that e.recover(thrower<T>()) will be valid or a exception will be thrown
+    // We are sure that e.catch_error(thrower<T>()) will be valid or a exception will be thrown
     // so the derefference is safe
-    return * e.recover(thrower<T>());
+    return * e.catch_error(thrower<T>());
   }
 
   template <class T, class E>
   BOOST_CONSTEXPR T value(expected<E,T> && e)
   {
-    // We are sure that e.recover(thrower<T>()) will be valid or a exception will be thrown
+    // We are sure that e.catch_error(thrower<T>()) will be valid or a exception will be thrown
     // so the derefference is safe
-    return * e.recover(thrower<T>());
+    return * e.catch_error(thrower<T>());
   }
 
 } // namespace expected_alg

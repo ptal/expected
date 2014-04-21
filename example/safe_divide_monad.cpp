@@ -415,7 +415,7 @@ namespace expected_based
   expected<std::exception_ptr, int> divide0(int i, int j)
   {
     using namespace boost::functional::monad_error;
-    return safe_divide(i,j).recover(
+    return safe_divide(i,j).catch_error(
       [](std::exception_ptr ex) -> expected<std::exception_ptr, int>
       {
         try

@@ -1186,7 +1186,7 @@ public:
 
   template <typename F>
   BOOST_CONSTEXPR this_type
-  recover(BOOST_RV_REF(F) f,
+  catch_error(BOOST_RV_REF(F) f,
     REQUIRES(boost::is_same<typename result_of<F(error_type)>::type, value_type>::value)) const
   {
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
@@ -1204,7 +1204,7 @@ public:
   }
 
   template <typename F>
-  BOOST_CONSTEXPR this_type recover(BOOST_RV_REF(F) f,
+  BOOST_CONSTEXPR this_type catch_error(BOOST_RV_REF(F) f,
     REQUIRES(boost::is_same<typename result_of<F(error_type)>::type, this_type>::value)) const
   {
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
@@ -1222,7 +1222,7 @@ public:
   }
 
   template <typename F>
-  BOOST_CONSTEXPR this_type recover(BOOST_RV_REF(F) f,
+  BOOST_CONSTEXPR this_type catch_error(BOOST_RV_REF(F) f,
     REQUIRES(boost::is_same<typename result_of<F(error_type)>::type, unexpected_type<error_type> >::value)) const
   {
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
@@ -1655,10 +1655,10 @@ public:
     return f(boost::move(*this));
   }
 
-  // recover factory
+  // catch_error factory
 
   template <typename F>
-  BOOST_CONSTEXPR this_type recover(BOOST_RV_REF(F) f,
+  BOOST_CONSTEXPR this_type catch_error(BOOST_RV_REF(F) f,
     REQUIRES(boost::is_same<typename result_of<F(error_type)>::type, value_type>::value)) const
   {
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
@@ -1676,7 +1676,7 @@ public:
     }
 
   template <typename F>
-  BOOST_CONSTEXPR this_type recover(BOOST_RV_REF(F) f,
+  BOOST_CONSTEXPR this_type catch_error(BOOST_RV_REF(F) f,
       REQUIRES(! boost::is_same<typename result_of<F(error_type)>::type, value_type>::value)) const
   {
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR

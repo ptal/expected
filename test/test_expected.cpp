@@ -848,24 +848,24 @@ BOOST_AUTO_TEST_CASE(expected_recover)
     throw test_exception();
   };
 
-  BOOST_CHECK_EQUAL(fun(false).recover(recover_error).valid(), true);
-  BOOST_CHECK_EQUAL(fun(false).recover(recover_error).value(), 0);
-  BOOST_CHECK_EQUAL(fun(true).recover(recover_error).value(), 5);
-  BOOST_CHECK_EQUAL(fun(false).recover(recover_error_silent_failure).valid(), false);
-  BOOST_CHECK_EQUAL(fun(false).recover(recover_error_failure).valid(), false);
+  BOOST_CHECK_EQUAL(fun(false).catch_error(recover_error).valid(), true);
+  BOOST_CHECK_EQUAL(fun(false).catch_error(recover_error).value(), 0);
+  BOOST_CHECK_EQUAL(fun(true).catch_error(recover_error).value(), 5);
+  BOOST_CHECK_EQUAL(fun(false).catch_error(recover_error_silent_failure).valid(), false);
+  BOOST_CHECK_EQUAL(fun(false).catch_error(recover_error_failure).valid(), false);
 
   BOOST_CHECK_EQUAL(fun(true).mbind(add_five).value(), 10);
-  BOOST_CHECK_EQUAL(fun(true).mbind(add_five).recover(recover_error).value(), 10);
-  BOOST_CHECK_EQUAL(fun(true).mbind(add_five).recover(recover_error_silent_failure).value(), 10);
-  BOOST_CHECK_EQUAL(fun(true).mbind(add_five).recover(recover_error_failure).value(), 10);
+  BOOST_CHECK_EQUAL(fun(true).mbind(add_five).catch_error(recover_error).value(), 10);
+  BOOST_CHECK_EQUAL(fun(true).mbind(add_five).catch_error(recover_error_silent_failure).value(), 10);
+  BOOST_CHECK_EQUAL(fun(true).mbind(add_five).catch_error(recover_error_failure).value(), 10);
 
-  BOOST_CHECK_EQUAL(fun(false).recover(recover_error).mbind(add_five).value(), 5);
-  BOOST_CHECK_EQUAL(fun(false).recover(recover_error).mbind(add_five).mbind(add_five).value(), 10);
-  BOOST_CHECK_EQUAL(fun(false).recover(recover_error_failure).mbind(add_five).valid(), false);
-  BOOST_CHECK_EQUAL(fun(false).mbind(add_five).recover(recover_error_failure).mbind(add_five).valid(), false);
-  BOOST_CHECK_EQUAL(fun(false).mbind(add_five).recover(recover_error_silent_failure).mbind(add_five).valid(), false);
+  BOOST_CHECK_EQUAL(fun(false).catch_error(recover_error).mbind(add_five).value(), 5);
+  BOOST_CHECK_EQUAL(fun(false).catch_error(recover_error).mbind(add_five).mbind(add_five).value(), 10);
+  BOOST_CHECK_EQUAL(fun(false).catch_error(recover_error_failure).mbind(add_five).valid(), false);
+  BOOST_CHECK_EQUAL(fun(false).mbind(add_five).catch_error(recover_error_failure).mbind(add_five).valid(), false);
+  BOOST_CHECK_EQUAL(fun(false).mbind(add_five).catch_error(recover_error_silent_failure).mbind(add_five).valid(), false);
 
-  BOOST_CHECK_THROW(fun(false).recover(recover_error_throws), test_exception);
+  BOOST_CHECK_THROW(fun(false).catch_error(recover_error_throws), test_exception);
 
 }
 
@@ -896,16 +896,16 @@ BOOST_AUTO_TEST_CASE(expected_void_recover)
     throw test_exception();
   };
 
-  // The recover doesn't alter the expected if it's valid.
-  BOOST_CHECK_EQUAL(fun(true).recover(recover_error_failure).valid(), true);
+  // The catch_error doesn't alter the expected if it's valid.
+  BOOST_CHECK_EQUAL(fun(true).catch_error(recover_error_failure).valid(), true);
 
-  // Simple recover tests.
-  BOOST_CHECK_EQUAL(fun(false).recover(recover_error).valid(), true);
-  BOOST_CHECK_THROW(fun(false).recover(recover_error_failure), test_exception);
-  BOOST_CHECK_EQUAL(fun(false).recover(recover_error_silent_failure).valid(), false);
+  // Simple catch_error tests.
+  BOOST_CHECK_EQUAL(fun(false).catch_error(recover_error).valid(), true);
+  BOOST_CHECK_THROW(fun(false).catch_error(recover_error_failure), test_exception);
+  BOOST_CHECK_EQUAL(fun(false).catch_error(recover_error_silent_failure).valid(), false);
 
   // With a mbind between.
-  BOOST_CHECK_THROW(fun(false).mbind(do_nothing).recover(recover_error_failure), test_exception);
+  BOOST_CHECK_THROW(fun(false).mbind(do_nothing).catch_error(recover_error_failure), test_exception);
 
 }
 BOOST_AUTO_TEST_SUITE_END()

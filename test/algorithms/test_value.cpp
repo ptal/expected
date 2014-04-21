@@ -33,7 +33,7 @@ BOOST_AUTO_TEST_SUITE(Value)
 BOOST_AUTO_TEST_CASE(Value_Valued_RValue)
 {
   expected<std::exception_ptr, int> ei = 1;
-  auto ej = ei.recover(thrower<int>());
+  auto ej = ei.catch_error(thrower<int>());
   BOOST_CHECK (*ej == 1);
   int i = value(std::move(ei));
   BOOST_CHECK_EQUAL (i, 1);

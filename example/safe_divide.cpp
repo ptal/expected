@@ -163,8 +163,8 @@ namespace exception_based
 
 boost::expected<std::exception_ptr, int> divide(int i, int j)
 {
-return safe_divide(i,j).
-recover([](std::exception_ptr ex) -> boost::expected<std::exception_ptr, int>
+  return safe_divide(i,j).
+    catch_error([](std::exception_ptr ex) -> boost::expected<std::exception_ptr, int>
     {
       try
       {
@@ -196,7 +196,7 @@ boost::expected<std::exception_ptr, int> divide1(int i, int j)
 boost::expected<std::exception_ptr, int> divide2(int i, int j)
 {
   return safe_divide(i,j).
-  catch_exception<NotDivisible>([](NotDivisible& e) -> expected<std::exception_ptr, int>
+    catch_exception<NotDivisible>([](NotDivisible& e) -> expected<std::exception_ptr, int>
     {
       return e.i / e.j;
     });
@@ -205,7 +205,7 @@ boost::expected<std::exception_ptr, int> divide2(int i, int j)
 boost::expected<std::exception_ptr, int> divide3(int i, int j)
 {
   return safe_divide(i,j).
-  catch_exception<NotDivisible>([](NotDivisible& e)
+    catch_exception<NotDivisible>([](NotDivisible& e)
     {
       return make_expected(e.i / e.j);
     });

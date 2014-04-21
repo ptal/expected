@@ -164,7 +164,7 @@ template <class Num, class CharT=char, class InputIterator = std::istreambuf_ite
 boost::expected<std::ios_base::iostate, std::pair<Num,Num>> get_interval4(ios_range<CharT, InputIterator>& r)
 {
   return get_num<Num>(r)
-     .recover([](std::ios_base::iostate st) {
+     .catch_error([](std::ios_base::iostate st) {
           std::cout << __FILE__ << "[" << __LINE__ << "] " << st << std::endl;
           return boost::make_unexpected(st);
         }

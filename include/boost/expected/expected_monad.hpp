@@ -58,7 +58,7 @@ namespace functional
     template <class M, class F>
     static M catch_error(M&& m, F&& f)
     {
-      return m.recover(std::forward<F>(f));
+      return m.catch_error(std::forward<F>(f));
     }
   };
   template <class T1, class E1>
