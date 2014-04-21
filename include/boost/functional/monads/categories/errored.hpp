@@ -15,6 +15,7 @@
 #include <boost/functional/meta.hpp>
 #include <boost/utility/enable_if.hpp>
 #include <boost/type_traits/is_same.hpp>
+#include <type_traits>
 
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
 #if defined __clang__
@@ -39,7 +40,7 @@ namespace functional
   }
 
   template <>
-  struct functor_traits<category::errored>
+  struct functor_traits<category::errored> : std::true_type
   {
 
     template <class F, class M0, class ...M,
@@ -56,7 +57,7 @@ namespace functional
   };
 
   template <>
-  struct monad_traits<category::errored>
+  struct monad_traits<category::errored> : std::true_type
   {
 
     template <class M, class T>
