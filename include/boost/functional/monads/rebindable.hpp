@@ -47,7 +47,7 @@ namespace rebindable
 {
 
   template <class M, class Traits = rebindable_traits_t<M> >
-  using value_type_t = typename Traits::template value_type<M>;
+  using value_type = typename Traits::template value_type<M>;
 
   template <class M, class U, class Traits = rebindable_traits_t<M> >
   using rebind = typename Traits::template rebind<M, U>;

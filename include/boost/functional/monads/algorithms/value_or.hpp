@@ -16,19 +16,19 @@ namespace valued {
 
 #if defined __clang
   template <class PV, class U, class = std::enable_if<valued_traits_t< PV >::value> >
-  constexpr value_type_t<PV> value_or(PV const& e, U&& v)
+  constexpr value_type<PV> value_or(PV const& e, U&& v)
   {
     return has_value(e)
       ? deref(e)
-      : static_cast<value_type_t<PV>>(std::forward<U>(v));
+      : static_cast<value_type<PV>>(std::forward<U>(v));
   }
 
   template <class PV, class U, class = std::enable_if<valued_traits_t< PV >::value> >
-  value_type_t<PV> value_or(PV && e, U&& v)
+  value_type<PV> value_or(PV && e, U&& v)
   {
     return has_value(e)
       ? std::move(deref(std::forward<PV>(e)))
-      : static_cast<value_type_t<PV>>(std::forward<U>(v));
+      : static_cast<value_type<PV>>(std::forward<U>(v));
   }
 #else
   template <class PV, class U, class = std::enable_if<valued_traits_t< PV >::value> >
@@ -36,7 +36,7 @@ namespace valued {
   {
     return has_value(e)
       ? deref(e)
-      : static_cast<value_type_t<PV>>(std::forward<U>(v));
+      : static_cast<value_type<PV>>(std::forward<U>(v));
   }
 
   template <class PV, class U, class = std::enable_if<valued_traits_t< PV >::value> >
@@ -44,7 +44,7 @@ namespace valued {
   {
     return has_value(e)
       ? std::move(deref(std::forward<PV>(e)))
-      : static_cast<value_type_t<PV>>(std::forward<U>(v));
+      : static_cast<value_type<PV>>(std::forward<U>(v));
   }
 #endif
 } // namespace valued

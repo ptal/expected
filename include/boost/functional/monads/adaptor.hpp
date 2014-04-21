@@ -55,7 +55,7 @@ namespace detail
     {
     }
 
-    typedef rebindable::value_type_t<E> value_type;
+    typedef rebindable::value_type<E> value_type;
     typedef rebindable::rebind<E, typename result_of<F(value_type)>::type> result_type;
 
     result_type operator()(E e)
@@ -146,7 +146,7 @@ namespace detail
     template <class E>
     struct rebind_right
     {
-      typedef if_valued<E, funct_type, rebindable::value_type_t<E>> type;
+      typedef if_valued<E, funct_type, rebindable::value_type<E>> type;
     };
   };
 }
@@ -224,7 +224,7 @@ namespace detail
     template <class E>
     struct rebind_right
     {
-      typedef if_unexpected<E, funct_type, rebindable::value_type_t<E>> type;
+      typedef if_unexpected<E, funct_type, rebindable::value_type<E>> type;
     };
   };
 }

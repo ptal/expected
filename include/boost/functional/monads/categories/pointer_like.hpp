@@ -38,7 +38,7 @@ namespace functional
     static constexpr auto deref(M&& m) -> decltype(*m) { return *m; }
 
     template <class M>
-    static constexpr value_type_t<M> get_value(M&& m)
+    static constexpr value_type<M> get_value(M&& m)
     {
       return (m) ? *m : throw bad_access(),*m;
     }
