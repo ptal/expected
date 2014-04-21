@@ -52,6 +52,13 @@ namespace functor
     return Traits::fmap(std::forward<F>(f),std::forward<M0>(m0), std::forward<M>(m)...);
   }
 
+  template <class F, class M>
+  auto operator^(F&& f, M&& m)
+  -> decltype(fmap(std::forward<F>(f), std::forward<M>(m)))
+  {
+    return fmap(std::forward<F>(f), std::forward<M>(m));
+  }
+
 }
 }
 }

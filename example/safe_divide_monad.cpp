@@ -257,6 +257,11 @@ namespace expected_based
           };
     };
   }
+  expected<std::exception_ptr, int> then_f4(int i, int j, int k)
+  {
+    using namespace ::boost::functional::monad;
+    return  safe_divide(i, k) & [=](int q1) { return [=](int q2) { return q1+q2; } ^ safe_divide(j,k) ;}  ;
+  }
 }
 
 namespace optional_based
@@ -603,6 +608,8 @@ void expected_test()
   std::cout << *tr23 << std::endl;
   auto tr2 = then_f2(1, 2, 1);
   std::cout << *tr2 << std::endl;
+  auto tr4 = then_f4(1, 2, 1);
+  std::cout << *tr4 << std::endl;
   auto r3 = cex_f2(1, 2, 0);
   auto a0 = divide0(1, 0);
   auto a1 = divide1(1, 0);
