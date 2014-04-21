@@ -8,7 +8,7 @@
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #define BOOST_RESULT_OF_USE_DECLTYPE
-#include <boost/expected/expected.hpp>
+#include <boost/expected/expected_monad.hpp>
 #include <iostream>
 #include <streambuf>
 #include <locale>
@@ -173,6 +173,22 @@ boost::expected<std::ios_base::iostate, std::pair<Num,Num>> get_interval4(ios_ra
     );
 }
 
+template <class Num, class CharT=char, class InputIterator = std::istreambuf_iterator<CharT> >
+boost::expected<std::ios_base::iostate, std::pair<Num,Num>> get_interval5(ios_range<CharT, InputIterator>& r)
+{
+  using namespace boost::functional::monad_error;
+
+  return ( get_num<Num>(r)
+    | [](std::ios_base::iostate st) {
+          std::cout << __FILE__ << "[" << __LINE__ << "] " << st << std::endl;
+          return boost::make_unexpected(st);
+        }
+    )
+    & [&r](Num f) { return matchedString("..", r).mbind( identity(f) ); }
+    & [&r](Num f) { return get_num<Num>(r).mbind( lpair(f) ); }
+    ;
+}
+
 #if 0
 
 template <class Num, class CharT=char, class InputIterator = std::istreambuf_iterator<CharT> >
@@ -237,6 +253,17 @@ int main()
     std::stringstream is("1..3");
     ios_range<> r(is);
     auto x = get_interval4<long>(r);
+    if (!x.valid()) {
+      std::cout << x.error() << std::endl;
+      return 4;
+    }
+
+    std::cout << x.value().first << ".." << x.value().second << std::endl;
+  }
+  {
+    std::stringstream is("1..3");
+    ios_range<> r(is);
+    auto x = get_interval5<long>(r);
     if (!x.valid()) {
       std::cout << x.error() << std::endl;
       return 4;
