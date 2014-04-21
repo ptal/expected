@@ -8,6 +8,7 @@
 
 #include <boost/functional/type_traits_t.hpp>
 #include <boost/functional/meta.hpp>
+#include <boost/functional/monads/rebindable.hpp>
 #include <boost/functional/monads/categories/forward.hpp>
 #include <utility>
 #include <type_traits>
@@ -41,6 +42,8 @@ namespace functional
 
 namespace functor
 {
+  using namespace ::boost::functional::rebindable;
+
   template <class F, class M0, class ...M, class Traits = functor_traits<functor_category_t<decay_t<M0> > > >
   auto
   fmap(F&& f, M0&& m0, M&& ...m)
@@ -48,6 +51,7 @@ namespace functor
   {
     return Traits::fmap(std::forward<F>(f),std::forward<M0>(m0), std::forward<M>(m)...);
   }
+
 }
 }
 }
