@@ -88,14 +88,14 @@ namespace monad_error
     return Traits::catch_error(std::forward<M>(m), std::forward<F>(f));
   }
 
+  template <class M, class F>
+  auto operator|(M&& m, F&& f)
+  -> decltype(::boost::functional::monad_error::catch_error(std::forward<M>(m), std::forward<F>(f)))
+  {
+    return ::boost::functional::monad_error::catch_error(std::forward<M>(m), std::forward<F>(f));
+  }
 }
 }
 }
 
-template <class M, class F>
-auto operator|(M&& m, F&& f)
--> decltype(::boost::functional::monad_error::catch_error(std::forward<M>(m), std::forward<F>(f)))
-{
-  return ::boost::functional::monad_error::catch_error(std::forward<M>(m), std::forward<F>(f));
-}
 #endif // BOOST_FUNCTIONAL_MONAD_ERROR_HPP
