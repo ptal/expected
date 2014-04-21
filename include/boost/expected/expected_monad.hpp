@@ -7,7 +7,7 @@
 #define BOOST_EXPECTED_EXPECTED_MONAD_HPP
 
 #include <boost/functional/monads/categories/errored.hpp>
-#include <boost/functional/monads/monad_error.hpp>
+#include <boost/functional/monads/monad_exception.hpp>
 #include <boost/expected/expected.hpp>
 #include <boost/expected/unexpected.hpp>
 #include <boost/mpl/identity.hpp>
@@ -59,6 +59,27 @@ namespace functional
     static M catch_error(M&& m, F&& f)
     {
       return m.recover(std::forward<F>(f));
+    }
+  };
+  template <class T1, class E1>
+  struct monad_exception_traits<expected<E1,T1> > : std::true_type
+  {
+    template <class M, class E>
+    static auto make_exception(E&& e) -> decltype(make_unexpected(std::forward<E>(e)))
+    {
+      return make_unexpected(std::forward<E>(e));
+    }
+
+    template <class E, class M>
+    static bool has_exception(M&& m)
+    {
+      return m.template has_exception<E>();
+    }
+
+    template <class E, class M, class F>
+    static M catch_exception(M&& m, F&& f)
+    {
+      return m.template catch_exception<E>(std::forward<F>(f));
     }
   };
 }
