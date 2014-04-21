@@ -10,6 +10,7 @@
 #include <boost/functional/meta.hpp>
 #include <boost/functional/monads/functor.hpp>
 #include <boost/functional/monads/categories/forward.hpp>
+#include <boost/functional/monads/categories/default.hpp>
 #include <utility>
 #include <type_traits>
 
@@ -29,25 +30,6 @@ namespace functional
 
   template <class Mo>
   struct monad_traits : std::false_type {};
-  template <>
-  struct monad_traits<category::forward> : std::true_type
-  {
-    // make use of constructor
-    template <class M, class T>
-    static apply<M, T> make(T&& v)
-    {
-      return apply<M, T>(std::forward<T>(v));
-    }
-
-    // make use of member function
-    template <class M, class F>
-    static auto
-    mbind(M&& m, F&& f) -> decltype(m.mbind(std::forward<F>(f)))
-    {
-      return m.mbind(std::forward<F>(f));
-    }
-
-  };
 
   template <class M, class T>
   using monad_traits_t = monad_traits<monad_category_t<decay_t<apply<M, T> > > >;
@@ -81,14 +63,59 @@ namespace monad
     return Traits::mbind(std::forward<M>(m), std::forward<F>(f));
   }
 
-  template <class M, class F>
-  auto operator&(M&& m, F&& f)
-  -> decltype(::boost::functional::monad::mbind(std::forward<M>(m), std::forward<F>(f)))
+  template <class M, class T, class U, class Traits = monad_traits_t<M,T>>
+  auto mdo(apply<M,T>&& m1, apply<M,U>&& m2)
+  -> decltype(Traits::mdo(std::forward<apply<M,T>>(m1), std::forward<apply<M,U>>(m2)))
   {
-    return ::boost::functional::monad::mbind(std::forward<M>(m),std::forward<F>(f));
+    return Traits::mdo(std::forward<apply<M,T>>(m1), std::forward<apply<M,U>>(m2));
   }
 
+  template <class M, class F>
+  auto operator&(M&& m, F&& f)
+  -> decltype(mbind(std::forward<M>(m), std::forward<F>(f)))
+  {
+    return mbind(std::forward<M>(m),std::forward<F>(f));
+  }
+
+  template <class M, class T, class U>
+  auto operator>>(apply<M,T>&& m1, apply<M,U>&& m2)
+  -> decltype(mdo(std::forward<apply<M,T>>(m1), std::forward<apply<M,U>>(m2)))
+
+  {
+    return mdo(m1, [&](T& ) { return m2; });
+  }
 }
+
+template <>
+struct monad_traits<category::default_> : std::true_type
+{
+  template <class M, class T, class U, class Traits = monad_traits_t<M,T>>
+  static apply<M,U> mdo(apply<M,T>&& m1, apply<M,U>&& m2)
+  {
+    return monad::mbind(m1, [&](T& ) { return m2; });
+  }
+
+};
+
+template <>
+struct monad_traits<category::forward> : monad_traits<category::default_>
+{
+  // make use of constructor
+  template <class M, class T>
+  static apply<M, T> make(T&& v)
+  {
+    return apply<M, T>(std::forward<T>(v));
+  }
+
+  // make use of member function
+  template <class M, class F>
+  static auto
+  mbind(M&& m, F&& f) -> decltype(m.mbind(std::forward<F>(f)))
+  {
+    return m.mbind(std::forward<F>(f));
+  }
+
+};
 }
 }
 

@@ -57,7 +57,7 @@ namespace functional
   };
 
   template <>
-  struct monad_traits<category::errored> : std::true_type
+  struct monad_traits<category::errored> : monad_traits<category::default_>
   {
 
     template <class M, class T>
