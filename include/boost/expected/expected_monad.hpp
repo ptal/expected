@@ -34,7 +34,7 @@ namespace functional
   };
 
   template <class T, class E>
-  struct unexpected_category<expected<E, T> > : mpl::identity<category::forward> {};
+  struct errored_category<expected<E, T> > : mpl::identity<category::forward> {};
 
   template <class T, class E>
   struct functor_category<expected<E, T> > : mpl::identity<category::errored> {};

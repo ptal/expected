@@ -17,19 +17,19 @@ namespace boost
 namespace functional
 {
   template <class M>
-  struct unexpected_category
+  struct errored_category
   {
     typedef M type;
   };
 
   template <class M>
-  using unexpected_category_t = typename unexpected_category<M>::type;
+  using errored_category_t = typename errored_category<M>::type;
 
   template <class T>
-  struct unexpected_traits  : std::false_type {};
+  struct errored_traits  : std::false_type {};
 
   template <>
-  struct unexpected_traits<category::forward>  : std::true_type
+  struct errored_traits<category::forward>  : std::true_type
   {
     template <class M>
     using unexpected_type_type = typename M::unexpected_type_type;
@@ -47,22 +47,22 @@ namespace errored
 {
   using namespace ::boost::functional::valued;
 
-  template <class M, class Traits = unexpected_traits<unexpected_category_t<decay_t<M> > > >
+  template <class M, class Traits = errored_traits<errored_category_t<decay_t<M> > > >
   using unexpected_type_t = typename Traits::template unexpected_type_type<M>;
 
-  template <class M, class Traits = unexpected_traits<unexpected_category_t<decay_t<M> > > >
+  template <class M, class Traits = errored_traits<errored_category_t<decay_t<M> > > >
   static constexpr auto
   get_unexpected(M&& e) -> decltype(Traits::get_unexpected(std::forward<M>(e)))
   {
     return Traits::get_unexpected(std::forward<M>(e));
   }
-  template <class M, class Traits = unexpected_traits<unexpected_category_t<decay_t<M> > > >
+  template <class M, class Traits = errored_traits<errored_category_t<decay_t<M> > > >
   static constexpr auto
   error(M&& e) -> decltype(Traits::error(std::forward<M>(e)))
   {
     return Traits::error(std::forward<M>(e));
   }
-//    template <class M, class E, class Traits = unexpected_traits<unexpected_category_t<decay_t<M> > > >
+//    template <class M, class E, class Traits = errored_traits<errored_category_t<decay_t<M> > > >
 //    static constexpr M
 //    make_unexpected(E&& e) -> decltype(Traits::make_unexpected(std::forward<M>(e)))
 //    {

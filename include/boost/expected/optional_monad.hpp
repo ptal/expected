@@ -48,7 +48,7 @@ namespace functional
   };
 
   template <class T>
-  struct unexpected_traits<optional<T> > : std::true_type
+  struct errored_traits<optional<T> > : std::true_type
   {
     template< class M >
     using unexpected_type_type = none_t;
