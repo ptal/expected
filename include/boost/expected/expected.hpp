@@ -23,24 +23,7 @@
 #include <stdexcept>
 #include <utility>
 #include <initializer_list>
-
-// TODO: We'd need to check if std::is_default_constructible is there too.
-#ifndef BOOST_NO_CXX11_FUNCTION_TEMPLATE_DEFAULT_ARGS
-  #define BOOST_EXPECTED_USE_DEFAULT_CONSTRUCTOR
-  #include <type_traits>
-#endif
-
-#if defined BOOST_NO_CXX11_VARIADIC_TEMPLATES
-  #include <boost/preprocessor/facilities/intercept.hpp>
-  #include <boost/preprocessor/repetition/enum_params.hpp>
-  #include <boost/preprocessor/repetition/repeat_from_to.hpp>
-  #ifndef BOOST_EXPECTED_EMPLACE_MAX_ARGS
-    #define BOOST_EXPECTED_EMPLACE_MAX_ARGS 10
-  #endif
-
-  #define MAKE_BOOST_FWD_REF_ARG(z, count, unused) BOOST_PP_COMMA_IF(count) BOOST_FWD_REF(Arg##count) arg##count
-  #define MAKE_BOOST_FWD_PARAM(z, count, unused) BOOST_PP_COMMA_IF(count) boost::constexpr_forward<Arg##count>(arg##count)
-#endif
+#include <type_traits>
 
 # define REQUIRES(...) typename ::boost::enable_if_c<__VA_ARGS__, void*>::type = 0
 # define T_REQUIRES(...) typename = typename ::boost::enable_if_c<(__VA_ARGS__)>::type
@@ -711,7 +694,6 @@ public:
   : base_type(std::forward<unexpected_type<Err>>(e))
   {}
 
-#if ! defined BOOST_NO_CXX11_VARIADIC_TEMPLATES
   template <class... Args
 #if !defined BOOST_EXPECTED_NO_CXX11_FUNCTION_TEMPLATE_DEFAULT_ARGS
   , T_REQUIRES(std::is_constructible<error_type, Args&...>::value)
@@ -724,10 +706,8 @@ public:
   )
   : base_type(unexpected_type<error_type>(error_type(std::forward<Args>(args)...)))
   {}
-#endif
 
 
-#if ! defined BOOST_NO_CXX11_VARIADIC_TEMPLATES
   template <class... Args
 #if !defined BOOST_EXPECTED_NO_CXX11_FUNCTION_TEMPLATE_DEFAULT_ARGS
     //, T_REQUIRES(std::is_constructible<value_type, decay_t<Args>...>::value)
@@ -745,9 +725,7 @@ public:
   BOOST_CONSTEXPR explicit expected(in_place_t, std::initializer_list<U> il, BOOST_FWD_REF(Args)... args)
   : base_type(in_place_t{}, il, constexpr_forward<Args>(args)...)
   {}
-#endif
 
-#if ! defined BOOST_NO_CXX11_VARIADIC_TEMPLATES
   template <class... Args
 #if !defined BOOST_EXPECTED_NO_CXX11_FUNCTION_TEMPLATE_DEFAULT_ARGS
     , T_REQUIRES(std::is_constructible<value_type, Args&...>::value)
@@ -765,9 +743,6 @@ public:
   BOOST_CONSTEXPR explicit expected(expect_t, std::initializer_list<U> il, BOOST_FWD_REF(Args)... args)
   : base_type(in_place_t{}, il, constexpr_forward<Args>(args)...)
   {}
-
-#endif
-
 
   ~expected() = default;
 
@@ -798,7 +773,6 @@ public:
     return *this;
   }
 
-#if ! defined BOOST_NO_CXX11_VARIADIC_TEMPLATES
   template <class... Args
 #if !defined BOOST_EXPECTED_NO_CXX11_FUNCTION_TEMPLATE_DEFAULT_ARGS
     , T_REQUIRES(std::is_constructible<value_type, Args&...>::value)
@@ -818,7 +792,6 @@ public:
     {
       this_type(in_place_t{}, il, constexpr_forward<Args>(args)...).swap(*this);
     }
-#endif
 
   // Modifiers
   void swap(expected& rhs)
@@ -1450,7 +1423,6 @@ public:
   : base_type(std::forward<unexpected_type<Err>>(e))
   {}
 
-#if ! defined BOOST_NO_CXX11_VARIADIC_TEMPLATES
   template <class... Args
 #if !defined BOOST_EXPECTED_NO_CXX11_FUNCTION_TEMPLATE_DEFAULT_ARGS
   , T_REQUIRES(std::is_constructible<error_type, Args&...>::value)
@@ -1463,7 +1435,6 @@ public:
   )
   : base_type(unexpected_type<error_type>(error_type(std::forward<Args>(args)...)))
   {}
-#endif
 
   ~expected() = default;
 
@@ -2082,11 +2053,6 @@ namespace expected_detail
   }
 #endif
 } // namespace boost
-
-#if defined BOOST_NO_CXX11_VARIADIC_TEMPLATES
-  #undef MAKE_BOOST_FWD_REF_ARG
-  #undef MAKE_BOOST_FWD_PARAM
-#endif
 
 #undef REQUIRES
 #undef T_REQUIRES
