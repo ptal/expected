@@ -9,6 +9,7 @@
 #include <boost/functional/type_traits_t.hpp>
 #include <boost/functional/monads/rebindable.hpp>
 #include <boost/functional/monads/categories/forward.hpp>
+#include <boost/functional/monads/categories/default.hpp>
 #include <utility>
 #include <stdexcept>
 #include <type_traits>
@@ -23,18 +24,20 @@ namespace functional
   }
 
   template <class M>
-  struct value_category
+  struct valued_category
   {
     typedef M type;
   };
 
   template <class M>
-  using value_category_t = typename value_category<M>::type;
+  using valued_category_t = typename valued_category<M>::type;
 
   template <class T>
   struct valued_traits  : std::false_type {};
   template <>
-  struct valued_traits<category::forward> : std::true_type
+  struct valued_traits<category::default_> : std::true_type {};
+  template <>
+  struct valued_traits<category::forward> : valued_traits<category::default_>
   {
     template <class M>
     static constexpr bool has_value(M&& m)
@@ -50,7 +53,13 @@ namespace functional
   };
 
   template <class M>
-  struct valued_traits_t : valued_traits<value_category_t<decay_t<M> > > {};
+  struct valued_traits_t : valued_traits<valued_category_t<decay_t<M> > > {};
+
+  template <class M>
+  struct is_valued : std::integral_constant<bool, is_rebindable<M>::value &&
+    valued_traits<valued_category_t<M>>::value
+  >
+  {};
 
 namespace valued
 {

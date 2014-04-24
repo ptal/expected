@@ -9,6 +9,7 @@
 #include <boost/functional/type_traits_t.hpp>
 #include <boost/functional/monads/valued.hpp>
 #include <boost/functional/monads/categories/forward.hpp>
+#include <boost/functional/monads/categories/default.hpp>
 #include <utility>
 #include <type_traits>
 
@@ -29,7 +30,9 @@ namespace functional
   struct errored_traits  : std::false_type {};
 
   template <>
-  struct errored_traits<category::forward>  : std::true_type
+  struct errored_traits<category::default_>  : std::true_type {};
+  template <>
+  struct errored_traits<category::forward>  : errored_traits<category::default_>
   {
     template <class M>
     using unexpected_type_type = typename M::unexpected_type_type;
@@ -42,6 +45,12 @@ namespace functional
     static constexpr auto error(M&& m) -> decltype(m.error())
     { return m.error();};
   };
+
+  template <class M>
+  struct is_errored : std::integral_constant<bool, is_valued<M>::value &&
+    errored_traits<errored_category_t<M>>::value
+  >
+  {};
 
 namespace errored
 {

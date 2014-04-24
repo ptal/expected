@@ -38,7 +38,10 @@ namespace functional
   using monad_traits_t0 = monad_traits<monad_category_t<decay_t<M> > >;
 
   template <class M>
-  struct is_monad : monad_traits<monad_category_t<M>> {};
+  struct is_monad : std::integral_constant<bool, is_functor<M>::value &&
+  monad_traits<monad_category_t<M>>::value
+  >
+  {};
 
 namespace monad
 {

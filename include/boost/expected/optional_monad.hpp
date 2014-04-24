@@ -24,7 +24,7 @@ namespace boost
 namespace functional
 {
   template <class T>
-  struct rebindable_traits<optional<T>> : std::true_type
+  struct rebindable_traits<optional<T>> : rebindable_traits<category::default_>
   {
     template <class M>
     using value_type = typename M::value_type;
@@ -35,7 +35,7 @@ namespace functional
   };
 
   template <class T>
-  struct valued_traits<optional<T>> : std::true_type
+  struct valued_traits<optional<T>> : valued_traits<category::default_>
   {
     template <class M>
     static constexpr bool has_value(M&& m) { return bool(m); }
@@ -48,7 +48,7 @@ namespace functional
   };
 
   template <class T>
-  struct errored_traits<optional<T> > : std::true_type
+  struct errored_traits<optional<T> > : errored_traits<category::default_>
   {
     template< class M >
     using unexpected_type_type = none_t;
@@ -76,7 +76,7 @@ namespace functional
   struct monad_category<optional<T> > : mpl::identity<category::errored> {};
 
   template <class T>
-  struct monad_error_traits<optional<T> > : std::true_type
+  struct monad_error_traits<optional<T> > : monad_error_traits<category::default_>
   {
     template <class M>
     static constexpr auto value(M&& m) -> decltype(m.value())
@@ -112,7 +112,7 @@ namespace functional
     }
   };
   template <>
-  struct monad_error_traits<optional_monad > : std::true_type
+  struct monad_error_traits<optional_monad > : monad_error_traits<category::default_>
   {
     template <class M>
     static constexpr auto value(M&& m) -> decltype(m.value())

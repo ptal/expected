@@ -10,6 +10,7 @@
 #include <boost/functional/meta.hpp>
 #include <boost/functional/monads/rebindable.hpp>
 #include <boost/functional/monads/categories/forward.hpp>
+#include <boost/functional/monads/categories/default.hpp>
 #include <utility>
 #include <type_traits>
 
@@ -29,7 +30,9 @@ namespace functional
   template <class Mo>
   struct functor_traits : std::false_type {};
   template <>
-  struct functor_traits<category::forward> : std::true_type
+  struct functor_traits<category::default_> : std::true_type {};
+  template <>
+  struct functor_traits<category::forward> : functor_traits<category::default_>
   {
 
     template <class F, class M0, class ...M, class FR = decltype( std::declval<F>()(*std::declval<M0>(), *std::declval<M>()...) )>
@@ -39,6 +42,12 @@ namespace functional
       return M0::fmap(std::forward<F>(f), std::forward<M0>(m0), std::forward<M>(ms)...);
     }
   };
+
+  template <class M>
+  struct is_functor : std::integral_constant<bool, is_rebindable<M>::value &&
+  functor_traits<functor_category_t<M>>::value
+  >
+  {};
 
 namespace functor
 {

@@ -19,7 +19,7 @@ namespace functional
   }
 
   template <class T>
-  struct rebindable_traits<T*> : std::true_type
+  struct rebindable_traits<T*> : rebindable_traits<category::default_>
   {
     template <class M>
     using value_type = T;
@@ -29,7 +29,7 @@ namespace functional
   };
 
   template <>
-  struct valued_traits<category::pointer_like> : std::true_type
+  struct valued_traits<category::pointer_like> : valued_traits<category::default_>
   {
     template <class M>
     static constexpr bool has_value(M&& m) { return bool(m); }

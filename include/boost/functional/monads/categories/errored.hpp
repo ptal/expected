@@ -40,7 +40,7 @@ namespace functional
   }
 
   template <>
-  struct functor_traits<category::errored> : std::true_type
+  struct functor_traits<category::errored> : functor_traits<category::default_>
   {
 
     template <class F, class M0, class ...M,

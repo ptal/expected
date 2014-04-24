@@ -21,7 +21,7 @@ namespace functional
   struct rebindable_category<expected<E, T> > : mpl::identity<category::forward> {};
 
   template <class E, class T>
-  struct valued_traits<expected<E, T>> : std::true_type
+  struct valued_traits<expected<E, T>> : valued_traits<category::default_>
   {
     template <class M>
     static constexpr bool has_value(M&& m) { return bool(m); }
@@ -43,7 +43,7 @@ namespace functional
   struct monad_category<expected<E,T> > : mpl::identity<category::forward> { };
 
   template <class T1, class E1>
-  struct monad_error_traits<expected<E1,T1> > : std::true_type
+  struct monad_error_traits<expected<E1,T1> > : monad_error_traits<category::default_>
   {
     template <class M>
     static constexpr auto value(M&& m) -> decltype(m.value())
@@ -62,7 +62,7 @@ namespace functional
     }
   };
   template <class T1, class E1>
-  struct monad_exception_traits<expected<E1,T1> > : std::true_type
+  struct monad_exception_traits<expected<E1,T1> > : monad_exception_traits<category::default_>
   {
     template <class M, class E>
     static auto make_exception(E&& e) -> decltype(make_unexpected(std::forward<E>(e)))

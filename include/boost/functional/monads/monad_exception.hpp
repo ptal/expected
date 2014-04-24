@@ -11,6 +11,7 @@
 #include <boost/functional/monads/monad.hpp>
 #include <boost/expected/unexpected.hpp>
 #include <boost/functional/monads/categories/forward.hpp>
+#include <boost/functional/monads/categories/default.hpp>
 #include <boost/functional/monads/monad_error.hpp>
 #include <utility>
 #include <type_traits>
@@ -30,7 +31,9 @@ namespace functional
   template <class Mo>
   struct monad_exception_traits : std::false_type {};
   template <>
-  struct monad_exception_traits<category::forward> : std::true_type
+  struct monad_exception_traits<category::default_> : std::true_type {};
+  template <>
+  struct monad_exception_traits<category::forward> : monad_exception_traits<category::default_>
   {
     template <class M, class E>
     static auto make_exception(E&& e) -> decltype(make_exception(std::forward<E>(e)))
@@ -56,6 +59,12 @@ namespace functional
 
   template <class M>
   using monad_exception_traits_t0 = monad_exception_traits<monad_exception_category_t<decay_t<M> > > ;
+
+  template <class M>
+  struct is_monad_exception : std::integral_constant<bool, is_monad_error<M>::value &&
+    monad_exception_traits<monad_exception_category_t<M>>::value
+  >
+  {};
 
 namespace monad_exception
 {
