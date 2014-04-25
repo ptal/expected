@@ -72,42 +72,6 @@ namespace functional
   template <class T>
   struct monad_category<optional<T> > : mpl::identity<category::errored> {};
 
-  template <class T>
-  struct monad_error_traits<optional<T> > : monad_error_traits<category::default_>
-  {
-    template <class M>
-    static constexpr auto value(M&& m) -> decltype(m.value())
-    { return m.value();}
-
-    template <class M, class E>
-    static auto make_error(E&&) -> decltype(none)
-    {
-      return none;
-    }
-
-    // f : E -> T
-    // todo complete with the other prototypes
-    // f : E -> void
-    // f : E -> M
-    template <class M, class F, class FR = decltype( std::declval<F>()( none ) ) >
-    static BOOST_CONSTEXPR M
-    catch_error(M&& m, F&& f)
-    {
-      typedef rebindable::rebind<decay_t<M>, FR> result_type;
-#if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
-      if(! has_value(m))
-      {
-        result_type(f(none));
-      }
-      return deref(m);
-#else
-      return (! has_value(m)
-          ? result_type(f(none))
-          : deref(m)
-      );
-#endif
-    }
-  };
   template <>
   struct monad_error_traits<optional_monad > : monad_error_traits<category::default_>
   {
@@ -146,6 +110,9 @@ namespace functional
 #endif
     }
   };
+
+  template <class T>
+  struct monad_error_traits<optional<T> > : monad_error_traits<optional_monad > {};
 
 }
 }
