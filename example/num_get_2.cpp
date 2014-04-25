@@ -37,7 +37,7 @@ namespace boost
   namespace functional
   {
     template <class T, class I, typename E>
-    struct rebindable_traits<pair_expected<I, T, E>>
+    struct rebindable_traits<pair_expected<I, T, E>> : rebindable_traits<category::default_>
     {
       constexpr static bool value = true;
 
@@ -49,9 +49,14 @@ namespace boost
 
     };
 
+    template <class T, class I, typename E>
+    struct functor_traits<pair_expected<I, T, E> > : functor_traits<category::default_>
+    {
+
+    };
 
     template <class T, class I, typename E>
-    struct monad_traits<pair_expected<I, T, E> >
+    struct monad_traits<pair_expected<I, T, E> > : monad_traits<category::default_>
     {
     private:
       typedef pair_expected<I, T, E> monad_type;

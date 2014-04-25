@@ -70,9 +70,6 @@ namespace functional
   struct functor_category<optional<T> > : mpl::identity<category::errored> {};
 
   template <class T>
-  struct is_monad<optional<T> > : std::true_type {};
-
-  template <class T>
   struct monad_category<optional<T> > : mpl::identity<category::errored> {};
 
   template <class T>

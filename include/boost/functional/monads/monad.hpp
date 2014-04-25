@@ -47,26 +47,26 @@ namespace monad
 {
   using namespace ::boost::functional::functor;
 
-  template <class M, class T, class Traits = monad_traits_t<M,T> >
+  template <class M, class T, class Traits = monad_traits_t<M,T>, class = std::enable_if<is_monad<apply<M,T>>::value> >
   apply<M,T> make(T&& v)
   {
     return Traits::template make<M>(std::forward<T>(v));
   }
 
-  template <template <class ...> class M, class T, class Traits = monad_traits_t<lift<M>,T> >
+  template <template <class ...> class M, class T, class Traits = monad_traits_t<lift<M>,T>, class = std::enable_if<is_monad<M<T>>::value> >
   M<T> make(T&& v)
   {
     return Traits::template make<lift<M>>(std::forward<T>(v));
   }
 
-  template <class M, class F, class Traits = monad_traits_t0<M> >
+  template <class M, class F, class Traits = monad_traits_t0<M>, class = std::enable_if<is_monad<decay_t<M>>::value> >
   auto
   mbind(M&& m, F&& f) -> decltype(Traits::mbind(std::forward<M>(m), std::forward<F>(f)))
   {
     return Traits::mbind(std::forward<M>(m), std::forward<F>(f));
   }
 
-  template <class M, class T, class U, class Traits = monad_traits_t<M,T>>
+  template <class M, class T, class U, class Traits = monad_traits_t<M,T>, class = std::enable_if<is_monad<decay_t<apply<M,T>>>::value> >
   auto mdo(apply<M,T>&& m1, apply<M,U>&& m2)
   -> decltype(Traits::mdo(std::forward<apply<M,T>>(m1), std::forward<apply<M,U>>(m2)))
   {

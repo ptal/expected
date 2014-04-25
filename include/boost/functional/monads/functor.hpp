@@ -29,6 +29,9 @@ namespace functional
 
   template <class Mo>
   struct functor_traits : std::false_type {};
+  template <class M>
+  struct functor_traits_t : functor_traits<functor_category_t<decay_t<M> > > {};
+
   template <>
   struct functor_traits<category::default_> : std::true_type {};
   template <>
@@ -53,7 +56,7 @@ namespace functor
 {
   using namespace ::boost::functional::rebindable;
 
-  template <class F, class M0, class ...M, class Traits = functor_traits<functor_category_t<decay_t<M0> > > >
+  template <class F, class M0, class ...M, class Traits = functor_traits_t<M0> >
   auto
   fmap(F&& f, M0&& m0, M&& ...m)
   -> decltype(Traits::fmap(std::forward<F>(f), std::forward<M0>(m0), std::forward<M>(m)...))

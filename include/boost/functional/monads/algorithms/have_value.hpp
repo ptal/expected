@@ -16,12 +16,12 @@ namespace functional
 {
 namespace valued
 {
-  template < class M, class = std::enable_if<valued_traits_t<M>::value> >
+  template < class M, class = std::enable_if<is_valued<decay_t<M>>::value> >
   BOOST_CONSTEXPR bool have_value( M&& m )
   {
     return has_value(std::forward<M>(m));
   }
-  template< class M1, class ...Ms, class = std::enable_if<valued_traits_t<M1>::value> >
+  template< class M1, class ...Ms, class = std::enable_if<is_valued<decay_t<M1>>::value> >
   BOOST_CONSTEXPR bool have_value( M1&& m1, Ms&& ...ms )
   {
     return has_value(std::forward<M1>(m1)) && have_value( std::forward<Ms>(ms)... );

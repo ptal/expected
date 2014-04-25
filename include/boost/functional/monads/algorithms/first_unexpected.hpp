@@ -16,7 +16,7 @@ namespace functional
 namespace errored
 {
 
-  template< class M, class = std::enable_if<errored_traits<errored_category_t<decay_t<M> > >::value> >
+  template< class M, class = std::enable_if<is_errored<decay_t<M>>::value> >
   BOOST_CONSTEXPR unexpected_type_t<M> first_unexpected( M&& m )
   {
     return get_unexpected(std::forward<M>(m));

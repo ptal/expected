@@ -52,10 +52,10 @@ namespace category
 namespace rebindable
 {
 
-  template <class M, class Traits = rebindable_traits_t<M> >
+  template <class M, class Traits = rebindable_traits_t<M>, class = std::enable_if<is_rebindable<M>::value> >
   using value_type = typename Traits::template value_type<M>;
 
-  template <class M, class U, class Traits = rebindable_traits_t<M> >
+  template <class M, class U, class Traits = rebindable_traits_t<M>, class = std::enable_if<is_rebindable<M>::value> >
   using rebind = typename Traits::template rebind<M, U>;
 
 

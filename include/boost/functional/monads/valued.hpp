@@ -75,14 +75,14 @@ namespace valued
       // todo - Add implicit/explicit conversion to error_type ?
   };
 
-  template <class M, class Traits = valued_traits_t<M> >
+  template <class M, class Traits = valued_traits_t<M>, class = std::enable_if<is_valued<decay_t<M>>::value> >
   constexpr auto
   has_value(M&& e) -> decltype(Traits::has_value(std::forward<M>(e)))
   {
     return Traits::has_value(std::forward<M>(e));
   }
 
-  template <class M, class Traits = valued_traits_t<M> >
+  template <class M, class Traits = valued_traits_t<M>, class = std::enable_if<is_valued<decay_t<M>>::value> >
   constexpr auto
   deref(M&& e) -> decltype(Traits::deref(std::forward<M>(e)))
   {

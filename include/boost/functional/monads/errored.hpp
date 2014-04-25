@@ -29,6 +29,9 @@ namespace functional
   template <class T>
   struct errored_traits  : std::false_type {};
 
+  template <class M>
+  struct errored_traits_t : errored_traits<errored_category_t<decay_t<M> > > {};
+
   template <>
   struct errored_traits<category::default_>  : std::true_type {};
   template <>
@@ -56,16 +59,16 @@ namespace errored
 {
   using namespace ::boost::functional::valued;
 
-  template <class M, class Traits = errored_traits<errored_category_t<decay_t<M> > > >
+  template <class M, class Traits = errored_traits_t<M> >
   using unexpected_type_t = typename Traits::template unexpected_type_type<M>;
 
-  template <class M, class Traits = errored_traits<errored_category_t<decay_t<M> > > >
+  template <class M, class Traits = errored_traits_t<M> >
   static constexpr auto
   get_unexpected(M&& e) -> decltype(Traits::get_unexpected(std::forward<M>(e)))
   {
     return Traits::get_unexpected(std::forward<M>(e));
   }
-  template <class M, class Traits = errored_traits<errored_category_t<decay_t<M> > > >
+  template <class M, class Traits = errored_traits_t<M> >
   static constexpr auto
   error(M&& e) -> decltype(Traits::error(std::forward<M>(e)))
   {
