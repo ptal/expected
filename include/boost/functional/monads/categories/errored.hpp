@@ -57,15 +57,8 @@ namespace functional
   };
 
   template <>
-  struct monad_traits<category::errored> : monad_traits<category::default_>
+  struct monad_traits<category::errored> : monad_traits<category::forward>
   {
-
-    template <class M, class T>
-    static BOOST_CONSTEXPR apply<M, T> make(T&& v)
-    {
-      return apply<M, T>(std::forward<T>(v));
-    }
-
     template <class M, class F, class FR = decltype( std::declval<F>()( errored::deref(std::declval<M>()) ) )>
     static BOOST_CONSTEXPR auto
     mbind(M&& m, F&& f,

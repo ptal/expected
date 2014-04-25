@@ -38,11 +38,14 @@ namespace functional
     static constexpr auto deref(M&& m) -> decltype(*m) { return *m; }
 
     template <class M>
-    static constexpr value_type<M> get_value(M&& m)
+    static constexpr valued::value_type<M> get_value(M&& m)
     {
-      return (m) ? *m : throw bad_access(),*m;
+      return (m) ? *m : throw valued::bad_access(),*m;
     }
   };
+
+  template <class T>
+  struct valued_traits<T*> : valued_traits<category::pointer_like>  {};
 
 }
 }

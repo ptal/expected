@@ -13,6 +13,7 @@
 #include <boost/functional/monads/errored.hpp>
 #include <boost/functional/monads/functor.hpp>
 #include <boost/functional/monads/categories/errored.hpp>
+#include <boost/functional/monads/categories/pointer_like.hpp>
 #include <boost/functional/monads/monad.hpp>
 #include <boost/functional/monads/monad_error.hpp>
 #include <type_traits>
@@ -31,18 +32,11 @@ namespace functional
 
     template <class M, class U>
     using rebind = optional<U>;
-
   };
 
   template <class T>
-  struct valued_traits<optional<T>> : valued_traits<category::default_>
+  struct valued_traits<optional<T>> : valued_traits<category::pointer_like>
   {
-    template <class M>
-    static constexpr bool has_value(M&& m) { return bool(m); }
-
-    template <class M>
-    static constexpr auto deref(M&& m) -> decltype(*m) { return *m; }
-
     template <class M>
     static constexpr rebindable::value_type<M> get_value(M&& m) { return m.value(); };
   };
@@ -63,7 +57,6 @@ namespace functional
     template< class M >
     static constexpr none_t error(M && m)
     { return none; }
-
   };
 
   template <class T>
