@@ -11,15 +11,13 @@
 #include <boost/functional/monads/monad_exception.hpp>
 #include <boost/expected/expected.hpp>
 #include <boost/expected/unexpected.hpp>
-#include <boost/mpl/identity.hpp>
-#include <type_traits>
 
 namespace boost
 {
 namespace functional
 {
   template <class T, class E>
-  struct rebindable_category<expected<E, T> > : mpl::identity<category::forward> {};
+  struct rebindable_traits<expected<E, T> > : rebindable_traits<category::forward> {};
 
   template <class E, class T>
   struct valued_traits<expected<E, T>> : valued_traits<category::pointer_like>
@@ -29,13 +27,13 @@ namespace functional
   };
 
   template <class T, class E>
-  struct errored_category<expected<E, T> > : mpl::identity<category::forward> {};
+  struct errored_traits<expected<E, T> > : errored_traits<category::forward> {};
 
   template <class T, class E>
-  struct functor_category<expected<E, T> > : mpl::identity<category::errored> {};
+  struct functor_traits<expected<E, T> > : functor_traits<category::errored> {};
 
   template <class T, class E>
-  struct monad_category<expected<E,T> > : mpl::identity<category::forward> { };
+  struct monad_traits<expected<E,T> > : monad_traits<category::forward> { };
 
   template <class T1, class E1>
   struct monad_error_traits<expected<E1,T1> > : monad_error_traits<category::forward>

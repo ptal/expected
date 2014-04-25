@@ -50,8 +50,7 @@ namespace boost
     };
 
     template <class T, class I, typename E>
-    struct functor_traits<pair_expected<I, T, E> > : functor_traits<category::default_>
-    {
+    struct functor_traits<pair_expected<I, T, E> > : functor_traits<category::default_> {
 
     };
 
@@ -111,13 +110,6 @@ namespace boost
     };
   }
 } // boost
-
-//template <class T, class I, typename E, class F>
-//auto operator&(pair_expected<T, I, E>& m, F&& f)
-//-> decltype(boost::monads::make_monad(std::forward<pair_expected<T, I, E>>(m)).mbind(std::forward<F>(f)))
-//{
-//  return boost::monads::make_monad(std::forward<pair_expected<T, I, E>>(m)).mbind(std::forward<F>(f));
-//}
 
 /**
  * num_get facet using the expected interface

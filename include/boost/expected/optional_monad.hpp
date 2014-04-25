@@ -60,10 +60,10 @@ namespace functional
   };
 
   template <class T>
-  struct functor_category<optional<T> > : mpl::identity<category::errored> {};
+  struct functor_traits<optional<T> > : functor_traits<category::errored> {};
 
   template <class T>
-  struct monad_category<optional<T> > : mpl::identity<category::errored> {};
+  struct monad_traits<optional<T> > : monad_traits<category::errored> {};
 
   template <>
   struct monad_error_traits<optional_monad > : monad_error_traits<category::default_>
