@@ -69,7 +69,7 @@ namespace functional
   struct monad_error_traits<optional_monad > : monad_error_traits<category::default_>
   {
     template <class M>
-    static constexpr auto value(M&& m) -> decltype(m.value())
+    static constexpr auto get_value(M&& m) -> decltype(m.value())
     { return m.value();};
 
     template <class M, class E>

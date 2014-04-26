@@ -18,19 +18,9 @@ namespace boost
 {
 namespace functional
 {
-  template <class M>
-  struct functor_category
-  {
-    typedef M type;
-  };
-
-  template <class M>
-  using functor_category_t = typename functor_category<M>::type;
 
   template <class Mo>
   struct functor_traits : std::false_type {};
-  template <class M>
-  struct functor_traits_t : functor_traits<functor_category_t<decay_t<M> > > {};
 
   template <>
   struct functor_traits<category::default_> : std::true_type {};
@@ -47,16 +37,18 @@ namespace functional
   };
 
   template <class M>
-  struct is_functor : std::integral_constant<bool, is_rebindable<M>::value &&
-  functor_traits<functor_category_t<M>>::value
+  struct is_functor : std::integral_constant<bool, is_rebindable<M>::value && functor_traits<M>::value
   >
   {};
+
+  template <class M> using if_functor =
+      typename std::enable_if<is_functor<M>::value, functor_traits<M> >::type;
 
 namespace functor
 {
   using namespace ::boost::functional::rebindable;
 
-  template <class F, class M0, class ...M, class Traits = functor_traits_t<M0> >
+  template <class F, class M0, class ...M, class Traits = if_functor<decay_t<M0>> >
   auto
   fmap(F&& f, M0&& m0, M&& ...m)
   -> decltype(Traits::fmap(std::forward<F>(f), std::forward<M0>(m0), std::forward<M>(m)...))
@@ -64,7 +56,7 @@ namespace functor
     return Traits::fmap(std::forward<F>(f),std::forward<M0>(m0), std::forward<M>(m)...);
   }
 
-  template <class F, class M>
+  template <class F, class M, class = if_functor<decay_t<M> > >
   auto operator^(F&& f, M&& m)
   -> decltype(fmap(std::forward<F>(f), std::forward<M>(m)))
   {

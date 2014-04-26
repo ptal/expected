@@ -51,7 +51,7 @@ namespace boost
 
     template <class T, class I, typename E>
     struct functor_traits<pair_expected<I, T, E> > : functor_traits<category::default_> {
-
+      // todo to be completed
     };
 
     template <class T, class I, typename E>

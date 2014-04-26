@@ -19,14 +19,6 @@ namespace boost
 {
 namespace functional
 {
-  template <class M>
-  struct monad_error_category {
-    typedef M type;
-  };
-
-  template <class M>
-  using monad_error_category_t = typename monad_error_category<M>::type;
-
   template <class Mo>
   struct monad_error_traits : std::false_type {};
   template <>
@@ -36,7 +28,7 @@ namespace functional
   {
 
     template <class M>
-    static constexpr auto value(M&& m) -> decltype(m.value()) { return m.value(); };
+    static constexpr auto get_value(M&& m) -> decltype(m.value()) { return m.value(); };
 
     template <class M, class E>
     static auto make_error(E&& e) -> decltype(make_unexpected(std::forward<E>(e)))
@@ -51,54 +43,47 @@ namespace functional
     }
   };
 
-  template <class M, class T>
-  using monad_error_traits_t = monad_error_traits<monad_error_category_t<decay_t<apply<M, T> > > >;
-
-  template <class M>
-  using monad_error_traits_t0 = monad_error_traits<monad_error_category_t<decay_t<M> > > ;
-
   template <class M>
   struct is_monad_error : std::integral_constant<bool, is_monad<M>::value &&
-    monad_error_traits<monad_error_category_t<M>>::value
+    monad_error_traits<M>::value
   >
   {};
+
+  template <class M> using if_monad_error =
+      typename std::enable_if<is_monad_error<M>::value, monad_error_traits<M> >::type;
 
 namespace monad_error
 {
   using namespace ::boost::functional::monad;
 
-  template <class M, class E, class Traits = monad_error_traits_t0<M> >
+  // todo shouldn' we use if_monad_error<M> or something like that here?
+  template <class M, class E, class Traits = monad_error_traits<M> >
   auto make_error(E&& e) -> decltype(Traits::template make_error<M>(std::forward<E>(e)))
   {
     return Traits::template make_error<M>(std::forward<E>(e));
   }
 
-  template <template <class ...> class M, class E, class Traits = monad_error_traits_t0<lift<M>> >
+  // todo shouldn' we use if_monad_error<lift<M>> or something like that here?
+  template <template <class ...> class M, class E, class Traits = monad_error_traits<lift<M>> >
   auto make_error(E&& e) -> decltype(Traits::template make_error<M>(std::forward<E>(e)))
   {
     return Traits::template make_error<M>(std::forward<E>(e));
   }
 
-//    template <template <class ...> class M, class T, class E, class Traits = monad_error_traits<monad_error_category_t<M<T> > > >
-//    M<T, E> make_error(E&& e)
-//    {
-//      return Traits::template make_error<M<T,E> >(std::forward<T>(e));
-//    }
-
-  template <class M, class Traits = monad_error_traits_t0<M> >
+  template <class M, class Traits = if_monad_error<decay_t<M>> >
   static constexpr auto
-  value(M&& e) -> decltype(Traits::value(std::forward<M>(e)))
+  value(M&& e) -> decltype(Traits::get_value(std::forward<M>(e)))
   {
-    return Traits::value(std::forward<M>(e));
+    return Traits::get_value(std::forward<M>(e));
   }
 
-  template <class M, class F, class Traits = monad_error_traits_t0<M> >
+  template <class M, class F, class Traits = if_monad_error<decay_t<M>> >
   static M catch_error(M&& m, F&& f)
   {
     return Traits::catch_error(std::forward<M>(m), std::forward<F>(f));
   }
 
-  template <class M, class F>
+  template <class M, class F, class = if_monad_error<decay_t<M>>>
   auto operator|(M&& m, F&& f)
   -> decltype(::boost::functional::monad_error::catch_error(std::forward<M>(m), std::forward<F>(f)))
   {

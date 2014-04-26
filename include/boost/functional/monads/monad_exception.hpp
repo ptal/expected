@@ -20,13 +20,6 @@ namespace boost
 {
 namespace functional
 {
-  template <class M>
-  struct monad_exception_category {
-    typedef M type;
-  };
-
-  template <class M>
-  using monad_exception_category_t = typename monad_exception_category<M>::type;
 
   template <class Mo>
   struct monad_exception_traits : std::false_type {};
@@ -54,51 +47,55 @@ namespace functional
     }
   };
 
-  template <class M, class T>
-  using monad_exception_traits_t = monad_exception_traits<monad_exception_category_t<decay_t<apply<M, T> > > >;
-
-  template <class M>
-  using monad_exception_traits_t0 = monad_exception_traits<monad_exception_category_t<decay_t<M> > > ;
-
   template <class M>
   struct is_monad_exception : std::integral_constant<bool, is_monad_error<M>::value &&
-    monad_exception_traits<monad_exception_category_t<M>>::value
+    monad_exception_traits<M>::value
   >
   {};
+  template <class M> using if_monad_exception =
+      typename std::enable_if<is_monad_exception<M>::value, monad_exception_traits<M> >::type;
 
 namespace monad_exception
 {
   using namespace ::boost::functional::monad_error;
 
-  template <class M, class E, class Traits = monad_exception_traits_t0<M> >
+  // todo shouldn' we use if_monad_exception<M> or something like that here?
+  template <class M, class E, class Traits = monad_exception_traits<M> >
   auto make_exception(E&& e) -> decltype(Traits::template make_exception<M>(std::forward<E>(e)))
   {
     return Traits::template make_exception<M>(std::forward<E>(e));
   }
 
-  template <template <class ...> class M, class E, class Traits = monad_exception_traits_t0<lift<M>> >
+  // todo shouldn' we use if_monad_exception<M> or something like that here?
+  template <template <class ...> class M, class E, class Traits = monad_exception_traits<lift<M>> >
   auto make_exception(E&& e) -> decltype(Traits::template make_exception<M>(std::forward<E>(e)))
   {
     return Traits::template make_error<M>(std::forward<E>(e));
   }
 
-//    template <template <class ...> class M, class T, class E, class Traits = monad_exception_traits<monad_exception_category_t<M<T> > > >
-//    M<T, E> make_error(E&& e)
-//    {
-//      return Traits::template make_error<M<T,E> >(std::forward<T>(e));
-//    }
-
-  template <class E, class M, class Traits = monad_exception_traits_t0<M> >
+  template <class E, class M, class Traits = if_monad_exception<decay_t<M>> >
   static bool has_exception(M&& m)
   {
     return Traits::template has_exception<E>(std::forward<M>(m));
   }
-  template <class E, class M, class F, class Traits = monad_exception_traits_t0<M> >
+  template <class E, class M, class F, class Traits = if_monad_exception<decay_t<M>> >
   static M catch_exception(M&& m, F&& f)
   {
     return Traits::template catch_exception<E>(std::forward<M>(m), std::forward<F>(f));
   }
 
+  template <class M, class E, class = if_monad_exception<decay_t<M>>>
+  auto operator||(M&& m, M(*f)(E&))
+  -> decltype(catch_exception<E>(std::forward<M>(m), f))
+  {
+    return catch_exception<E>(std::forward<M>(m), f);
+  }
+  template <class M, class E, class = if_monad_exception<decay_t<M>>>
+  auto operator||(M&& m, std::function<M(E&)>&& f)
+  -> decltype(catch_exception<E>(std::forward<M>(m), std::forward<std::function<M(E&)>>(f)))
+  {
+    return catch_exception<E>(std::forward<M>(m), std::forward<std::function<M(E&)>>(f));
+  }
 }
 }
 }

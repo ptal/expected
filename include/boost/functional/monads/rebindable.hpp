@@ -20,14 +20,6 @@ namespace category
 {
   struct rebindable {};
 }
-  template <class M>
-  struct rebindable_category
-  {
-    typedef M type;
-  };
-
-  template <class M>
-  using rebindable_category_t = typename rebindable_category<M>::type;
 
   template <class T>
   struct rebindable_traits : std::false_type {};
@@ -44,18 +36,18 @@ namespace category
   };
 
   template <class M>
-  struct rebindable_traits_t : rebindable_traits<rebindable_category_t<decay_t<M> > > {};
+  struct is_rebindable : rebindable_traits<M> {};
 
-  template <class M>
-  struct is_rebindable : rebindable_traits<rebindable_category_t<M>> {};
+  template <class M> using if_rebindable =
+      typename std::enable_if<is_rebindable<M>::value, rebindable_traits<M> >::type;
 
 namespace rebindable
 {
 
-  template <class M, class Traits = rebindable_traits_t<M>, class = std::enable_if<is_rebindable<M>::value> >
+  template <class M, class Traits = if_rebindable<M>>
   using value_type = typename Traits::template value_type<M>;
 
-  template <class M, class U, class Traits = rebindable_traits_t<M>, class = std::enable_if<is_rebindable<M>::value> >
+  template <class M, class U, class Traits = if_rebindable<M> >
   using rebind = typename Traits::template rebind<M, U>;
 
 

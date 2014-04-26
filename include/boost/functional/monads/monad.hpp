@@ -19,15 +19,6 @@ namespace boost
 namespace functional
 {
 
-//  template <class M>
-//  struct monad_category
-//  {
-//    typedef M type;
-//  };
-//
-//  template <class M>
-//  using monad_category_t = typename monad_category<M>::type;
-
   template <class Mo>
   struct monad_traits : std::false_type {};
 
@@ -72,14 +63,14 @@ namespace monad
     return Traits::mdo(std::forward<M1>(m1), std::forward<M2>(m2)) ;
   }
 
-  template <class M, class F>
+  template <class M, class F, class Traits = if_monad<decay_t<M>> >
   auto operator&(M&& m, F&& f)
   -> decltype(mbind(std::forward<M>(m), std::forward<F>(f)))
   {
     return mbind(std::forward<M>(m),std::forward<F>(f));
   }
 
-  template <class M1, class M2>
+  template <class M1, class M2, class Traits = if_monad<decay_t<M1>>, class = if_monad<decay_t<M2>> >
   auto operator>>(M1&& m1, M2&& m2)
   -> decltype( mdo(std::forward<M1>(m1), std::forward<M2>(m2)) )
 

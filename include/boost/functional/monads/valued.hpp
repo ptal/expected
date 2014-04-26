@@ -20,17 +20,8 @@ namespace functional
 {
   namespace category
   {
-    struct valued {};
+    struct pvalued {};
   }
-
-  template <class M>
-  struct valued_category
-  {
-    typedef M type;
-  };
-
-  template <class M>
-  using valued_category_t = typename valued_category<M>::type;
 
   template <class T>
   struct valued_traits  : std::false_type {};
@@ -53,13 +44,14 @@ namespace functional
   };
 
   template <class M>
-  struct valued_traits_t : valued_traits<valued_category_t<decay_t<M> > > {};
-
-  template <class M>
   struct is_valued : std::integral_constant<bool, is_rebindable<M>::value &&
-    valued_traits<valued_category_t<M>>::value
+    valued_traits<M>::value
   >
   {};
+
+  template <class M> using if_pvalued =
+      typename std::enable_if<is_valued<M>::value, valued_traits<M> >::type;
+
 
 namespace valued
 {
@@ -75,14 +67,14 @@ namespace valued
       // todo - Add implicit/explicit conversion to error_type ?
   };
 
-  template <class M, class Traits = valued_traits_t<M>, class = std::enable_if<is_valued<decay_t<M>>::value> >
+  template <class M, class Traits = if_pvalued<decay_t<M>> >
   constexpr auto
   has_value(M&& e) -> decltype(Traits::has_value(std::forward<M>(e)))
   {
     return Traits::has_value(std::forward<M>(e));
   }
 
-  template <class M, class Traits = valued_traits_t<M>, class = std::enable_if<is_valued<decay_t<M>>::value> >
+  template <class M, class Traits = if_pvalued<decay_t<M>> >
   constexpr auto
   deref(M&& e) -> decltype(Traits::deref(std::forward<M>(e)))
   {
@@ -90,7 +82,7 @@ namespace valued
   }
 
 
-//  template <class M, class Traits = valued_traits_t<M> >
+//  template <class M, class Traits = if_pvalued<decay_t<M>> >
 //  static constexpr auto
 //  value(M&& e) -> decltype(Traits::get_value(std::forward<M>(e)))
 //  {

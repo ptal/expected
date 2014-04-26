@@ -510,7 +510,7 @@ namespace generic_based
   }
 
   template <class M>
-    apply<M, int> divide2(int i, int j)
+    apply<M, int> divide23(int i, int j)
   {
     using namespace boost::functional::monad_exception;
     return
@@ -518,6 +518,16 @@ namespace generic_based
         {
           return e.i / e.j;
         });
+  }
+  template <class M>
+    apply<M, int> divide2(int i, int j)
+  {
+    using namespace boost::functional::monad_exception;
+    return
+    safe_divide<M>(i,j) || [](NotDivisible& e) -> apply<M, int>
+        {
+          return e.i / e.j;
+        };
   }
 
   template <class M>
