@@ -19,58 +19,57 @@ namespace boost
 namespace functional
 {
 
-  template <class M>
-  struct monad_category
-  {
-    typedef M type;
-  };
-
-  template <class M>
-  using monad_category_t = typename monad_category<M>::type;
+//  template <class M>
+//  struct monad_category
+//  {
+//    typedef M type;
+//  };
+//
+//  template <class M>
+//  using monad_category_t = typename monad_category<M>::type;
 
   template <class Mo>
   struct monad_traits : std::false_type {};
 
-  template <class M, class T>
-  using monad_traits_t = monad_traits<monad_category_t<decay_t<apply<M, T> > > >;
-
-  template <class M>
-  using monad_traits_t0 = monad_traits<monad_category_t<decay_t<M> > >;
-
   template <class M>
   struct is_monad : std::integral_constant<bool, is_functor<M>::value &&
-  monad_traits<monad_category_t<M>>::value
+  monad_traits<M>::value
   >
   {};
+
+  template <class M> using if_monad =
+      typename std::enable_if<is_monad<M>::value, monad_traits<M> >::type;
 
 namespace monad
 {
   using namespace ::boost::functional::functor;
 
-  template <class M, class T, class Traits = monad_traits_t<M,T>, class = std::enable_if<is_monad<apply<M,T>>::value> >
-  apply<M,T> make(T&& v)
+  template <class M, class T,
+      class Mo = apply<M,T>, class Traits = if_monad<Mo> >
+  Mo make(T&& v)
   {
     return Traits::template make<M>(std::forward<T>(v));
   }
 
-  template <template <class ...> class M, class T, class Traits = monad_traits_t<lift<M>,T>, class = std::enable_if<is_monad<M<T>>::value> >
-  M<T> make(T&& v)
+  template <template <class ...> class M, class T,
+      class Mo = M<T>, class Traits = if_monad<decay_t<Mo>> >
+  Mo make(T&& v)
   {
     return Traits::template make<lift<M>>(std::forward<T>(v));
   }
 
-  template <class M, class F, class Traits = monad_traits_t0<M>, class = std::enable_if<is_monad<decay_t<M>>::value> >
+  template <class M, class F, class Traits = if_monad<decay_t<M>> >
   auto
   mbind(M&& m, F&& f) -> decltype(Traits::mbind(std::forward<M>(m), std::forward<F>(f)))
   {
     return Traits::mbind(std::forward<M>(m), std::forward<F>(f));
   }
 
-  template <class M, class T, class U, class Traits = monad_traits_t<M,T>, class = std::enable_if<is_monad<decay_t<apply<M,T>>>::value> >
-  auto mdo(apply<M,T>&& m1, apply<M,U>&& m2)
-  -> decltype(Traits::mdo(std::forward<apply<M,T>>(m1), std::forward<apply<M,U>>(m2)))
+  template <class M1, class M2, class Traits = if_monad<decay_t<M1>>, class = if_monad<decay_t<M2>> >
+  auto mdo(M1&& m1, M2&& m2)
+  -> decltype( Traits::mdo(std::forward<M1>(m1), std::forward<M2>(m2)) )
   {
-    return Traits::mdo(std::forward<apply<M,T>>(m1), std::forward<apply<M,U>>(m2));
+    return Traits::mdo(std::forward<M1>(m1), std::forward<M2>(m2)) ;
   }
 
   template <class M, class F>
@@ -80,22 +79,22 @@ namespace monad
     return mbind(std::forward<M>(m),std::forward<F>(f));
   }
 
-  template <class M, class T, class U>
-  auto operator>>(apply<M,T>&& m1, apply<M,U>&& m2)
-  -> decltype(mdo(std::forward<apply<M,T>>(m1), std::forward<apply<M,U>>(m2)))
+  template <class M1, class M2>
+  auto operator>>(M1&& m1, M2&& m2)
+  -> decltype( mdo(std::forward<M1>(m1), std::forward<M2>(m2)) )
 
   {
-    return mdo(m1, [&](T& ) { return m2; });
+    return mdo(std::forward<M1>(m1), std::forward<M2>(m2));
   }
 }
 
 template <>
 struct monad_traits<category::default_> : std::true_type
 {
-  template <class M, class T, class U, class Traits = monad_traits_t<M,T>>
-  static apply<M,U> mdo(apply<M,T>&& m1, apply<M,U>&& m2)
+  template <class M1, class M2 >
+  static M2 mdo(M1&& m1, M2&& m2)
   {
-    return monad::mbind(m1, [&](T& ) { return m2; });
+    return monad::mbind(std::forward<M1>(m1), [&](rebindable::value_type<decay_t<M1>> ) { return std::forward<M2>(m2); });
   }
 
 };

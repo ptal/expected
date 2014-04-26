@@ -248,7 +248,44 @@ int main()
 
     std::cout << x.value().first << ".." << x.value().second << std::endl;
   }
+  {
+      std::stringstream is("1..3 4..5");
+      ios_range<> r(is);
+      using namespace boost::functional::monad;
 
+      auto x = get_interval3<long>(r);
+      if (!x.valid()) {
+        std::cout << x.error() << std::endl;
+        return 7;
+      }
+      matchedString(" ", r);
+      auto y = mdo(x, get_interval3<long>(r));
+      if (!y.valid()) {
+        std::cout << y.error() << std::endl;
+        return 8;
+      }
+
+      std::cout << y.value().first << ".." << y.value().second << std::endl;
+  }
+  {
+    std::stringstream is("1..3 4..5");
+    ios_range<> r(is);
+    using namespace boost::functional::monad;
+
+    auto x = get_interval3<long>(r);
+    if (!x.valid()) {
+      std::cout << x.error() << std::endl;
+      return 7;
+    }
+    matchedString(" ", r);
+    auto y = x >> get_interval3<long>(r);
+    if (!y.valid()) {
+      std::cout << y.error() << std::endl;
+      return 8;
+    }
+
+    std::cout << y.value().first << ".." << y.value().second << std::endl;
+  }
   {
     std::stringstream is("1..3");
     ios_range<> r(is);
