@@ -311,7 +311,6 @@ namespace generic_based
     return  mbind(safe_divide<M>(i, k),
       [=](int q1)
       {
-        using namespace boost::functional::monad_error;
         return mbind(safe_divide<M>(j,k), [=](int q2)
             {
               return q1+q2;
@@ -528,7 +527,7 @@ namespace generic_based
     return
     catch_exception<NotDivisible>(safe_divide<M>(i,j), [](NotDivisible& e)
         {
-          return make_expected(e.i / e.j);
+          return make<M>(e.i / e.j);
         });
   }
   template <class M>
