@@ -45,14 +45,14 @@ namespace monad
   using namespace ::boost::functional::functor;
 
   template <class M, class T,
-      class Mo = apply<M,T>, class Traits = if_monad<Mo> >
+      class Mo = apply<M,decay_t<T>>, class Traits = if_monad<Mo> >
   Mo make(T&& v)
   {
     return Traits::template make<M>(std::forward<T>(v));
   }
 
   template <template <class ...> class M, class T,
-      class Mo = M<T>, class Traits = if_monad<decay_t<Mo>> >
+      class Mo = M<decay_t<T>>, class Traits = if_monad<decay_t<Mo>> >
   Mo make(T&& v)
   {
     return Traits::template make<lift<M>>(std::forward<T>(v));
