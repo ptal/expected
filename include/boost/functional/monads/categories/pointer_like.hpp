@@ -24,13 +24,9 @@ namespace functional
     template <class M>
     using value_type = T;
 
-    template <class M, class U>
-    using rebind = U*;
-
     template <class M>
     struct type_constructor {
-      template <class U>
-      using type = U*;
+      template <class U> using type = U*;
     };
   };
 

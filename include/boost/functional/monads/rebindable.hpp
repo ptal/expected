@@ -9,6 +9,7 @@
 #include <boost/functional/type_traits_t.hpp>
 #include <boost/functional/monads/categories/forward.hpp>
 #include <boost/functional/monads/categories/default.hpp>
+#include <boost/functional/meta.hpp>
 #include <utility>
 #include <type_traits>
 
@@ -23,20 +24,6 @@ namespace category
 
   template <class T>
   struct rebindable_traits : std::false_type {};
-  template <>
-  struct rebindable_traits<category::default_>  : std::true_type {};
-  template <>
-  struct rebindable_traits<category::forward>  : rebindable_traits<category::default_>
-  {
-    template <class M>
-    using value_type = typename M::value_type;
-
-    template <class M, class U>
-    using rebind = typename M::template rebind<U>;
-
-    template <class M>
-    using type_constructor = typename M::type_constructor;
-  };
 
   template <class M>
   struct is_rebindable : rebindable_traits<M> {};
@@ -46,18 +33,32 @@ namespace category
 
 namespace rebindable
 {
-
   template <class M, class Traits = if_rebindable<M>>
   using value_type = typename Traits::template value_type<M>;
-
-  template <class M, class U, class Traits = if_rebindable<M> >
-  using rebind = typename Traits::template rebind<M, U>;
 
   template <class M, class Traits = if_rebindable<M> >
   using type_constructor = typename Traits::template type_constructor<M>;
 
-
+  template <class M, class U, class Traits = if_rebindable<M> >
+  using rebind = typename Traits::template rebind<M, U>;
 }
+
+template <>
+struct rebindable_traits<category::default_>  : std::true_type {
+  template <class M, class U>
+  using rebind = apply<rebindable::type_constructor<M>,U>;
+
+};
+template <>
+struct rebindable_traits<category::forward>  : rebindable_traits<category::default_>
+{
+  template <class M>
+  using value_type = typename M::value_type;
+
+  template <class M>
+  using type_constructor = typename M::type_constructor;
+};
+
 }
 }
 

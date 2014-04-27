@@ -30,9 +30,6 @@ namespace functional
     template <class M>
     using value_type = typename M::value_type;
 
-    template <class M, class U>
-    using rebind = optional<U>;
-
     template <class M>
     struct type_constructor {
       template <class U>
