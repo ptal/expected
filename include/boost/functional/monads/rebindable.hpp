@@ -33,6 +33,9 @@ namespace category
 
     template <class M, class U>
     using rebind = typename M::template rebind<U>;
+
+    template <class M>
+    using type_constructor = typename M::type_constructor;
   };
 
   template <class M>
@@ -49,6 +52,9 @@ namespace rebindable
 
   template <class M, class U, class Traits = if_rebindable<M> >
   using rebind = typename Traits::template rebind<M, U>;
+
+  template <class M, class Traits = if_rebindable<M> >
+  using type_constructor = typename Traits::template type_constructor<M>;
 
 
 }

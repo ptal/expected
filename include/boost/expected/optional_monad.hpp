@@ -32,6 +32,13 @@ namespace functional
 
     template <class M, class U>
     using rebind = optional<U>;
+
+    template <class M>
+    struct type_constructor {
+      template <class U>
+      using type = optional<U>;
+    };
+
   };
 
   template <class T>

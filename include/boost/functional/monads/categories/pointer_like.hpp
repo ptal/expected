@@ -26,6 +26,12 @@ namespace functional
 
     template <class M, class U>
     using rebind = U*;
+
+    template <class M>
+    struct type_constructor {
+      template <class U>
+      using type = U*;
+    };
   };
 
   template <>
@@ -37,11 +43,6 @@ namespace functional
     template <class M>
     static constexpr auto deref(M&& m) -> decltype(*m) { return *m; }
 
-//    template <class M>
-//    static constexpr auto get_value(M&& m) -> decltype((m) ? *m : throw valued::bad_access(),*m)
-//    {
-//      return (m) ? *m : throw valued::bad_access(),*m;
-//    }
   };
 
   template <class T>

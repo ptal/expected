@@ -591,6 +591,9 @@ public:
   template <class T>
   using rebind = expected<error_param_type, T>;
 
+  using type_constructor = expected<error_param_type>;
+
+
   // Constructors/Destructors/Assignments
 
   BOOST_CONSTEXPR expected(
@@ -1340,6 +1343,8 @@ public:
 
   template <class T>
   using rebind = expected<error_param_type, T>;
+
+  using type_constructor = expected<error_param_type>;
 
   // Constructors/Destructors/Assignments
 
