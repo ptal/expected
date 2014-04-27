@@ -752,6 +752,11 @@ BOOST_AUTO_TEST_CASE(expected_non_void_then)
     throw test_exception();
   };
 
+  auto then_launch_except = [](expected<std::exception_ptr, int>) -> int
+  {
+    throw test_exception();
+  };
+
   expected<std::exception_ptr, int> e = fun(true).then(if_valued(add_five));
   BOOST_CHECK_NO_THROW(e.value());
   BOOST_CHECK_EQUAL(*e, 10);
@@ -778,6 +783,9 @@ BOOST_AUTO_TEST_CASE(expected_non_void_then)
   BOOST_CHECK_THROW(e.value(), test_exception);
 
   BOOST_CHECK_THROW(fun(true).then(if_valued(launch_except)), test_exception);
+
+  e = fun(false).then(catch_all(then_launch_except));
+  BOOST_CHECK_THROW(e.value(), test_exception);
 
 }
 

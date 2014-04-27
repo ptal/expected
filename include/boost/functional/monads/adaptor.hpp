@@ -233,6 +233,55 @@ namespace detail
   {
     return adaptor_holder<detail::if_unexpected_adaptor<F> > (f);
   }
+
+  namespace detail
+  {
+
+    template <class E, class F, class V>
+    class catch_all
+    {
+      F fct_;
+    public:
+      typedef F funct_type;
+      typedef E result_type;
+
+      explicit catch_all(funct_type f) :
+        fct_(f)
+      {
+      }
+
+      E operator()(E e)
+      {
+        using namespace ::boost::functional::monad_exception;
+        using namespace ::boost::functional::valued;
+
+        try {
+          std::cout << __FILE__ << __LINE__ << std::endl;
+          return fct_(value(e));
+        } catch (...) {
+          std::cout << __FILE__ << __LINE__ << std::endl;
+          return make_exception<type_constructor<E>>(std::current_exception());
+        }
+      }
+    };
+
+    template <class F>
+    struct catch_all_adaptor
+    {
+      typedef F funct_type;
+      template <class E>
+      struct rebind_right
+      {
+        typedef catch_all<E, funct_type, rebindable::value_type<E>> type;
+      };
+    };
+  }
+  template <class F>
+  inline adaptor_holder<detail::catch_all_adaptor<F> > catch_all(F f)
+  {
+    return adaptor_holder<detail::catch_all_adaptor<F> > (f);
+  }
+
 }
 } // namespace boost
 
