@@ -87,6 +87,7 @@ test-suite monads_ex
 test-suite monads_algo
     : 
       [ run monads/algorithms/test_m_value_or.cpp ]
+      [ run monads/algorithms/test_m_equal.cpp ]
     ;
 
 explicit fix ;
