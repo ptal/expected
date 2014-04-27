@@ -25,23 +25,6 @@ namespace functional
 
   template <class T>
   struct valued_traits  : std::false_type {};
-  template <>
-  struct valued_traits<category::default_> : std::true_type {};
-  template <>
-  struct valued_traits<category::forward> : valued_traits<category::default_>
-  {
-    template <class M>
-    static constexpr bool has_value(M&& m)
-    { return m.has_value();}
-
-    template <class M>
-    static constexpr auto deref(M&& m) -> decltype(m.deref())
-    { return m.deref();};
-
-    template <class M>
-    static constexpr auto get_value(M&& m) -> decltype(m.value())
-    { return m.value(); };
-  };
 
   template <class M>
   struct is_valued : std::integral_constant<bool, is_rebindable<M>::value &&
@@ -51,7 +34,6 @@ namespace functional
 
   template <class M> using if_pvalued =
       typename std::enable_if<is_valued<M>::value, valued_traits<M> >::type;
-
 
 namespace valued
 {
@@ -81,15 +63,39 @@ namespace valued
     return Traits::deref(std::forward<M>(e));
   }
 
-
-//  template <class M, class Traits = if_pvalued<decay_t<M>> >
-//  static constexpr auto
-//  value(M&& e) -> decltype(Traits::get_value(std::forward<M>(e)))
-//  {
-//    return Traits::get_value(std::forward<M>(e));
-//  }
+  template <class M, class Traits = if_pvalued<decay_t<M>> >
+  static constexpr auto
+  value(M&& e) -> decltype(Traits::get_value(std::forward<M>(e)))
+  {
+    return Traits::get_value(std::forward<M>(e));
+  }
 
 }
+
+template <>
+struct valued_traits<category::default_> : std::true_type {
+  template <class M>
+  static constexpr auto get_value(M&& m) -> decltype (has_value(m) ? deref(m) : throw valued::bad_access(),deref(m) )
+  {
+    return has_value(m) ? deref(m) : throw valued::bad_access(),deref(m);
+  }
+};
+
+template <>
+struct valued_traits<category::forward> : valued_traits<category::default_>
+{
+  template <class M>
+  static constexpr bool has_value(M&& m)
+  { return m.has_value(); }
+
+  template <class M>
+  static constexpr auto deref(M&& m) -> decltype(m.deref())
+  { return m.deref(); }
+
+};
+
+
+
 }
 }
 

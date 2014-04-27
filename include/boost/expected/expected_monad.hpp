@@ -23,7 +23,8 @@ namespace functional
   struct valued_traits<expected<E, T>> : valued_traits<category::pointer_like>
   {
     template <class M>
-    static constexpr rebindable::value_type<M> get_value(M&& m) { return m.value(); };
+    static constexpr auto get_value(M&& m) -> decltype(m.value())
+    { return m.value(); }
   };
 
   template <class T, class E>

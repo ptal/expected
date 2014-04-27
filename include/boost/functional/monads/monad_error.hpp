@@ -26,10 +26,6 @@ namespace functional
   template <>
   struct monad_error_traits<category::forward> : monad_error_traits<category::default_>
   {
-
-    template <class M>
-    static constexpr auto get_value(M&& m) -> decltype(m.value()) { return m.value(); };
-
     template <class M, class E>
     static auto make_error(E&& e) -> decltype(make_unexpected(std::forward<E>(e)))
     {
@@ -68,13 +64,6 @@ namespace monad_error
   auto make_error(E&& e) -> decltype(Traits::template make_error<M>(std::forward<E>(e)))
   {
     return Traits::template make_error<M>(std::forward<E>(e));
-  }
-
-  template <class M, class Traits = if_monad_error<decay_t<M>> >
-  static constexpr auto
-  value(M&& e) -> decltype(Traits::get_value(std::forward<M>(e)))
-  {
-    return Traits::get_value(std::forward<M>(e));
   }
 
   template <class M, class F, class Traits = if_monad_error<decay_t<M>> >

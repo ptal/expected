@@ -61,7 +61,6 @@ namespace detail
     result_type operator()(E e)
     {
       using namespace ::boost::functional::errored;
-      using namespace ::boost::functional::monad_error;
       if (has_value(e))
       {
         return result_type(fct_(value(e)));

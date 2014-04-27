@@ -38,7 +38,8 @@ namespace functional
   struct valued_traits<optional<T>> : valued_traits<category::pointer_like>
   {
     template <class M>
-    static constexpr rebindable::value_type<M> get_value(M&& m) { return m.value(); };
+    static constexpr auto get_value(M&& m) -> decltype(m.value())
+    { return m.value(); }
   };
 
   template <class T>
@@ -68,10 +69,6 @@ namespace functional
   template <>
   struct monad_error_traits<optional_monad > : monad_error_traits<category::default_>
   {
-    template <class M>
-    static constexpr auto get_value(M&& m) -> decltype(m.value())
-    { return m.value();};
-
     template <class M, class E>
     static auto make_error(E&&) -> decltype(none)
     {
