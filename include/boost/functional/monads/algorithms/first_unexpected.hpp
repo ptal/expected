@@ -17,20 +17,20 @@ namespace errored
 {
 
   template< class M, class = if_errored<decay_t<M>> >
-  BOOST_CONSTEXPR unexpected_type_t<M> first_unexpected( M&& m )
+  BOOST_CONSTEXPR errored_type<M> first_unexpected( M&& m )
   {
-    return get_unexpected(std::forward<M>(m));
+    return get_errored(std::forward<M>(m));
   }
 
   // todo: create a variadic if_errored
   template< class M1, class ...Ms
     , class = if_errored<decay_t<M1>>
     >
-  BOOST_CONSTEXPR unexpected_type_t<M1> first_unexpected( M1&& m1, Ms&& ...ms )
+  BOOST_CONSTEXPR errored_type<M1> first_unexpected( M1&& m1, Ms&& ...ms )
   {
     return has_value(std::forward<M1>(m1))
         ? first_unexpected( std::forward<Ms>(ms)... )
-            : get_unexpected(std::forward<M1>(m1)) ;
+            : get_errored(std::forward<M1>(m1)) ;
   }
 
 }

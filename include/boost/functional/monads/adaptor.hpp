@@ -67,7 +67,7 @@ namespace detail
       }
       else
       {
-        return result_type(get_unexpected(e));
+        return result_type(get_errored(e));
       }
     }
   };
@@ -94,7 +94,7 @@ namespace detail
       }
       else
       {
-        return result_type(get_unexpected(e));
+        return result_type(get_errored(e));
       }
     }
   };
@@ -122,7 +122,7 @@ namespace detail
       }
       else
       {
-        return result_type(get_unexpected(e));
+        return result_type(get_errored(e));
       }
     }
   };

@@ -6,8 +6,8 @@
 #ifndef BOOST_EXPECTED_MONADS_CATEGORIES_POINTER_LIKE_HPP
 #define BOOST_EXPECTED_MONADS_CATEGORIES_POINTER_LIKE_HPP
 
-#include <boost/functional/monads/valued.hpp>
-#include <type_traits>
+#include <boost/functional/monads/errored.hpp>
+#include <cstddef>
 
 namespace boost
 {
@@ -44,6 +44,22 @@ namespace functional
   template <class T>
   struct valued_traits<T*> : valued_traits<category::pointer_like>  {};
 
+  template <>
+  struct errored_traits<category::pointer_like>  : errored_traits<category::default_>
+  {
+    template <class M>
+    using error_type = std::nullptr_t;
+    template <class M>
+    using errored_type = std::nullptr_t;
+
+    template <class M>
+    static constexpr std::nullptr_t get_errored(M&& m)
+    { return nullptr;}
+
+    template <class M>
+    static constexpr std::nullptr_t error(M&& m)
+    { return nullptr;}
+  };
 }
 }
 

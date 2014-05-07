@@ -28,7 +28,12 @@ namespace functional
   };
 
   template <class T, class E>
-  struct errored_traits<expected<E, T> > : errored_traits<category::forward> {};
+  struct errored_traits<expected<E, T> > : errored_traits<category::forward> {
+    template <class M>
+    static constexpr auto get_errored(M&& m) -> decltype(m.get_unexpected())
+    { return m.get_unexpected();};
+
+  };
 
   template <class T, class E>
   struct functor_traits<expected<E, T> > : functor_traits<category::errored> {};

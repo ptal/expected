@@ -50,13 +50,15 @@ namespace functional
   struct errored_traits<optional<T> > : errored_traits<category::default_>
   {
     template< class M >
-    using unexpected_type_type = none_t;
+    using error_type = none_t;
+    template< class M >
+    using errored_type = none_t;
 
     template <class M, class E>
     static M make_error(E&&)
     { return none; }
 
-    static constexpr none_t get_unexpected(optional<T> const& )
+    static constexpr none_t get_errored(optional<T> const& )
     { return none; }
 
     template< class M >

@@ -63,7 +63,24 @@ namespace boost {
     return x.value() == y;
   }
 
-  // Specialization for error_exception
+  // Specialization for ensured_read
+  template <class E1>
+  struct expected_traits<ensured_read<E1> >
+  {
+    typedef ensured_read<E1> error_type;
+    typedef ensured_read<E1> error_storage_type;
+
+    template <class E>
+    static error_type from_error(E const& e)
+    {
+      return make_ensured_read(e);
+    }
+
+    static void bad_access(const error_type &e)
+    {
+      throw bad_expected_access<E1>(e.value());
+    }
+  };
   template <>
   struct expected_traits<ensured_read<std::exception_ptr> >
   {

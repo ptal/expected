@@ -73,11 +73,11 @@ namespace functional
         f(deref(m));
         return result_type();
       }
-      return get_unexpected(m);
+      return get_errored(m);
 #else
       return (has_value(m)
           ? (f(deref(m)), result_type() )
-          : result_type( get_unexpected(m) )
+          : result_type( get_errored(m) )
       );
 #endif
     }
@@ -96,11 +96,11 @@ namespace functional
       {
         return result_type(f(deref(m)));
       }
-      return get_unexpected(m);
+      return get_errored(m);
 #else
       return (has_value(m)
           ? result_type(f(deref(m)))
-          : result_type( get_unexpected(m) )
+          : result_type( get_errored(m) )
       );
 #endif
     }
@@ -117,11 +117,11 @@ namespace functional
       {
         return f(deref(m));
       }
-      return get_unexpected(m);
+      return get_errored(m);
 #else
       return (has_value(m)
           ? f(deref(m))
-          : FR( get_unexpected(m) )
+          : FR( get_errored(m) )
       );
 #endif
     }

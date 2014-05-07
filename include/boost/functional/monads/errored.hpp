@@ -27,15 +27,17 @@ namespace functional
   struct errored_traits<category::forward>  : errored_traits<category::default_>
   {
     template <class M>
-    using unexpected_type_type = typename M::unexpected_type_type;
+    using error_type = typename M::error_type;
+    template <class M>
+    using errored_type = typename M::errored_type;
 
     template <class M>
-    static constexpr auto get_unexpected(M&& m) -> decltype(m.get_unexpected())
-    { return m.get_unexpected();};
+    static constexpr auto get_errored(M&& m) -> decltype(m.get_errored())
+    { return m.get_errored();}
 
     template <class M>
     static constexpr auto error(M&& m) -> decltype(m.error())
-    { return m.error();};
+    { return m.error();}
   };
 
   template <class M>
@@ -52,13 +54,16 @@ namespace errored
   using namespace ::boost::functional::valued;
 
   template <class M, class Traits = if_errored<decay_t<M>> >
-  using unexpected_type_t = typename Traits::template unexpected_type_type<M>;
+  using errored_type = typename Traits::template errored_type<M>;
+
+  template <class M, class Traits = if_errored<decay_t<M>> >
+  using error_type = typename Traits::template error_type<M>;
 
   template <class M, class Traits = if_errored<decay_t<M>> >
   static constexpr auto
-  get_unexpected(M&& e) -> decltype(Traits::get_unexpected(std::forward<M>(e)))
+  get_errored(M&& e) -> decltype(Traits::get_errored(std::forward<M>(e)))
   {
-    return Traits::get_unexpected(std::forward<M>(e));
+    return Traits::get_errored(std::forward<M>(e));
   }
   template <class M, class Traits = if_errored<decay_t<M>> >
   static constexpr auto
@@ -66,12 +71,6 @@ namespace errored
   {
     return Traits::error(std::forward<M>(e));
   }
-//    template <class M, class E, class Traits = errored_traits<errored_category_t<decay_t<M> > > >
-//    static constexpr M
-//    make_unexpected(E&& e) -> decltype(Traits::make_unexpected(std::forward<M>(e)))
-//    {
-//      return Traits::make_unexpected(std::forward<M>(e));
-//    }
 
 }
 }

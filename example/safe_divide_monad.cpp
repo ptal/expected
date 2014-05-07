@@ -116,7 +116,7 @@ namespace expected_based
   expected<std::exception_ptr, int> ex_f1(int i, int j, int k)
   {
     auto eq = safe_divide(j, k);
-    if (! has_value(eq)) return get_unexpected(eq);
+    if (! has_value(eq)) return get_errored(eq);
     auto q = deref(eq);
 
     return 1 + q;
@@ -125,11 +125,11 @@ namespace expected_based
   expected<std::exception_ptr, int> ex_f2(int i, int j, int k)
   {
     auto eq1 = safe_divide(i, k);
-    if (! has_value(eq1)) return get_unexpected(eq1);
+    if (! has_value(eq1)) return get_errored(eq1);
     auto q1 = deref(eq1);
 
     auto eq2 = safe_divide(j, k);
-    if (! has_value(eq2)) return get_unexpected(eq2);
+    if (! has_value(eq2)) return get_errored(eq2);
     auto q2 = deref(eq2);
 
     return q1 + q2;
@@ -142,7 +142,7 @@ namespace optional_based
   optional<int> ex_f1(int i, int j, int k)
   {
     auto eq = safe_divide(j, k);
-    if (! has_value(eq)) return get_unexpected(eq);
+    if (! has_value(eq)) return get_errored(eq);
     auto q = deref(eq);
 
     return 1 + q;
@@ -151,11 +151,11 @@ namespace optional_based
   optional<int> ex_f2(int i, int j, int k)
   {
     auto eq1 = safe_divide(i, k);
-    if (!eq1) return get_unexpected(eq1);
+    if (!eq1) return get_errored(eq1);
     auto q1 = deref(eq1);
 
     auto eq2 = safe_divide(j, k);
-    if (!eq2) return get_unexpected(eq2);
+    if (!eq2) return get_errored(eq2);
     auto q2 = deref(eq2);
 
     return q1 + q2;
@@ -169,7 +169,7 @@ namespace generic_based
   apply<M, int> ex_f1(int i, int j, int k)
   {
     auto eq = safe_divide<M>(j, k);
-    if (! has_value(eq)) return get_unexpected(eq);
+    if (! has_value(eq)) return get_errored(eq);
     auto q = deref(eq);
 
     return 1 + q;
@@ -179,11 +179,11 @@ namespace generic_based
   apply<M, int> ex_f2(int i, int j, int k)
   {
     auto eq1 = safe_divide<M>(i, k);
-    if (! has_value(eq1)) return get_unexpected(eq1);
+    if (! has_value(eq1)) return get_errored(eq1);
     auto q1 = deref(eq1);
 
     auto eq2 = safe_divide<M>(j, k);
-    if (! has_value(eq2)) return get_unexpected(eq2);
+    if (! has_value(eq2)) return get_errored(eq2);
     auto q2 = deref(eq2);
 
     return q1 + q2;
@@ -192,7 +192,7 @@ namespace generic_based
 
 #define EXPECT(V, EXPR) \
 auto BOOST_JOIN(expected,V) = EXPR; \
-if (! boost::functional::valued::has_value(BOOST_JOIN(expected,V))) return boost::functional::errored::get_unexpected(BOOST_JOIN(expected,V)); \
+if (! boost::functional::valued::has_value(BOOST_JOIN(expected,V))) return boost::functional::errored::get_errored(BOOST_JOIN(expected,V)); \
 auto V = boost::functional::valued::deref(BOOST_JOIN(expected,V))
 
 namespace expected_based

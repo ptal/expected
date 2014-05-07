@@ -526,7 +526,7 @@ public:
   typedef typename traits_type::error_type error_type;
   typedef ErrorType error_param_type;
   typedef typename traits_type::error_storage_type error_storage_type;
-  using unexpected_type_type = boost::unexpected_type<error_type>;
+  using errored_type = boost::unexpected_type<error_type>;
 
 private:
   typedef expected<ErrorType, value_type> this_type;
@@ -1297,7 +1297,7 @@ public:
   typedef typename traits_type::error_type error_type;
   typedef ErrorType error_param_type;
   typedef typename traits_type::error_storage_type error_storage_type;
-  using unexpected_type_type = boost::unexpected_type<error_type>;
+  using errored_type = boost::unexpected_type<error_type>;
 
 private:
   typedef expected<error_param_type, void> this_type;
@@ -2006,6 +2006,12 @@ make_expected_from_call(F funct
   {
     return make_unexpected_from_current_exception();
   }
+}
+
+template <class E, class T>
+BOOST_FORCEINLINE BOOST_CONSTEXPR unexpected_type<E> make_unexpected(expected<E,T>& ex)
+{
+  return unexpected_type<E>(ex.error());
 }
 
 namespace expected_detail
