@@ -63,13 +63,11 @@ template <typename ErrorType, class Exception>
 struct expected_error_traits
 {
   typedef ErrorType error_type;
-  typedef ErrorType error_storage_type;
-  typedef Exception exception_type;
 
   template <class E>
-  static error_storage_type from_error(E const& e)
+  static error_type from_error(E const& e)
   {
-    return error_storage_type(e);
+    return error_type(e);
   }
 
   static void bad_access(const error_type &e)
@@ -88,16 +86,14 @@ template <>
 struct expected_traits<boost::exception_ptr>
 {
   typedef boost::exception_ptr error_type;
-  typedef boost::exception_ptr exception_type;
-  typedef boost::exception_ptr error_storage_type;
 
   template <class E>
-  static error_storage_type from_error(E const& e)
+  static error_type from_error(E const& e)
   {
     return boost::copy_exception(e);
   }
 
-  static void bad_access(const error_storage_type &e)
+  static void bad_access(const error_type &e)
   {
     if (e==boost::exception_ptr())
       throw expected_default_constructed();
@@ -110,8 +106,6 @@ template <>
 struct expected_traits<std::exception_ptr>
 {
   typedef std::exception_ptr error_type;
-  typedef std::exception_ptr exception_type;
-  typedef std::exception_ptr error_storage_type;
 
   template <class E>
   static error_type from_error(E const& e)
@@ -144,9 +138,8 @@ union trivial_expected_storage
 {
   typedef T value_type;
   typedef typename traits_type::error_type error_type;
-  typedef typename traits_type::error_storage_type error_storage_type;
 
-  error_storage_type err;
+  error_type err;
   value_type val;
 
   BOOST_CONSTEXPR trivial_expected_storage()
@@ -154,11 +147,11 @@ union trivial_expected_storage
   : err()
   {}
 
-  BOOST_CONSTEXPR trivial_expected_storage(unexpected_type<error_storage_type> const& e)
+  BOOST_CONSTEXPR trivial_expected_storage(unexpected_type<error_type> const& e)
   : err(e.value())
   {}
 
-  BOOST_CONSTEXPR trivial_expected_storage(unexpected_type<error_storage_type> && e)
+  BOOST_CONSTEXPR trivial_expected_storage(unexpected_type<error_type> && e)
   : err(std::move(e.value()))
   {}
 
@@ -179,19 +172,18 @@ template <typename E, class traits_type>
 union trivial_expected_storage<void, E, traits_type >
 {
   typedef typename traits_type::error_type error_type;
-  typedef typename traits_type::error_storage_type error_storage_type;
 
-  error_storage_type err;
+  error_type err;
   unsigned char dummy;
 
   BOOST_CONSTEXPR trivial_expected_storage()
   : err()
   {}
 
-  BOOST_CONSTEXPR trivial_expected_storage(unexpected_type<error_storage_type> const& e)
+  BOOST_CONSTEXPR trivial_expected_storage(unexpected_type<error_type> const& e)
   : err(e.value())
   {}
-  BOOST_CONSTEXPR trivial_expected_storage(unexpected_type<error_storage_type> && e)
+  BOOST_CONSTEXPR trivial_expected_storage(unexpected_type<error_type> && e)
   : err(std::move(e.value()))
   {}
 
@@ -211,19 +203,18 @@ union no_trivial_expected_storage
 {
   typedef T value_type;
   typedef typename traits_type::error_type error_type;
-  typedef typename traits_type::error_storage_type error_storage_type;
 
-  error_storage_type err;
+  error_type err;
   value_type val;
 
   BOOST_CONSTEXPR no_trivial_expected_storage()
   : err()
   {}
 
-  BOOST_CONSTEXPR no_trivial_expected_storage(unexpected_type<error_storage_type> const& e)
+  BOOST_CONSTEXPR no_trivial_expected_storage(unexpected_type<error_type> const& e)
   : err(e.value())
   {}
-  BOOST_CONSTEXPR no_trivial_expected_storage(unexpected_type<error_storage_type> && e)
+  BOOST_CONSTEXPR no_trivial_expected_storage(unexpected_type<error_type> && e)
   : err(std::move(e.value()))
   {}
 
@@ -244,19 +235,18 @@ template <typename E, class traits_type>
 union no_trivial_expected_storage<void, E, traits_type >
 {
   typedef typename traits_type::error_type error_type;
-  typedef typename traits_type::error_storage_type error_storage_type;
 
-  error_storage_type err;
+  error_type err;
   unsigned char dummy;
 
   BOOST_CONSTEXPR no_trivial_expected_storage()
   : err()
   {}
 
-  BOOST_CONSTEXPR no_trivial_expected_storage(unexpected_type<error_storage_type> const& e)
+  BOOST_CONSTEXPR no_trivial_expected_storage(unexpected_type<error_type> const& e)
   : err(e.value())
   {}
-  BOOST_CONSTEXPR no_trivial_expected_storage(unexpected_type<error_storage_type> && e)
+  BOOST_CONSTEXPR no_trivial_expected_storage(unexpected_type<error_type> && e)
   : err(boost::move(e.value()))
   {}
 
@@ -279,7 +269,6 @@ struct trivial_expected_base
 {
   typedef T value_type;
   typedef typename traits_type::error_type error_type;
-  typedef typename traits_type::error_storage_type error_storage_type;
 
   bool has_value;
   trivial_expected_storage<T, E, traits_type> storage;
@@ -340,7 +329,6 @@ struct trivial_expected_base<void, E, traits_type >
 {
   typedef void value_type;
   typedef typename traits_type::error_type error_type;
-  typedef typename traits_type::error_storage_type error_storage_type;
 
   bool has_value;
   trivial_expected_storage<void, E, traits_type> storage;
@@ -377,7 +365,6 @@ struct no_trivial_expected_base
 {
   typedef T value_type;
   typedef typename traits_type::error_type error_type;
-  typedef typename traits_type::error_storage_type error_storage_type;
 
   bool has_value;
   no_trivial_expected_storage<T, E, traits_type> storage;
@@ -431,7 +418,7 @@ struct no_trivial_expected_base
   ~no_trivial_expected_base()
   {
     if (has_value) storage.val.~value_type();
-    else storage.err.~error_storage_type();
+    else storage.err.~error_type();
   }
 };
 
@@ -439,7 +426,6 @@ template <typename E, class traits_type>
 struct no_trivial_expected_base<void, E, traits_type> {
   typedef void value_type;
   typedef typename traits_type::error_type error_type;
-  typedef typename traits_type::error_storage_type error_storage_type;
 
   bool has_value;
   no_trivial_expected_storage<void, E, traits_type> storage;
@@ -473,7 +459,7 @@ struct no_trivial_expected_base<void, E, traits_type> {
 
   ~no_trivial_expected_base() {
     if (! has_value)
-      storage.err.~error_storage_type();
+      storage.err.~error_type();
   }
 };
 
@@ -525,7 +511,6 @@ public:
   typedef expected_traits<ErrorType> traits_type;
   typedef typename traits_type::error_type error_type;
   typedef ErrorType error_param_type;
-  typedef typename traits_type::error_storage_type error_storage_type;
   using errored_type = boost::unexpected_type<error_type>;
 
 private:
@@ -552,8 +537,8 @@ private:
 
   value_type* dataptr() { return std::addressof(base_type::storage.val); }
   BOOST_CONSTEXPR const value_type* dataptr() const { return static_addressof(base_type::storage.val); }
-  error_storage_type* errorptr() { return std::addressof(base_type::storage.err); }
-  BOOST_CONSTEXPR const error_storage_type* errorptr() const { return static_addressof(base_type::storage.err); }
+  error_type* errorptr() { return std::addressof(base_type::storage.err); }
+  BOOST_CONSTEXPR const error_type* errorptr() const { return static_addressof(base_type::storage.err); }
 
 #if ! defined BOOST_EXPECTED_NO_CXX11_RVALUE_REFERENCE_FOR_THIS
   BOOST_CONSTEXPR const bool& contained_has_value() const& { return base_type::has_value; }
@@ -568,19 +553,19 @@ private:
   BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS
   value_type&& contained_val() && { return std::move(base_type::storage.val); }
 
-  BOOST_CONSTEXPR const error_storage_type& contained_err() const& { return base_type::storage.err; }
+  BOOST_CONSTEXPR const error_type& contained_err() const& { return base_type::storage.err; }
   BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS
-  error_storage_type& contained_err() & { return base_type::storage.err; }
+  error_type& contained_err() & { return base_type::storage.err; }
   BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS
-  error_storage_type&& contained_err() && { return std::move(base_type::storage.err); }
+  error_type&& contained_err() && { return std::move(base_type::storage.err); }
 
 #else
   BOOST_CONSTEXPR const bool& contained_has_value() const BOOST_NOEXCEPT { return base_type::has_value; }
   bool& contained_has_value() BOOST_NOEXCEPT { return base_type::has_value; }
   BOOST_CONSTEXPR const value_type& contained_val() const { return base_type::storage.val; }
   value_type& contained_val() { return base_type::storage.val; }
-  BOOST_CONSTEXPR const error_storage_type& contained_err() const { return base_type::storage.err; }
-  error_storage_type& contained_err() { return base_type::storage.err; }
+  BOOST_CONSTEXPR const error_type& contained_err() const { return base_type::storage.err; }
+  error_type& contained_err() { return base_type::storage.err; }
 #endif
 
   // C++03 movable support
@@ -636,7 +621,7 @@ public:
     }
     else
     {
-      ::new (errorptr()) error_storage_type(rhs.contained_err());
+      ::new (errorptr()) error_type(rhs.contained_err());
     }
   }
 
@@ -656,7 +641,7 @@ public:
     }
     else
     {
-      ::new (errorptr()) error_storage_type(boost::move(rhs.contained_err()));
+      ::new (errorptr()) error_type(boost::move(rhs.contained_err()));
     }
   }
 
@@ -807,9 +792,9 @@ public:
       }
       else
       {
-        error_storage_type t = boost::move(rhs.contained_err());
+        error_type t = boost::move(rhs.contained_err());
         new (rhs.dataptr()) value_type(boost::move(contained_val()));
-        new (errorptr()) error_storage_type(t);
+        new (errorptr()) error_type(t);
         std::swap(contained_has_value(), rhs.contained_has_value());
       }
     }
@@ -1296,7 +1281,6 @@ public:
   typedef expected_traits<ErrorType> traits_type;
   typedef typename traits_type::error_type error_type;
   typedef ErrorType error_param_type;
-  typedef typename traits_type::error_storage_type error_storage_type;
   using errored_type = boost::unexpected_type<error_type>;
 
 private:
@@ -1313,8 +1297,8 @@ private:
   typedef boost::is_same<error_param_type, expect_t> is_same_error_expect_t;
   BOOST_STATIC_ASSERT_MSG( !is_same_error_expect_t::value, "bad ErrorType" );
 
-  error_storage_type* errorptr() { return std::addressof(base_type::storage.err); }
-  BOOST_CONSTEXPR const error_storage_type* errorptr() const { return static_addressof(base_type::storage.err); }
+  error_type* errorptr() { return std::addressof(base_type::storage.err); }
+  BOOST_CONSTEXPR const error_type* errorptr() const { return static_addressof(base_type::storage.err); }
 
 #if ! defined BOOST_EXPECTED_NO_CXX11_RVALUE_REFERENCE_FOR_THIS
   BOOST_CONSTEXPR const bool& contained_has_value() const& { return base_type::has_value; }
@@ -1323,17 +1307,17 @@ private:
   BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS
   bool&& contained_has_value() && { return std::move(base_type::has_value); }
 
-  BOOST_CONSTEXPR const error_storage_type& contained_err() const& { return base_type::storage.err; }
+  BOOST_CONSTEXPR const error_type& contained_err() const& { return base_type::storage.err; }
   BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS
-  error_storage_type& contained_err() & { return base_type::storage.err; }
+  error_type& contained_err() & { return base_type::storage.err; }
   BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS
-  error_storage_type&& contained_err() && { return std::move(base_type::storage.err); }
+  error_type&& contained_err() && { return std::move(base_type::storage.err); }
 
 #else
   BOOST_CONSTEXPR const bool& contained_has_value() const BOOST_NOEXCEPT { return base_type::has_value; }
   bool& contained_has_value() BOOST_NOEXCEPT { return base_type::has_value; }
-  BOOST_CONSTEXPR const error_storage_type& contained_err() const { return base_type::storage.err; }
-  error_storage_type& contained_err() { return base_type::storage.err; }
+  BOOST_CONSTEXPR const error_type& contained_err() const { return base_type::storage.err; }
+  error_type& contained_err() { return base_type::storage.err; }
 #endif
 
   // C++03 movable support
@@ -1358,7 +1342,7 @@ public:
   {
     if (! rhs.valid())
     {
-      ::new (errorptr()) error_storage_type(rhs.contained_err());
+      ::new (errorptr()) error_type(rhs.contained_err());
     }
   }
 
@@ -1372,7 +1356,7 @@ public:
   {
     if (! rhs.valid())
     {
-      ::new (errorptr()) error_storage_type(boost::move(rhs.contained_err()));
+      ::new (errorptr()) error_type(boost::move(rhs.contained_err()));
     }
   }
 
@@ -1469,8 +1453,8 @@ public:
     {
       if (! rhs.valid())
       {
-        error_storage_type t = boost::move(rhs.contained_err());
-        new (errorptr()) error_storage_type(t);
+        error_type t = boost::move(rhs.contained_err());
+        new (errorptr()) error_type(t);
         std::swap(contained_has_value(), rhs.contained_has_value());
       }
     }
@@ -1509,24 +1493,24 @@ public:
   }
 
 #if ! defined BOOST_EXPECTED_NO_CXX11_MOVE_ACCESSORS
-  BOOST_CONSTEXPR error_storage_type const& error() const& BOOST_NOEXCEPT
+  BOOST_CONSTEXPR error_type const& error() const& BOOST_NOEXCEPT
   {
     return contained_err();
   }
-  BOOST_CONSTEXPR error_storage_type& error() & BOOST_NOEXCEPT
+  BOOST_CONSTEXPR error_type& error() & BOOST_NOEXCEPT
   {
     return contained_err();
   }
-  BOOST_CONSTEXPR error_storage_type&& error() && BOOST_NOEXCEPT
+  BOOST_CONSTEXPR error_type&& error() && BOOST_NOEXCEPT
   {
     return constexpr_move(contained_err());
   }
 #else
-  BOOST_CONSTEXPR error_storage_type const& error() const BOOST_NOEXCEPT
+  BOOST_CONSTEXPR error_type const& error() const BOOST_NOEXCEPT
   {
     return contained_err();
   }
-  error_storage_type & error() BOOST_NOEXCEPT
+  error_type & error() BOOST_NOEXCEPT
   {
     return contained_err();
   }

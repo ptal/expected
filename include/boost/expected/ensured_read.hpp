@@ -68,7 +68,6 @@ namespace boost {
   struct expected_traits<ensured_read<E1> >
   {
     typedef ensured_read<E1> error_type;
-    typedef ensured_read<E1> error_storage_type;
 
     template <class E>
     static error_type from_error(E const& e)
@@ -85,7 +84,6 @@ namespace boost {
   struct expected_traits<ensured_read<std::exception_ptr> >
   {
     typedef ensured_read<std::exception_ptr> error_type;
-    typedef ensured_read<std::exception_ptr> error_storage_type;
 
     template <class E>
     static error_type from_error(E const& e)
