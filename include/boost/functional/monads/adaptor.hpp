@@ -63,7 +63,7 @@ namespace detail
       using namespace ::boost::functional::errored;
       if (has_value(e))
       {
-        return result_type(fct_(value(e)));
+        return result_type(fct_(deref(e)));
       }
       else
       {

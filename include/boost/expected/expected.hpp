@@ -1004,6 +1004,7 @@ public:
 #else
   inline BOOST_CONSTEXPR expected_detail::unwrap_result_type_t<expected> unwrap() const;
 #endif
+
   template <typename F>
   BOOST_CONSTEXPR rebind<void>
   fmap(BOOST_RV_REF(F) f,
@@ -1099,7 +1100,7 @@ public:
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
     if(valid())
     {
-        return f(value());
+        return f(**this);
     }
     return get_unexpected();
 #else
