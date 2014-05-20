@@ -231,11 +231,11 @@ namespace expected_based
   expected<std::exception_ptr, int> then_f22(int i, int j, int k)
   {
     using namespace boost::functional::monad_error;
-    return mbind(safe_divide(i, k),
+    return bind(safe_divide(i, k),
       [=](int q1)
       {
         using namespace boost::functional::monad_error;
-        return mbind(safe_divide(j,k), [=](int q2)
+        return bind(safe_divide(j,k), [=](int q2)
             {
               return q1+q2;
             });
@@ -245,7 +245,7 @@ namespace expected_based
   expected<std::exception_ptr, int> then_f23(int i, int j, int k)
   {
     using namespace boost::functional::functor;
-    return fmap([=](int q1, int q2)
+    return map([=](int q1, int q2)
         { return q1+q2;},
         safe_divide(i, k), safe_divide(j, k));
   }
@@ -267,11 +267,11 @@ namespace optional_based
   optional<int> then_f22(int i, int j, int k)
   {
     using namespace boost::functional::monad_error;
-    return  mbind(safe_divide(i, k),
+    return  bind(safe_divide(i, k),
       [=](int q1)
       {
         using namespace boost::functional::monad_error;
-        return mbind(safe_divide(j,k), [=](int q2)
+        return bind(safe_divide(j,k), [=](int q2)
             {
               return q1+q2;
             });
@@ -281,7 +281,7 @@ namespace optional_based
   optional<int> then_f23(int i, int j, int k)
   {
     using namespace boost::functional::monad_error;
-    return fmap([=](int q1, int q2)
+    return map([=](int q1, int q2)
         { return q1+q2;},
         safe_divide(i, k), safe_divide(j, k));
   }
@@ -306,11 +306,11 @@ namespace generic_based
   apply<M, int> then_f22(int i, int j, int k)
   {
     using namespace boost::functional::monad_error;
-    return  mbind(safe_divide<M>(i, k),
+    return  bind(safe_divide<M>(i, k),
       [=](int q1)
       {
         using namespace boost::functional::monad_error;
-        return mbind(safe_divide<M>(j,k), [=](int q2)
+        return bind(safe_divide<M>(j,k), [=](int q2)
             {
               return q1+q2;
             });
@@ -321,7 +321,7 @@ namespace generic_based
   apply<M, int> then_f23(int i, int j, int k)
   {
     using namespace boost::functional::functor;
-    return fmap([=](int q1, int q2)
+    return map([=](int q1, int q2)
         { return q1+q2;},
         safe_divide<M>(i, k), safe_divide<M>(j, k));
   }
@@ -352,9 +352,9 @@ namespace expected_based
 
   expected<std::exception_ptr, int> operator-(expected<std::exception_ptr, int> i, expected<std::exception_ptr, int> j)
   {
-    return  mbind(i, [j](int i)
+    return  bind(i, [j](int i)
       {
-        return mbind(j, [i](int j)
+        return bind(j, [i](int j)
             {
               return i-j;
             });
@@ -380,9 +380,9 @@ namespace optional_based
   template <class T>
   optional<T> operator-(optional<T> i, optional<T> j)
   {
-    return  mbind(i, [j](T i)
+    return  bind(i, [j](T i)
       {
-        return mbind(j, [i](T j)
+        return bind(j, [i](T j)
             {
               return i-j;
             });

@@ -51,9 +51,9 @@ namespace monad
 
   template <class M, class F, class Traits = if_monad<decay_t<M>> >
   auto
-  mbind(M&& m, F&& f) -> decltype(Traits::mbind(std::forward<M>(m), std::forward<F>(f)))
+  bind(M&& m, F&& f) -> decltype(Traits::bind(std::forward<M>(m), std::forward<F>(f)))
   {
-    return Traits::mbind(std::forward<M>(m), std::forward<F>(f));
+    return Traits::bind(std::forward<M>(m), std::forward<F>(f));
   }
 
   template <class M1, class M2, class Traits = if_monad<decay_t<M1>>, class = if_monad<decay_t<M2>> >
@@ -65,9 +65,9 @@ namespace monad
 
   template <class M, class F, class Traits = if_monad<decay_t<M>> >
   auto operator&(M&& m, F&& f)
-  -> decltype(mbind(std::forward<M>(m), std::forward<F>(f)))
+  -> decltype(bind(std::forward<M>(m), std::forward<F>(f)))
   {
-    return mbind(std::forward<M>(m),std::forward<F>(f));
+    return bind(std::forward<M>(m),std::forward<F>(f));
   }
 
   template <class M1, class M2, class Traits = if_monad<decay_t<M1>>, class = if_monad<decay_t<M2>> >
@@ -85,7 +85,7 @@ struct monad_traits<category::default_> : std::true_type
   template <class M1, class M2 >
   static M2 mdo(M1&& m1, M2&& m2)
   {
-    return monad::mbind(std::forward<M1>(m1), [&](rebindable::value_type<decay_t<M1>> ) { return std::forward<M2>(m2); });
+    return monad::bind(std::forward<M1>(m1), [&](rebindable::value_type<decay_t<M1>> ) { return std::forward<M2>(m2); });
   }
 
 };
@@ -103,9 +103,9 @@ struct monad_traits<category::forward> : monad_traits<category::default_>
   // make use of member function
   template <class M, class F>
   static auto
-  mbind(M&& m, F&& f) -> decltype(m.mbind(std::forward<F>(f)))
+  bind(M&& m, F&& f) -> decltype(m.bind(std::forward<F>(f)))
   {
-    return m.mbind(std::forward<F>(f));
+    return m.bind(std::forward<F>(f));
   }
 
 };

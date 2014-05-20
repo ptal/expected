@@ -113,10 +113,10 @@ boost::expected<std::exception_ptr, int> mex_f2(int i, int j, int k)
 boost::expected<std::exception_ptr, int> then_f2(int i, int j, int k)
 {
   auto q1 = safe_divide(i, k);
-  return q1.mbind([j,k](int q1)
+  return q1.bind([j,k](int q1)
     {
       auto q2 = safe_divide(j,k);
-      return q2.mbind([q1](int q2)
+      return q2.bind([q1](int q2)
           { return q1+q2;});
     });
 }
@@ -130,8 +130,8 @@ expected<std::exception_ptr, T> operator+(expected<std::exception_ptr, T> i, exp
 }
 
 //expected<std::exception_ptr, int> operator+(expected<std::exception_ptr, int> i, expected<std::exception_ptr, int> j) {
-//  return i.mbind([j](int i) {
-//    return j.mbind([i](int j) {
+//  return i.bind([j](int i) {
+//    return j.bind([i](int j) {
 //      return i+j;
 //    });
 //  });

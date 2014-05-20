@@ -30,9 +30,9 @@ namespace functional
 
     template <class F, class M0, class ...M, class FR = decltype( std::declval<F>()(*std::declval<M0>(), *std::declval<M>()...) )>
     static auto
-    fmap(F&& f, M0&& m0, M&& ...ms) -> rebindable::rebind<decay_t<M0>, FR>
+    map(F&& f, M0&& m0, M&& ...ms) -> rebindable::rebind<decay_t<M0>, FR>
     {
-      return M0::fmap(std::forward<F>(f), std::forward<M0>(m0), std::forward<M>(ms)...);
+      return M0::map(std::forward<F>(f), std::forward<M0>(m0), std::forward<M>(ms)...);
     }
   };
 
@@ -50,17 +50,17 @@ namespace functor
 
   template <class F, class M0, class ...M, class Traits = if_functor<decay_t<M0>> >
   auto
-  fmap(F&& f, M0&& m0, M&& ...m)
-  -> decltype(Traits::fmap(std::forward<F>(f), std::forward<M0>(m0), std::forward<M>(m)...))
+  map(F&& f, M0&& m0, M&& ...m)
+  -> decltype(Traits::map(std::forward<F>(f), std::forward<M0>(m0), std::forward<M>(m)...))
   {
-    return Traits::fmap(std::forward<F>(f),std::forward<M0>(m0), std::forward<M>(m)...);
+    return Traits::map(std::forward<F>(f),std::forward<M0>(m0), std::forward<M>(m)...);
   }
 
   template <class F, class M, class = if_functor<decay_t<M> > >
   auto operator^(F&& f, M&& m)
-  -> decltype(fmap(std::forward<F>(f), std::forward<M>(m)))
+  -> decltype(map(std::forward<F>(f), std::forward<M>(m)))
   {
-    return fmap(std::forward<F>(f), std::forward<M>(m));
+    return map(std::forward<F>(f), std::forward<M>(m));
   }
 
 }

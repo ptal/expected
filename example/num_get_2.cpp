@@ -89,7 +89,7 @@ namespace boost
       };
     public:
       template <class F>
-      static BOOST_CONSTEXPR typename result_type<F>::type mbind(monad_type m, F f)
+      static BOOST_CONSTEXPR typename result_type<F>::type bind(monad_type m, F f)
       {
         typedef typename std::result_of<F(value_type)>::type result_type;
         typedef typename result_type::second_type expected_type;
@@ -260,16 +260,16 @@ public:
 
     //auto  f = std::use_facet< ::NumGet<char_type, iter_type> >(ios.getloc()).template get<Num>(s, e, ios);
     auto f = ::NumGet<char_type, iter_type>().template get<Num> (s, e, ios);
-    auto  m = mbind(f, [e](std::pair<iter_type,Num> f)
+    auto  m = bind(f, [e](std::pair<iter_type,Num> f)
       {
         return matchedString("..", f.first, e);
       });
-    auto l = mbind(m, [&ios, e](std::pair<iter_type, Num> m)
+    auto l = bind(m, [&ios, e](std::pair<iter_type, Num> m)
       {
         //return std::use_facet< ::NumGet<char_type, iter_type> >(ios.getloc()).template get<Num>(m.first, e, ios);
         return ::NumGet<char_type, iter_type>().template get<Num> (m.first, e, ios);
       });
-    return mbind(l, [f](std::pair<iter_type,Num> l)
+    return bind(l, [f](std::pair<iter_type,Num> l)
       {
         value_type tmp(*f.second, l.second);
         return make_pair_expected<std::ios_base::iostate>(l.first, tmp);

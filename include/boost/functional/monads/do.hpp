@@ -8,7 +8,7 @@
 
 #define BOOST_PP_VARIADICS 1
 #include <boost/preprocessor.hpp>
-#include <boost/functional/monads.hpp>
+#include <boost/functional/monads/monad.hpp>
 
 // Macro helpers.
 
@@ -18,7 +18,7 @@
 // Bind the couple (decl, monad_expr) to a suitable lambda and method call.
 
 #define MONADIC_BIND_0_IV_0(mexpr, decl)
-#define MONADIC_BIND_0_IV_1(mexpr, decl) boost::monads::mbind BOOST_PP_LPAREN() (mexpr), [&](decl){ return
+#define MONADIC_BIND_0_IV_1(mexpr, decl) boost::functional::monad::bind BOOST_PP_LPAREN() (mexpr), [&](decl){ return
 
 #define MONADIC_BIND_0_III(bit, mexpr, decl) \
   MONADIC_BIND_0_IV_ ## bit (mexpr, decl)
@@ -68,7 +68,7 @@ YIELD(i+4))
 
 ===>
 
-monad_expr.mbind([&](int i){
+bind(monad_expr, [&](int i){
   return i + 4;
 })
 
@@ -81,8 +81,8 @@ YIELD(i+j))
 
 ===>
 
-monad_expr_1.mbind([&](int i){
-monad_expr_2.mbind([&](int j){
+bind(monad_expr_1, [&](int i){
+bind(monad_expr_2, [&](int j){
   return i + j;
 })})
 

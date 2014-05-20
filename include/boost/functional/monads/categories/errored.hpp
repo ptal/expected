@@ -45,7 +45,7 @@ namespace functional
 
     template <class F, class M0, class ...M,
     class FR = decltype( std::declval<F>()(errored::deref(std::declval<M0>()), errored::deref(std::declval<M>())...) )>
-    static BOOST_CONSTEXPR auto fmap(F&& f, M0&& m0, M&& ...m) -> errored::rebind<decay_t<M0>, FR>
+    static BOOST_CONSTEXPR auto map(F&& f, M0&& m0, M&& ...m) -> errored::rebind<decay_t<M0>, FR>
     {
       using namespace errored;
       typedef rebind<decay_t<M0>, FR> result_type;
@@ -61,7 +61,7 @@ namespace functional
   {
     template <class M, class F, class FR = decltype( std::declval<F>()( errored::deref(std::declval<M>()) ) )>
     static BOOST_CONSTEXPR auto
-    mbind(M&& m, F&& f,
+    bind(M&& m, F&& f,
         REQUIRES(boost::is_same<FR, void>::value)
     ) -> errored::rebind<decay_t<M>, FR>
     {
@@ -84,7 +84,7 @@ namespace functional
 
     template <class M, class F, class FR = decltype( std::declval<F>()( errored::deref(std::declval<M>()) ) )>
     static BOOST_CONSTEXPR auto
-    mbind(M&& m, F&& f,
+    bind(M&& m, F&& f,
         REQUIRES((! boost::is_same<FR, void>::value
                 && ! boost::functional::is_monad<FR>::value)
         )) -> errored::rebind<decay_t<M>, FR>
@@ -107,7 +107,7 @@ namespace functional
 
     template <class M, class F, class FR = decltype( std::declval<F>()( errored::deref(std::declval<M>()) ) )>
     static BOOST_CONSTEXPR auto
-    mbind(M&& m, F&& f,
+    bind(M&& m, F&& f,
         REQUIRES( boost::functional::is_monad<FR>::value )
     ) -> FR
     {

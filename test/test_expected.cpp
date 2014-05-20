@@ -783,9 +783,9 @@ BOOST_AUTO_TEST_CASE(expected_swap_function_value)
 
 BOOST_AUTO_TEST_SUITE_END()
 ////////////////////////////////////
-BOOST_AUTO_TEST_SUITE(expected_mbind)
+BOOST_AUTO_TEST_SUITE(expected_bind)
 
-BOOST_AUTO_TEST_CASE(expected_mbind)
+BOOST_AUTO_TEST_CASE(expected_bind)
 {
   auto fun = [](bool b) -> expected<std::exception_ptr, int>
   {
@@ -805,22 +805,22 @@ BOOST_AUTO_TEST_CASE(expected_mbind)
     throw test_exception();
   };
 
-  expected<std::exception_ptr, int> e = fun(true).mbind(add_five);
+  expected<std::exception_ptr, int> e = fun(true).bind(add_five);
   BOOST_CHECK_NO_THROW(e.value());
   BOOST_CHECK_EQUAL(*e, 10);
 
-  e = fun(true).mbind(add_five).mbind(add_five);
+  e = fun(true).bind(add_five).bind(add_five);
   BOOST_CHECK_NO_THROW(e.value());
   BOOST_CHECK_EQUAL(*e, 15);
 
-  e = fun(false).mbind(add_five).mbind(add_five);
+  e = fun(false).bind(add_five).bind(add_five);
   BOOST_CHECK_THROW(e.value(), test_exception);
 
-  BOOST_CHECK_THROW(fun(true).mbind(launch_except), test_exception);
+  BOOST_CHECK_THROW(fun(true).bind(launch_except), test_exception);
 
 }
 
-BOOST_AUTO_TEST_CASE(expected_void_mbind)
+BOOST_AUTO_TEST_CASE(expected_void_bind)
 {
   auto fun = [](bool b)
   {
@@ -837,13 +837,13 @@ BOOST_AUTO_TEST_CASE(expected_void_mbind)
 
   auto do_nothing = [](){};
 
-  expected<std::exception_ptr, void> e = fun(true).mbind(do_nothing);
+  expected<std::exception_ptr, void> e = fun(true).bind(do_nothing);
   BOOST_CHECK_NO_THROW(e.value());
 
-  e = fun(false).mbind(do_nothing);
+  e = fun(false).bind(do_nothing);
   BOOST_CHECK_THROW(e.value(), test_exception);
 
-  BOOST_CHECK_THROW(fun(true).mbind(launch_except), test_exception);
+  BOOST_CHECK_THROW(fun(true).bind(launch_except), test_exception);
 
 }
 
@@ -993,16 +993,16 @@ BOOST_AUTO_TEST_CASE(expected_recover)
   BOOST_CHECK_EQUAL(fun(false).catch_error(recover_error_silent_failure).valid(), false);
   BOOST_CHECK_EQUAL(fun(false).catch_error(recover_error_failure).valid(), false);
 
-  BOOST_CHECK_EQUAL(fun(true).mbind(add_five).value(), 10);
-  BOOST_CHECK_EQUAL(fun(true).mbind(add_five).catch_error(recover_error).value(), 10);
-  BOOST_CHECK_EQUAL(fun(true).mbind(add_five).catch_error(recover_error_silent_failure).value(), 10);
-  BOOST_CHECK_EQUAL(fun(true).mbind(add_five).catch_error(recover_error_failure).value(), 10);
+  BOOST_CHECK_EQUAL(fun(true).bind(add_five).value(), 10);
+  BOOST_CHECK_EQUAL(fun(true).bind(add_five).catch_error(recover_error).value(), 10);
+  BOOST_CHECK_EQUAL(fun(true).bind(add_five).catch_error(recover_error_silent_failure).value(), 10);
+  BOOST_CHECK_EQUAL(fun(true).bind(add_five).catch_error(recover_error_failure).value(), 10);
 
-  BOOST_CHECK_EQUAL(fun(false).catch_error(recover_error).mbind(add_five).value(), 5);
-  BOOST_CHECK_EQUAL(fun(false).catch_error(recover_error).mbind(add_five).mbind(add_five).value(), 10);
-  BOOST_CHECK_EQUAL(fun(false).catch_error(recover_error_failure).mbind(add_five).valid(), false);
-  BOOST_CHECK_EQUAL(fun(false).mbind(add_five).catch_error(recover_error_failure).mbind(add_five).valid(), false);
-  BOOST_CHECK_EQUAL(fun(false).mbind(add_five).catch_error(recover_error_silent_failure).mbind(add_five).valid(), false);
+  BOOST_CHECK_EQUAL(fun(false).catch_error(recover_error).bind(add_five).value(), 5);
+  BOOST_CHECK_EQUAL(fun(false).catch_error(recover_error).bind(add_five).bind(add_five).value(), 10);
+  BOOST_CHECK_EQUAL(fun(false).catch_error(recover_error_failure).bind(add_five).valid(), false);
+  BOOST_CHECK_EQUAL(fun(false).bind(add_five).catch_error(recover_error_failure).bind(add_five).valid(), false);
+  BOOST_CHECK_EQUAL(fun(false).bind(add_five).catch_error(recover_error_silent_failure).bind(add_five).valid(), false);
 
   BOOST_CHECK_THROW(fun(false).catch_error(recover_error_throws), test_exception);
 
@@ -1043,8 +1043,8 @@ BOOST_AUTO_TEST_CASE(expected_void_recover)
   BOOST_CHECK_THROW(fun(false).catch_error(recover_error_failure), test_exception);
   BOOST_CHECK_EQUAL(fun(false).catch_error(recover_error_silent_failure).valid(), false);
 
-  // With a mbind between.
-  BOOST_CHECK_THROW(fun(false).mbind(do_nothing).catch_error(recover_error_failure), test_exception);
+  // With a bind between.
+  BOOST_CHECK_THROW(fun(false).bind(do_nothing).catch_error(recover_error_failure), test_exception);
 
 }
 BOOST_AUTO_TEST_SUITE_END()

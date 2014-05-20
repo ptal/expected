@@ -1048,7 +1048,7 @@ public:
 
   template <typename F>
   BOOST_CONSTEXPR rebind<void>
-  mbind(BOOST_RV_REF(F) f,
+  bind(BOOST_RV_REF(F) f,
     REQUIRES(boost::is_same<typename result_of<F(value_type)>::type, void>::value)) const
   {
     typedef rebind<void> result_type;
@@ -1069,7 +1069,7 @@ public:
 
   template <typename F>
   BOOST_CONSTEXPR rebind<typename result_of<F(value_type)>::type>
-  mbind(BOOST_RV_REF(F) f,
+  bind(BOOST_RV_REF(F) f,
     REQUIRES(!boost::is_same<typename result_of<F(value_type)>::type, void>::value
         && !boost::is_expected<typename result_of<F(value_type)>::type>::value
         )) const
@@ -1091,7 +1091,7 @@ public:
 
   template <typename F>
   BOOST_CONSTEXPR typename result_of<F(value_type)>::type
-  mbind(BOOST_RV_REF(F) f,
+  bind(BOOST_RV_REF(F) f,
     REQUIRES(!boost::is_same<typename result_of<F(value_type)>::type, void>::value
         && boost::is_expected<typename result_of<F(value_type)>::type>::value
         )
@@ -1541,10 +1541,10 @@ public:
   inline BOOST_CONSTEXPR expected_detail::unwrap_result_type_t<expected> unwrap() const;
 #endif
 
-  // mbind factory
+  // bind factory
 
   template <typename F>
-  BOOST_CONSTEXPR rebind<void> mbind(BOOST_RV_REF(F) f,
+  BOOST_CONSTEXPR rebind<void> bind(BOOST_RV_REF(F) f,
     REQUIRES(boost::is_same<typename result_of<F()>::type, void>::value)) const
   {
     typedef rebind<void> result_type;
@@ -1565,7 +1565,7 @@ public:
 
   template <typename F>
   BOOST_CONSTEXPR rebind<typename result_of<F()>::type>
-  mbind(BOOST_RV_REF(F) f,
+  bind(BOOST_RV_REF(F) f,
     REQUIRES( ! boost::is_same<typename result_of<F()>::type, void>::value) ) const
   {
     typedef rebind<typename result_of<F()>::type> result_type;
