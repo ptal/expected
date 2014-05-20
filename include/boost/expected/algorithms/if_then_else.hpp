@@ -16,9 +16,9 @@ namespace expected_alg
 
   template <class T, class E, class True, class False>
   auto if_then_else(expected<E,T> e, True&& t, False&& f)
-  -> decltype(unwrap(e.fmap(std::forward<True>(t)).catch_error(std::forward<False>(f))))
+  -> decltype(unwrap(e.map(std::forward<True>(t)).catch_error(std::forward<False>(f))))
   {
-    return unwrap(e.fmap(std::forward<True>(t)).catch_error(std::forward<False>(f)));
+    return unwrap(e.map(std::forward<True>(t)).catch_error(std::forward<False>(f)));
   }
 
 } // namespace expected_alg

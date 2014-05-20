@@ -1007,7 +1007,7 @@ public:
 
   template <typename F>
   BOOST_CONSTEXPR rebind<void>
-  fmap(BOOST_RV_REF(F) f,
+  map(BOOST_RV_REF(F) f,
     REQUIRES(boost::is_same<typename result_of<F(value_type)>::type, void>::value)) const
   {
     typedef rebind<void> result_type;
@@ -1028,7 +1028,7 @@ public:
 
   template <typename F>
   BOOST_CONSTEXPR rebind<typename result_of<F(value_type)>::type>
-  fmap(BOOST_RV_REF(F) f,
+  map(BOOST_RV_REF(F) f,
     REQUIRES(!boost::is_same<typename result_of<F(value_type)>::type, void>::value)) const
   {
     typedef rebind<typename result_of<F(value_type)>::type> result_type;

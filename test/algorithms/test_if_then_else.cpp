@@ -73,7 +73,7 @@ BOOST_AUTO_TEST_SUITE(Copyable)
       BOOST_AUTO_TEST_CASE(Copyable_Nested_OkKo_Unexpected)
       {
         expected<int,int> e0{unexpect, 1};
-        expected<int, expected<int, std::string>> e1 = e0.fmap(to_expected_string_ok);
+        expected<int, expected<int, std::string>> e1 = e0.map(to_expected_string_ok);
         expected<int, expected<int, std::string>> e2 = e1.catch_error(to_expected_error_ko);
         //expected<int, std::string> e3 = unwrap(e2);
         expected<int, std::string> e3 = e2.unwrap();
