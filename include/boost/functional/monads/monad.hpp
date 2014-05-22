@@ -18,6 +18,8 @@ namespace boost
 {
 namespace functional
 {
+//inline namespace functional_v0_1
+//{
 
   template <class Mo>
   struct monad_traits : std::false_type {};
@@ -33,6 +35,7 @@ namespace functional
 
 namespace monad
 {
+
   using namespace ::boost::functional::functor;
 
   template <class M, class T,
@@ -109,7 +112,8 @@ struct monad_traits<category::forward> : monad_traits<category::default_>
   }
 
 };
-}
-}
+//} // v0_1
+} // functional
+} // boost
 
 #endif // BOOST_FUNCTIONAL_MONAD_HPP

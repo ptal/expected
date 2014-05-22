@@ -606,8 +606,8 @@ BOOST_AUTO_TEST_CASE(expected_recover)
   BOOST_CHECK_THROW(fun(false).bind(add_five).catch_error(recover_error_failure).bind(add_five).valid(), test_exception);
   BOOST_CHECK_EQUAL(fun(false).bind(add_five).catch_error(recover_error_silent_failure).bind(add_five).valid(), false);
 
-  BOOST_CHECK_THROW(fun(true).bind(then_launch).catch_error(recover_error).value(), test_exception);
-  BOOST_CHECK_THROW(fun(true).bind(then_launch).catch_error(recover_error).bind(add_five).value(), test_exception);
+  BOOST_CHECK_NO_THROW(fun(true).bind(then_launch).catch_error(recover_error).value());
+  BOOST_CHECK_NO_THROW(fun(true).bind(then_launch).catch_error(recover_error).bind(add_five).value());
   BOOST_CHECK_THROW(fun(true).bind(then_launch).catch_error(recover_error_failure).valid(), test_exception);
 }
 

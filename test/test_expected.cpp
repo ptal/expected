@@ -36,125 +36,6 @@
 
 #include <boost/expected/optional_monad.hpp>
 
-#if 1
-template <class ER, class E>
-ER make_error(E e, ER*)
-{
-  return ER(e);
-}
-template <class ER, class E>
-ER make_error(E e)
-{
-  ER* ptr=0;
-  return make_error(e, ptr);
-}
-
-template <class ER>
-void rethrow(ER& er)
-{
-  throw boost::bad_expected_access<ER>(er);
-}
-
-boost::none_t make_error(boost::none_t, boost::none_t*)
-{
-  return boost::none;
-}
-void rethrow(boost::none_t&)
-{
-  throw boost::functional::valued::bad_access();
-}
-
-template <class E>
-std::exception_ptr make_error(E e, std::exception_ptr*)
-{
-  return std::make_exception_ptr(e);
-}
-void rethrow(std::exception_ptr& ex)
-{
-  std::rethrow_exception(ex);
-}
-
-template <class Errc, class Exception>
-void rethrow(boost::error_exception<Errc,Exception>& er)
-{
-  throw Exception(er.value());
-}
-
-template <class E>
-boost::ensured_read<std::exception_ptr> make_error(E e, boost::ensured_read<std::exception_ptr>*)
-{
-  return ER(std::make_exception_ptr(e));
-}
-
-template <class Errc>
-void rethrow(boost::ensured_read<Errc>& er)
-{
-  rethrow(er.value());
-}
-
-#else
-template <class ER, class E>
-ER make_error(E e)
-{
-  return ER(e);
-}
-
-template <class ER>
-void rethrow(ER& er)
-{
-  throw boost::bad_expected_access<ER>(er);
-}
-
-template <class ER
-   , typename std::enable_if<std::is_same<ER,boost::none_t>::value, int>::type = 0
->
-boost::none_t make_error(boost::none_t)
-{
-  return boost::none;
-}
-void rethrow(boost::none_t&)
-{
-  //throw boost::bad_optional_access();
-}
-
-template <
-class ER,
-class E
-  , typename std::enable_if<std::is_same<ER,std::exception_ptr>::value, int>::type = 0
->
-std::exception_ptr make_error(E e)
-{
-  return std::make_exception_ptr(e);
-}
-void rethrow(std::exception_ptr& ex)
-{
-  std::rethrow_exception(ex);
-}
-
-template <class Errc, class Exception>
-void rethrow(boost::error_exception<Errc,Exception>& er)
-{
-  throw Exception(er.value());
-}
-
-template <
-class ER,
-class E
-  , typename std::enable_if<std::is_same<ER, boost::ensured_read<std::exception_ptr>>::value, int>::type = 0
->
-boost::ensured_read<std::exception_ptr> make_error(E e)
-{
-  return ER(std::make_exception_ptr(e));
-}
-
-template <class Errc>
-void rethrow(boost::ensured_read<Errc>& er)
-{
-  rethrow(er.value());
-}
-
-#endif
-
 enum State
 {
     sDefaultConstructed,
@@ -177,16 +58,6 @@ struct OracleVal
     OracleVal(int i = 0) : s(sValueConstructed), i(i) {}
 };
 
-void tt() {
-  auto i = make_error<int>(0);
-  BOOST_REQUIRE_THROW(rethrow(i), boost::bad_expected_access<int>);
-  auto j = make_error<std::exception_ptr>(OracleVal(0));
-  BOOST_REQUIRE_THROW(rethrow(j), OracleVal);
-  auto k = make_error<boost::error_exception<int, OracleVal>>(0);
-  BOOST_REQUIRE_THROW(rethrow(k), OracleVal);
-  //auto l = make_error<boost::ensured_read<int>>(0);
-  //BOOST_REQUIRE_THROW(rethrow(k), OracleVal);
-}
 struct Oracle
 {
     State s;
@@ -271,12 +142,12 @@ BOOST_AUTO_TEST_CASE(except_default_constructor2)
 {
   // From value constructor.
   expected<std::exception_ptr, int> e {};
-  try {
-    e.value();
-  } catch (expected_default_constructed& ex )  {
-  } catch(...) {
-    BOOST_CHECK(false);
-  };
+//  try {
+//    e.value();
+//  } catch (expected_default_constructed& ex )  {
+//  } catch(...) {
+//    BOOST_CHECK(false);
+//  };
   BOOST_CHECK(!e.valid());
   BOOST_CHECK(! e);
   BOOST_CHECK(! static_cast<bool>(e));
@@ -286,12 +157,12 @@ BOOST_AUTO_TEST_CASE(except_default_constructor)
 {
   // From value constructor.
   expected<std::exception_ptr, int> e;
-  try {
-    e.value();
-  } catch (expected_default_constructed& ex )  {
-  } catch(...) {
-    BOOST_CHECK(false);
-  };
+//  try {
+//    e.value();
+//  } catch (expected_default_constructed& ex )  {
+//  } catch(...) {
+//    BOOST_CHECK(false);
+//  };
   BOOST_CHECK(!e.valid());
   BOOST_CHECK(! e);
   BOOST_CHECK(! static_cast<bool>(e));
@@ -324,12 +195,12 @@ BOOST_AUTO_TEST_CASE(expected_from_value2)
   // From value constructor.
   expected<std::exception_ptr, int> e(5);
   e = {};
-  try {
-    e.value();
-  } catch (expected_default_constructed& ex )  {
-  } catch(...) {
-    BOOST_CHECK(false);
-  };
+//  try {
+//    e.value();
+//  } catch (expected_default_constructed& ex )  {
+//  } catch(...) {
+//    BOOST_CHECK(false);
+//  };
   BOOST_CHECK(! e.valid());
 }
 BOOST_AUTO_TEST_CASE(expected_from_cnv_value)
@@ -816,7 +687,7 @@ BOOST_AUTO_TEST_CASE(expected_bind)
   e = fun(false).bind(add_five).bind(add_five);
   BOOST_CHECK_THROW(e.value(), test_exception);
 
-  BOOST_CHECK_THROW(fun(true).bind(launch_except), test_exception);
+  BOOST_CHECK_NO_THROW(fun(true).bind(launch_except));
 
 }
 
@@ -913,7 +784,7 @@ BOOST_AUTO_TEST_CASE(expected_non_void_then)
   e = fun(false).then(if_valued(add_five)).then(if_valued(add_five));
   BOOST_CHECK_THROW(e.value(), test_exception);
 
-  BOOST_CHECK_THROW(fun(true).then(if_valued(launch_except)), test_exception);
+  BOOST_CHECK_NO_THROW(fun(true).then(if_valued(launch_except)));
 
   e = fun(false).then(catch_all(then_launch_except));
   BOOST_CHECK_THROW(e.value(), test_exception);

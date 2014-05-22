@@ -34,9 +34,9 @@ namespace functional
     }
 
     template <class E>
-    typename H::template rebind_right<E>::type::result_type operator()(E e)
+    typename H::template rebind_right<decay_t<E>>::type::result_type operator()(E e)
     {
-      return typename H::template rebind_right<E>::type(fct_)(e);
+      return typename H::template rebind_right<decay_t<E>>::type(fct_)(std::forward<E>(e));
     }
   private:
     funct_type fct_;
@@ -46,11 +46,11 @@ namespace detail
 {
 
   template <class E, class F, class V>
-  class if_valued
+  class if_valued0
   {
     F fct_;
   public:
-    explicit if_valued(F f) :
+    explicit if_valued0(F f) :
       fct_(f)
     {
     }
@@ -128,10 +128,10 @@ namespace detail
   };
 
   template <class E, class F>
-  struct if_valued<E, F, void> : if_valued2<E, F, typename result_of<F()>::type>
+  struct if_valued0<E, F, void> : if_valued2<E, F, typename result_of<F()>::type>
   {
 
-    explicit if_valued(F f) :
+    explicit if_valued0(F f) :
       if_valued2<E, F, typename result_of<F()>::type> (f)
     {
     }
@@ -145,7 +145,7 @@ namespace detail
     template <class E>
     struct rebind_right
     {
-      typedef if_valued<E, funct_type, rebindable::value_type<E>> type;
+      typedef if_valued0<E, funct_type, rebindable::value_type<E>> type;
     };
   };
 }
@@ -202,7 +202,7 @@ namespace detail
     {
     }
 
-    E operator()(E e)
+    decay_t<E> operator()(E e)
     {
       using namespace ::boost::functional::errored;
       if (!has_value(e))
@@ -250,7 +250,7 @@ namespace detail
       {
       }
 
-      E operator()(E e)
+      decay_t<E> operator()(E e)
       {
         using namespace ::boost::functional::monad_exception;
         using namespace ::boost::functional::valued;

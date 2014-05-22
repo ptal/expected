@@ -63,41 +63,20 @@ namespace boost {
     return x.value() == y;
   }
 
-  // Specialization for ensured_read
-  template <class E1>
-  struct expected_traits<ensured_read<E1> >
+  ensured_read<std::exception_ptr> make_error_from_current_exception(ensured_read<std::exception_ptr>)
   {
-    typedef ensured_read<E1> error_type;
+    return make_ensured_read(std::current_exception());
+  }
 
-    template <class E>
-    static error_type from_error(E const& e)
-    {
-      return make_ensured_read(e);
-    }
-
-    static void bad_access(const error_type &e)
-    {
-      throw bad_expected_access<E1>(e.value());
-    }
-  };
-  template <>
-  struct expected_traits<ensured_read<std::exception_ptr> >
+  template <class Error>
+  ensured_read<std::exception_ptr> make_error(Error e, ensured_read<std::exception_ptr>)
   {
-    typedef ensured_read<std::exception_ptr> error_type;
-
-    template <class E>
-    static error_type from_error(E const& e)
-    {
-      return make_ensured_read(std::make_exception_ptr(e));
-    }
-
-    static void bad_access(const error_type &e)
-    {
-      if (e.value()==std::exception_ptr())
-        throw expected_default_constructed();
-      std::rethrow_exception(e.value());
-    }
-  };
+    return make_ensured_read(std::make_exception_ptr(e));
+  }
+  void rethrow(ensured_read<std::exception_ptr> e)
+  {
+    std::rethrow_exception(e.value());
+  }
 
 } // namespace boost
 

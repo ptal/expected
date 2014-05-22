@@ -352,16 +352,16 @@ namespace expected_based
     return i_ + j_;
   }
 
-  expected<std::exception_ptr, int> operator-(expected<std::exception_ptr, int> i, expected<std::exception_ptr, int> j)
-  {
-    return  bind(i, [j](int i)
-      {
-        return bind(j, [i](int j)
-            {
-              return i-j;
-            });
-      });
-  }
+//  expected<std::exception_ptr, int> operator-(expected<std::exception_ptr, int> i, expected<std::exception_ptr, int> j)
+//  {
+//    return  bind(i, [j](int i)
+//      {
+//        return bind(j, [i](int j)
+//            {
+//              return i-j;
+//            });
+//      });
+//  }
 
   expected<std::exception_ptr, int> cex_f2(int i, int j, int k)
   {

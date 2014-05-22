@@ -50,77 +50,101 @@ class bad_expected_access : public std::logic_error
     // todo - Add implicit/explicit conversion to error_type ?
 };
 
-class expected_default_constructed : public std::logic_error
-{
-  public:
-    expected_default_constructed()
-    : std::logic_error("Found a default constructed expected.")
-    {}
-};
+//class expected_default_constructed : public std::logic_error
+//{
+//  public:
+//    expected_default_constructed()
+//    : std::logic_error("Found a default constructed expected.")
+//    {}
+//};
 
-// Traits classes
-template <typename ErrorType, class Exception>
-struct expected_error_traits
-{
-  typedef ErrorType error_type;
+namespace no_adl {
+    template <class T>
+    struct wrapper {
+        wrapper(T&& v) : value(move(v)) {}
+        T unwrap() { return move(value); }
+    private:
+        T value;
+    };
+    template <class T>
+    wrapper<decay_t<T>> wrap(T&& v) { return wrapper<decay_t<T>>(forward<T>(v)); }
+}
 
+template <class Error, class E>
+E make_error(Error e, E)
+{
+  return e;
+}
+template <class E>
+void rethrow(E e)
+{
+  throw bad_expected_access<E>(e);
+}
+template <class E>
+E make_error_from_current_exception(E)
+{
+  return E();
+}
+
+template <class Error>
+exception_ptr make_error(Error e, exception_ptr)
+{
+  return copy_exception(e);
+}
+void rethrow(exception_ptr e)
+{
+  return rethrow_exception(e);
+}
+exception_ptr make_error_from_current_exception(exception_ptr)
+{
+  return current_exception();
+}
+
+
+}
+
+namespace std {
+template <class Error>
+exception_ptr make_error(Error e, exception_ptr)
+{
+  return make_exception_ptr(e);
+}
+void rethrow(exception_ptr e)
+{
+  return rethrow_exception(e);
+}
+exception_ptr make_error_from_current_exception(exception_ptr)
+{
+  return current_exception();
+}
+
+}
+
+namespace boost {
+
+namespace error {
+  template <class E, class Error>
+  E make_error(Error e)
+  {
+    using boost::make_error;
+    using std::make_error;
+    return make_error(e, E());
+  }
+  template <class Error>
+  void rethrow(Error e)
+  {
+    using boost::rethrow;
+    using std::rethrow;
+    return rethrow(e);
+  }
   template <class E>
-  static error_type from_error(E const& e)
+  E make_error_from_current_exception()
   {
-    return error_type(e);
+    using boost::make_error_from_current_exception;
+    using std::make_error_from_current_exception;
+    return make_error_from_current_exception(E());
   }
-
-  static void bad_access(const error_type &e)
-  {
-    throw Exception(e);
-  }
-};
-
-template <typename ErrorType>
-struct expected_traits : expected_error_traits<ErrorType, bad_expected_access<ErrorType> >
-{
-};
-
-// Specialization for exception_ptr
-template <>
-struct expected_traits<boost::exception_ptr>
-{
-  typedef boost::exception_ptr error_type;
-
-  template <class E>
-  static error_type from_error(E const& e)
-  {
-    return boost::copy_exception(e);
-  }
-
-  static void bad_access(const error_type &e)
-  {
-    if (e==boost::exception_ptr())
-      throw expected_default_constructed();
-    boost::rethrow_exception(e);
-  }
-};
-
-#if ! defined BOOST_NO_CXX11_HDR_EXCEPTION  && ! defined BOOST_NO_CXX11_RVALUE_REFERENCES
-template <>
-struct expected_traits<std::exception_ptr>
-{
-  typedef std::exception_ptr error_type;
-
-  template <class E>
-  static error_type from_error(E const& e)
-  {
-    return std::make_exception_ptr(e);
-  }
-
-  static void bad_access(const error_type &e)
-  {
-    if (e==std::exception_ptr())
-      throw expected_default_constructed();
-    std::rethrow_exception(e);
-  }
-};
-#endif
+}
 
 struct in_place_t {};
 BOOST_CONSTEXPR_OR_CONST in_place_t in_place2 = {};
@@ -133,11 +157,11 @@ BOOST_CONSTEXPR_OR_CONST unexpect_t unexpect = {};
 
 namespace detail {
 
-template <typename T, typename E, class traits_type=expected_traits<E> >
+template <typename T, typename E>
 union trivial_expected_storage
 {
   typedef T value_type;
-  typedef typename traits_type::error_type error_type;
+  typedef E error_type;
 
   error_type err;
   value_type val;
@@ -157,7 +181,7 @@ union trivial_expected_storage
 
   template <class Err>
   BOOST_CONSTEXPR trivial_expected_storage(unexpected_type<Err> const& e)
-  : err(traits_type::from_error(e.value()))
+  : err(error::make_error<error_type>(e.value()))
   {}
 
   template <class... Args>
@@ -168,10 +192,10 @@ union trivial_expected_storage
   ~trivial_expected_storage() = default;
 };
 
-template <typename E, class traits_type>
-union trivial_expected_storage<void, E, traits_type >
+template <typename E>
+union trivial_expected_storage<void, E>
 {
-  typedef typename traits_type::error_type error_type;
+  typedef E error_type;
 
   error_type err;
   unsigned char dummy;
@@ -189,7 +213,7 @@ union trivial_expected_storage<void, E, traits_type >
 
   template <class Err>
   BOOST_CONSTEXPR trivial_expected_storage(unexpected_type<Err> const& e)
-  : err(traits_type::from_error(e.value()))
+  : err(error::make_error<error_type>(e.value()))
   {}
 
   BOOST_CONSTEXPR trivial_expected_storage(in_place_t)
@@ -198,11 +222,11 @@ union trivial_expected_storage<void, E, traits_type >
   ~trivial_expected_storage() = default;
 };
 
-template <typename T, typename E, class traits_type=expected_traits<E> >
+template <typename T, typename E >
 union no_trivial_expected_storage
 {
   typedef T value_type;
-  typedef typename traits_type::error_type error_type;
+  typedef E error_type;
 
   error_type err;
   value_type val;
@@ -220,7 +244,7 @@ union no_trivial_expected_storage
 
   template <class Err>
   BOOST_CONSTEXPR no_trivial_expected_storage(unexpected_type<Err> const& e)
-  : err(traits_type::from_error(e.value()))
+  : err(error::make_error<error_type>(e.value()))
   {}
 
   template <class... Args>
@@ -231,10 +255,10 @@ union no_trivial_expected_storage
   ~no_trivial_expected_storage() {};
 };
 
-template <typename E, class traits_type>
-union no_trivial_expected_storage<void, E, traits_type >
+template <typename E>
+union no_trivial_expected_storage<void, E>
 {
-  typedef typename traits_type::error_type error_type;
+  typedef E error_type;
 
   error_type err;
   unsigned char dummy;
@@ -252,7 +276,7 @@ union no_trivial_expected_storage<void, E, traits_type >
 
   template <class Err>
   BOOST_CONSTEXPR no_trivial_expected_storage(unexpected_type<Err> const& e)
-  : err(traits_type::from_error(e.value()))
+  : err(error::make_error<error_type>(e.value()))
   {}
 
   BOOST_CONSTEXPR no_trivial_expected_storage(in_place_t)
@@ -264,14 +288,14 @@ union no_trivial_expected_storage<void, E, traits_type >
 
 BOOST_CONSTEXPR struct only_set_valid_t{} only_set_valid{};
 
-template <typename T, typename E, class traits_type=expected_traits<E> >
+template <typename T, typename E >
 struct trivial_expected_base
 {
   typedef T value_type;
-  typedef typename traits_type::error_type error_type;
+  typedef E error_type;
 
   bool has_value;
-  trivial_expected_storage<T, E, traits_type> storage;
+  trivial_expected_storage<T, E> storage;
 
   BOOST_CONSTEXPR trivial_expected_base()
     //BOOST_NOEXCEPT_IF(has_nothrow_default_constructor<value_type>::value)
@@ -324,14 +348,14 @@ struct trivial_expected_base
    ~trivial_expected_base() = default;
 };
 
-template <typename E, class traits_type>
-struct trivial_expected_base<void, E, traits_type >
+template <typename E>
+struct trivial_expected_base<void, E>
 {
   typedef void value_type;
-  typedef typename traits_type::error_type error_type;
+  typedef E error_type;
 
   bool has_value;
-  trivial_expected_storage<void, E, traits_type> storage;
+  trivial_expected_storage<void, E> storage;
 
   BOOST_CONSTEXPR trivial_expected_base()
   : has_value(false), storage() {}
@@ -360,14 +384,14 @@ struct trivial_expected_base<void, E, traits_type >
    ~trivial_expected_base() = default;
 };
 
-template <typename T, typename E, class traits_type=expected_traits<E> >
+template <typename T, typename E >
 struct no_trivial_expected_base
 {
   typedef T value_type;
-  typedef typename traits_type::error_type error_type;
+  typedef E error_type;
 
   bool has_value;
-  no_trivial_expected_storage<T, E, traits_type> storage;
+  no_trivial_expected_storage<T, E> storage;
 
   BOOST_CONSTEXPR no_trivial_expected_base()
     //BOOST_NOEXCEPT_IF(has_nothrow_default_constructor<value_type>::value)
@@ -422,13 +446,13 @@ struct no_trivial_expected_base
   }
 };
 
-template <typename E, class traits_type>
-struct no_trivial_expected_base<void, E, traits_type> {
+template <typename E>
+struct no_trivial_expected_base<void, E> {
   typedef void value_type;
-  typedef typename traits_type::error_type error_type;
+  typedef E error_type;
 
   bool has_value;
-  no_trivial_expected_storage<void, E, traits_type> storage;
+  no_trivial_expected_storage<void, E> storage;
 
   BOOST_CONSTEXPR no_trivial_expected_base()
   : has_value(false), storage() {}
@@ -463,11 +487,11 @@ struct no_trivial_expected_base<void, E, traits_type> {
   }
 };
 
-template <typename T, typename E, class traits_type=expected_traits<E> >
+template <typename T, typename E >
   using expected_base = typename std::conditional<
     has_trivial_destructor<T>::value && has_trivial_destructor<E>::value,
-    trivial_expected_base<T,E,traits_type>,
-    no_trivial_expected_base<T,E,traits_type>
+    trivial_expected_base<T,E>,
+    no_trivial_expected_base<T,E>
   >::type;
 
 } // namespace detail
@@ -504,18 +528,16 @@ struct is_expected<expected<E,T> > : true_type {};
 
 template <typename ErrorType, typename ValueType>
 class expected
-: private detail::expected_base<ValueType, ErrorType, expected_traits<ErrorType> >
+: private detail::expected_base<ValueType, ErrorType >
 {
 public:
   typedef ValueType value_type;
-  typedef expected_traits<ErrorType> traits_type;
-  typedef typename traits_type::error_type error_type;
-  typedef ErrorType error_param_type;
+  typedef ErrorType error_type;
   using errored_type = boost::unexpected_type<error_type>;
 
 private:
   typedef expected<ErrorType, value_type> this_type;
-  typedef detail::expected_base<ValueType, ErrorType, expected_traits<ErrorType> > base_type;
+  typedef detail::expected_base<ValueType, ErrorType> base_type;
 
   // Static asserts.
   typedef boost::is_unexpected<value_type> is_unexpected_value_t;
@@ -526,13 +548,13 @@ private:
   BOOST_STATIC_ASSERT_MSG( !is_same_value_unexpect_t::value, "bad ValueType" );
   typedef boost::is_same<value_type, expect_t> is_same_value_expect_t;
   BOOST_STATIC_ASSERT_MSG( !is_same_value_expect_t::value, "bad ValueType" );
-  typedef boost::is_unexpected<error_param_type> is_unexpected_error_t;
+  typedef boost::is_unexpected<error_type> is_unexpected_error_t;
   BOOST_STATIC_ASSERT_MSG( !is_unexpected_error_t::value, "bad ErrorType" );
-  typedef boost::is_same<error_param_type, in_place_t> is_same_error_in_place_t;
+  typedef boost::is_same<error_type, in_place_t> is_same_error_in_place_t;
   BOOST_STATIC_ASSERT_MSG( !is_same_error_in_place_t::value, "bad ErrorType" );
-  typedef boost::is_same<error_param_type, unexpect_t> is_same_error_unexpect_t;
+  typedef boost::is_same<error_type, unexpect_t> is_same_error_unexpect_t;
   BOOST_STATIC_ASSERT_MSG( !is_same_error_unexpect_t::value, "bad ErrorType" );
-  typedef boost::is_same<error_param_type, expect_t> is_same_error_expect_t;
+  typedef boost::is_same<error_type, expect_t> is_same_error_expect_t;
   BOOST_STATIC_ASSERT_MSG( !is_same_error_expect_t::value, "bad ErrorType" );
 
   value_type* dataptr() { return std::addressof(base_type::storage.val); }
@@ -574,9 +596,9 @@ private:
 public:
 
   template <class T>
-  using rebind = expected<error_param_type, T>;
+  using rebind = expected<error_type, T>;
 
-  using type_constructor = expected<error_param_type>;
+  using type_constructor = expected<error_type>;
 
 
   // Constructors/Destructors/Assignments
@@ -830,26 +852,26 @@ public:
     return valid()
       ? contained_val()
       : (
-          traits_type::bad_access(contained_err()),
+          error::rethrow<error_type>(contained_err()),
           contained_val()
         )
       ;
   }
   BOOST_CONSTEXPR value_type& value() &
   {
-    if (!valid()) traits_type::bad_access(contained_err());
+    if (!valid()) error::rethrow<error_type>(contained_err());
     return contained_val();
   }
   BOOST_CONSTEXPR value_type&& value() &&
   {
-    if (!valid()) traits_type::bad_access(contained_err());
+    if (!valid()) error::rethrow<error_type>(contained_err());
     return std::move(contained_val());
   }
 
 #else
   value_type& value()
   {
-    if (!valid()) traits_type::bad_access(contained_err());
+    if (!valid()) error::rethrow<error_type>(contained_err());
     return contained_val();
   }
 
@@ -858,7 +880,7 @@ public:
     return valid()
       ? contained_val()
       : (
-          traits_type::bad_access(contained_err()),
+          error::rethrow<error_type>(contained_err()),
           contained_val()
         )
       ;
@@ -1006,101 +1028,171 @@ public:
 #endif
 
   template <typename F>
-  BOOST_CONSTEXPR rebind<void>
+  rebind<void>
+  catch_all_type_void(BOOST_RV_REF(F) f)
+  {
+    typedef rebind<void> result_type;
+    try {
+      f(std::move(**this));
+    } catch (...) {
+      return make_unexpected(error::make_error_from_current_exception<error_type>());
+    }
+    return result_type(in_place_t{});
+  }
+
+  template <typename F>
+  typename result_of<F(value_type)>::type
+  catch_all_type_type(BOOST_RV_REF(F) f)
+  {
+    typedef typename result_of<F(value_type)>::type result_type;
+    try {
+      return f(std::move(**this));
+    } catch (...) {
+      return make_unexpected(error::make_error_from_current_exception<error_type>());
+    }
+  }
+  template <typename F>
+  rebind<typename result_of<F(value_type)>::type>
+  catch_all_type_etype(BOOST_RV_REF(F) f)
+  {
+    typedef rebind<typename result_of<F(value_type)>::type> result_type;
+    try {
+      return f(std::move(**this));
+    } catch (...) {
+      return make_unexpected(error::make_error_from_current_exception<error_type>());
+    }
+  }
+  template <typename F>
+  rebind<void>
+  catch_all_etype_void(BOOST_RV_REF(F) f)
+  {
+    typedef rebind<void> result_type;
+    try {
+      f(std::move(*this));
+    } catch (...) {
+      return make_unexpected(error::make_error_from_current_exception<error_type>());
+    }
+    return result_type(in_place_t{});
+  }
+
+  template <typename F>
+  typename result_of<F(expected)>::type
+  catch_all_etype_type(BOOST_RV_REF(F) f)
+  {
+    typedef typename result_of<F(expected)>::type result_type;
+    try {
+      return f(std::move(*this));
+    } catch (...) {
+      return make_unexpected(error::make_error_from_current_exception<error_type>());
+    }
+  }
+  template <typename F>
+  rebind<typename result_of<F(expected)>::type>
+  catch_all_etype_etype(BOOST_RV_REF(F) f)
+  {
+    typedef rebind<typename result_of<F(expected)>::type> result_type;
+    try {
+      return f(std::move(*this));
+    } catch (...) {
+      return make_unexpected(error::make_error_from_current_exception<error_type>());
+    }
+  }
+
+
+  template <typename F>
+  rebind<void>
   map(BOOST_RV_REF(F) f,
-    REQUIRES(boost::is_same<typename result_of<F(value_type)>::type, void>::value)) const
+    REQUIRES(boost::is_same<typename result_of<F(value_type)>::type, void>::value))
   {
     typedef rebind<void> result_type;
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
     if(valid())
     {
-        f(**this);
-        return result_type(in_place_t{});
+        return catch_all_type_void(std::forward<F>(f));
     }
     return get_unexpected();
 #else
     return (valid()
-        ? (f(**this), result_type( in_place_t{}))
+        ? catch_all_type_void(std::forward<F>(f))
         : result_type( get_unexpected() )
         );
 #endif
   }
 
   template <typename F>
-  BOOST_CONSTEXPR rebind<typename result_of<F(value_type)>::type>
+  rebind<typename result_of<F(value_type)>::type>
   map(BOOST_RV_REF(F) f,
-    REQUIRES(!boost::is_same<typename result_of<F(value_type)>::type, void>::value)) const
+    REQUIRES(!boost::is_same<typename result_of<F(value_type)>::type, void>::value))
   {
     typedef rebind<typename result_of<F(value_type)>::type> result_type;
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
     if(valid())
     {
-        return result_type(f(**this));
+        return catch_all_type_etype(std::forward<F>(f));
     }
     return get_unexpected();
 #else
     return (valid()
-        ? result_type( f(value()) )
+        ? catch_all_type_etype(std::forward<F>(f))
         : result_type( get_unexpected() )
         );
 #endif
   }
 
   template <typename F>
-  BOOST_CONSTEXPR rebind<void>
+  rebind<void>
   bind(BOOST_RV_REF(F) f,
-    REQUIRES(boost::is_same<typename result_of<F(value_type)>::type, void>::value)) const
+    REQUIRES(boost::is_same<typename result_of<F(value_type)>::type, void>::value))
   {
     typedef rebind<void> result_type;
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
     if(valid())
     {
-        f(**this);
-        return result_type(in_place_t{});
+        return catch_all_type_void(std::forward<F>(f));
     }
     return get_unexpected();
 #else
     return (valid()
-        ? (f(**this), result_type( in_place_t{}))
+        ? catch_all_type_void(std::forward<F>(f))
         : result_type( get_unexpected() )
         );
 #endif
   }
 
   template <typename F>
-  BOOST_CONSTEXPR rebind<typename result_of<F(value_type)>::type>
+  rebind<typename result_of<F(value_type)>::type>
   bind(BOOST_RV_REF(F) f,
     REQUIRES(!boost::is_same<typename result_of<F(value_type)>::type, void>::value
         && !boost::is_expected<typename result_of<F(value_type)>::type>::value
-        )) const
+        ))
   {
     typedef rebind<typename result_of<F(value_type)>::type> result_type;
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
     if(valid())
     {
-        return result_type(f(**this));
+        return catch_all_type_etype(std::forward<F>(f));
     }
     return get_unexpected();
 #else
     return (valid()
-        ? result_type( f(value()) )
+        ? catch_all_type_etype(std::forward<F>(f))
         : result_type( get_unexpected() )
         );
 #endif
   }
 
   template <typename F>
-  BOOST_CONSTEXPR typename result_of<F(value_type)>::type
+  typename result_of<F(value_type)>::type
   bind(BOOST_RV_REF(F) f,
     REQUIRES(!boost::is_same<typename result_of<F(value_type)>::type, void>::value
         && boost::is_expected<typename result_of<F(value_type)>::type>::value
         )
-    ) const
+    )
   {
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
     if(valid())
     {
-        return f(**this);
+        return catch_all_type_type(std::forward<F>(f));
     }
     return get_unexpected();
 #else
@@ -1111,45 +1203,40 @@ public:
   }
 
   template <typename F>
-  BOOST_CONSTEXPR rebind<void>
+  rebind<void>
   then(BOOST_RV_REF(F) f,
-    REQUIRES(boost::is_same<typename result_of<F(expected)>::type, void>::value)) const
+    REQUIRES(boost::is_same<typename result_of<F(expected)>::type, void>::value))
   {
     typedef rebind<void> result_type;
-#if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
-    f(boost::move(*this));
-    return result_type(in_place_t{});
-#else
-    return (f(boost::move(*this)), result_type(in_place_t{}));
-#endif
+    return catch_all_etype_void(std::forward<F>(f));
   }
 
   template <typename F>
-  BOOST_CONSTEXPR rebind<typename result_of<F(expected)>::type>
+  rebind<typename result_of<F(expected)>::type>
   then(BOOST_RV_REF(F) f,
     REQUIRES(!boost::is_same<typename result_of<F(expected)>::type, void>::value
         && !boost::is_expected<typename result_of<F(expected)>::type>::value
-        )) const
+        ))
   {
-    typedef rebind<typename result_of<F(value_type)>::type> result_type;
-    return result_type(f(boost::move(*this)));
+    return catch_all_etype_etype(std::forward<F>(f));
+    //typedef rebind<typename result_of<F(value_type)>::type> result_type;
+    //return result_type(f(boost::move(*this)));
   }
 
   template <typename F>
-  BOOST_CONSTEXPR typename result_of<F(expected)>::type
+  typename result_of<F(expected)>::type
   then(BOOST_RV_REF(F) f,
-    REQUIRES(!boost::is_same<typename result_of<F(expected)>::type, void>::value
-        && boost::is_expected<typename result_of<F(expected)>::type>::value
-        )
-    ) const
+    REQUIRES(boost::is_expected<typename result_of<F(expected)>::type>::value)
+    )
   {
-    return f(boost::move(*this));
+    return catch_all_etype_type(std::forward<F>(f));
+    //return f(boost::move(*this));
   }
 
   template <typename F>
-  BOOST_CONSTEXPR this_type
+  this_type
   catch_error(BOOST_RV_REF(F) f,
-    REQUIRES(boost::is_same<typename result_of<F(error_type)>::type, value_type>::value)) const
+    REQUIRES(boost::is_same<typename result_of<F(error_type)>::type, value_type>::value))
   {
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
     if(!valid())
@@ -1166,8 +1253,8 @@ public:
   }
 
   template <typename F>
-  BOOST_CONSTEXPR this_type catch_error(BOOST_RV_REF(F) f,
-    REQUIRES(boost::is_same<typename result_of<F(error_type)>::type, this_type>::value)) const
+  this_type catch_error(BOOST_RV_REF(F) f,
+    REQUIRES(boost::is_same<typename result_of<F(error_type)>::type, this_type>::value))
   {
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
     if(!valid())
@@ -1184,8 +1271,8 @@ public:
   }
 
   template <typename F>
-  BOOST_CONSTEXPR this_type catch_error(BOOST_RV_REF(F) f,
-    REQUIRES(boost::is_same<typename result_of<F(error_type)>::type, unexpected_type<error_type> >::value)) const
+  this_type catch_error(BOOST_RV_REF(F) f,
+    REQUIRES(boost::is_same<typename result_of<F(error_type)>::type, unexpected_type<error_type> >::value))
   {
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
     if(!valid())
@@ -1275,27 +1362,25 @@ using exception_or = expected<std::exception_ptr,T>;
 
 template <typename ErrorType>
 class expected<ErrorType,void>
-: detail::expected_base<void, ErrorType, expected_traits<ErrorType> >
+: detail::expected_base<void, ErrorType >
 {
 public:
   typedef void value_type;
-  typedef expected_traits<ErrorType> traits_type;
-  typedef typename traits_type::error_type error_type;
-  typedef ErrorType error_param_type;
+  typedef ErrorType error_type;
   using errored_type = boost::unexpected_type<error_type>;
 
 private:
-  typedef expected<error_param_type, void> this_type;
-  typedef detail::expected_base<void, ErrorType, traits_type> base_type;
+  typedef expected<error_type, void> this_type;
+  typedef detail::expected_base<void, ErrorType> base_type;
 
   // Static asserts.
   typedef boost::is_unexpected<error_type> is_unexpected_error_t;
   BOOST_STATIC_ASSERT_MSG( !is_unexpected_error_t::value, "bad ErrorType" );
-  typedef boost::is_same<error_param_type, in_place_t> is_same_error_in_place_t;
+  typedef boost::is_same<error_type, in_place_t> is_same_error_in_place_t;
   BOOST_STATIC_ASSERT_MSG( !is_same_error_in_place_t::value, "bad ErrorType" );
-  typedef boost::is_same<error_param_type, unexpect_t> is_same_error_unexpect_t;
+  typedef boost::is_same<error_type, unexpect_t> is_same_error_unexpect_t;
   BOOST_STATIC_ASSERT_MSG( !is_same_error_unexpect_t::value, "bad ErrorType" );
-  typedef boost::is_same<error_param_type, expect_t> is_same_error_expect_t;
+  typedef boost::is_same<error_type, expect_t> is_same_error_expect_t;
   BOOST_STATIC_ASSERT_MSG( !is_same_error_expect_t::value, "bad ErrorType" );
 
   error_type* errorptr() { return std::addressof(base_type::storage.err); }
@@ -1327,9 +1412,9 @@ private:
 public:
 
   template <class T>
-  using rebind = expected<error_param_type, T>;
+  using rebind = expected<error_type, T>;
 
-  using type_constructor = expected<error_param_type>;
+  using type_constructor = expected<error_type>;
 
   // Constructors/Destructors/Assignments
 
@@ -1489,7 +1574,7 @@ public:
   {
     if(!valid())
     {
-      traits_type::bad_access(contained_err());
+      error::rethrow<error_type>(contained_err());
     }
   }
 
@@ -1541,6 +1626,75 @@ public:
   inline BOOST_CONSTEXPR expected_detail::unwrap_result_type_t<expected> unwrap() const;
 #endif
 
+  template <typename F>
+  rebind<void>
+  catch_all_void_void(BOOST_RV_REF(F) f)
+  {
+    typedef rebind<void> result_type;
+    try {
+      f();
+    } catch (...) {
+      return make_unexpected(error::make_error_from_current_exception<error_type>());
+    }
+    return result_type(in_place_t{});
+  }
+  template <typename F>
+  typename result_of<F()>::type
+  catch_all_void_type(BOOST_RV_REF(F) f)
+  {
+    typedef typename result_of<F()>::type result_type;
+    try {
+      return f();
+    } catch (...) {
+      return make_unexpected(error::make_error_from_current_exception<error_type>());
+    }
+  }
+  template <typename F>
+  rebind<typename result_of<F()>::type>
+  catch_all_void_etype(BOOST_RV_REF(F) f)
+  {
+    typedef rebind<typename result_of<F()>::type> result_type;
+    try {
+      return f();
+    } catch (...) {
+      return make_unexpected(error::make_error_from_current_exception<error_type>());
+    }
+  }
+  template <typename F>
+  rebind<void>
+  catch_all_evoid_void(BOOST_RV_REF(F) f)
+  {
+    typedef rebind<void> result_type;
+    try {
+      f(std::move(*this));
+    } catch (...) {
+      return make_unexpected(error::make_error_from_current_exception<error_type>());
+    }
+    return result_type(in_place_t{});
+  }
+  template <typename F>
+  typename result_of<F(expected)>::type
+  catch_all_evoid_type(BOOST_RV_REF(F) f)
+  {
+    typedef typename result_of<F(expected)>::type result_type;
+    try {
+      return f(std::move(*this));
+    } catch (...) {
+      return make_unexpected(error::make_error_from_current_exception<error_type>());
+    }
+  }
+  template <typename F>
+  rebind<typename result_of<F(expected)>::type>
+  catch_all_evoid_etype(BOOST_RV_REF(F) f)
+  {
+    typedef rebind<typename result_of<F(expected)>::type> result_type;
+    try {
+      return f(std::move(*this));
+    } catch (...) {
+      return make_unexpected(error::make_error_from_current_exception<error_type>());
+    }
+  }
+
   // bind factory
 
   template <typename F>
@@ -1564,9 +1718,9 @@ public:
   }
 
   template <typename F>
-  BOOST_CONSTEXPR rebind<typename result_of<F()>::type>
+  rebind<typename result_of<F()>::type>
   bind(BOOST_RV_REF(F) f,
-    REQUIRES( ! boost::is_same<typename result_of<F()>::type, void>::value) ) const
+    REQUIRES( ! boost::is_same<typename result_of<F()>::type, void>::value) )
   {
     typedef rebind<typename result_of<F()>::type> result_type;
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
@@ -1584,9 +1738,9 @@ public:
   }
 
   template <typename F>
-  BOOST_CONSTEXPR rebind<void>
+  rebind<void>
   then(BOOST_RV_REF(F) f,
-    REQUIRES(boost::is_same<typename result_of<F(expected)>::type, void>::value)) const
+    REQUIRES(boost::is_same<typename result_of<F(expected)>::type, void>::value))
   {
     typedef rebind<void> result_type;
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
@@ -1599,23 +1753,22 @@ public:
 
   // then factory
   template <typename F>
-  BOOST_CONSTEXPR rebind<typename result_of<F(expected)>::type>
+  rebind<typename result_of<F(expected)>::type>
   then(BOOST_RV_REF(F) f,
-    REQUIRES(!boost::is_same<typename result_of<F(expected)>::type, void>::value
-        && !boost::is_expected<typename result_of<F(expected)>::type>::value
-        )) const
+    REQUIRES(!boost::is_expected<typename result_of<F(expected)>::type>::value
+        ))
   {
     typedef rebind<typename result_of<F(expected)>::type> result_type;
     return result_type(f(boost::move(*this)));
   }
 
   template <typename F>
-  BOOST_CONSTEXPR typename result_of<F(expected)>::type
+  typename result_of<F(expected)>::type
   then(BOOST_RV_REF(F) f,
     REQUIRES(!boost::is_same<typename result_of<F(expected)>::type, void>::value
         && boost::is_expected<typename result_of<F(expected)>::type>::value
         )
-    ) const
+    )
   {
     return f(boost::move(*this));
   }
@@ -1623,8 +1776,8 @@ public:
   // catch_error factory
 
   template <typename F>
-  BOOST_CONSTEXPR this_type catch_error(BOOST_RV_REF(F) f,
-    REQUIRES(boost::is_same<typename result_of<F(error_type)>::type, value_type>::value)) const
+  this_type catch_error(BOOST_RV_REF(F) f,
+    REQUIRES(boost::is_same<typename result_of<F(error_type)>::type, value_type>::value))
   {
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
     if(! valid())
@@ -1641,8 +1794,8 @@ public:
     }
 
   template <typename F>
-  BOOST_CONSTEXPR this_type catch_error(BOOST_RV_REF(F) f,
-      REQUIRES(! boost::is_same<typename result_of<F(error_type)>::type, value_type>::value)) const
+  this_type catch_error(BOOST_RV_REF(F) f,
+      REQUIRES(! boost::is_same<typename result_of<F(error_type)>::type, value_type>::value))
   {
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
     if(!valid())
