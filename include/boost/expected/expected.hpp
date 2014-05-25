@@ -27,6 +27,8 @@
 #include <type_traits>
 #include <system_error>
 
+#define BOOST_EXPECTED_SUPPORT_REBIND_TRAITS
+
 # define REQUIRES(...) typename ::boost::enable_if_c<__VA_ARGS__, void*>::type = 0
 # define T_REQUIRES(...) typename = typename ::boost::enable_if_c<(__VA_ARGS__)>::type
 
@@ -667,9 +669,10 @@ public:
   template <class V>
   using rebind = expected<error_type, V, traits_type>;
 
+#ifdef BOOST_EXPECTED_SUPPORT_REBIND_TRAITS
   template <class T>
   using rebind_traits = expected<error_type, value_type, T>;
-
+#endif
   using type_constructor = expected<error_type>;
 
 
@@ -739,6 +742,7 @@ public:
     }
   }
 
+#ifdef BOOST_EXPECTED_SUPPORT_REBIND_TRAITS
   template <class T>
   expected(const rebind_traits<T>& rhs
     //, REQUIRES( std::is_copy_constructible<value_type>::value
@@ -780,6 +784,7 @@ public:
       ::new (errorptr()) error_type(boost::move(rhs.contained_err()));
     }
   }
+#endif
 
   expected(unexpected_type<error_type> const& e
     //, REQUIRES(std::is_copy_constructible<error_type>::value)
@@ -885,6 +890,7 @@ public:
     return *this;
   }
 
+#ifdef BOOST_EXPECTED_SUPPORT_REBIND_TRAITS
   template <class T>
   expected& operator=(BOOST_COPY_ASSIGN_REF(rebind_traits<T>) e)
   {
@@ -898,7 +904,7 @@ public:
     this_type(boost::move(e)).swap(*this);
     return *this;
   }
-
+#endif
   template <class U, T_REQUIRES(is_same<decay_t<U>, value_type>::value)>
   expected& operator=(BOOST_COPY_ASSIGN_REF(U) value)
   {
@@ -934,7 +940,9 @@ public:
   }
 
   // Modifiers
+#ifdef BOOST_EXPECTED_SUPPORT_REBIND_TRAITS
 private:
+
   template <class T>
   void swap_impl(rebind_traits<T>& rhs)
   {
@@ -976,7 +984,36 @@ public:
   {
     swap_impl(rhs);
   }
-
+#else
+  void swap(expected& rhs)
+  {
+    if (valid())
+    {
+      if (rhs.valid())
+      {
+        boost::swap(contained_val(), rhs.contained_val());
+      }
+      else
+      {
+        error_type t = boost::move(rhs.contained_err());
+        new (rhs.dataptr()) value_type(boost::move(contained_val()));
+        new (errorptr()) error_type(t);
+        std::swap(contained_has_value(), rhs.contained_has_value());
+      }
+    }
+    else
+    {
+      if (rhs.valid())
+      {
+        rhs.swap(*this);
+      }
+      else
+      {
+        boost::swap(contained_err(), rhs.contained_err());
+      }
+    }
+  }
+#endif
 
   // Observers
   BOOST_CONSTEXPR bool valid() const BOOST_NOEXCEPT
@@ -1573,8 +1610,10 @@ public:
   template <class V>
   using rebind = expected<error_type, V, traits_type>;
 
+#ifdef BOOST_EXPECTED_SUPPORT_REBIND_TRAITS
   template <class T>
   using rebind_traits = expected<error_type, value_type, T>;
+#endif
 
   using type_constructor = expected<error_type>;
 
@@ -1607,6 +1646,7 @@ public:
     }
   }
 
+#ifdef BOOST_EXPECTED_SUPPORT_REBIND_TRAITS
   template <class T>
   expected(const rebind_traits<T>& rhs
     , REQUIRES(std::is_copy_constructible<error_type>::value)
@@ -1636,6 +1676,7 @@ public:
       ::new (errorptr()) error_type(boost::move(rhs.contained_err()));
     }
   }
+#endif
 
   BOOST_CONSTEXPR explicit expected(in_place_t) BOOST_NOEXCEPT
   : base_type(in_place2)
@@ -1718,6 +1759,7 @@ public:
     return *this;
   }
 
+#ifdef BOOST_EXPECTED_SUPPORT_REBIND_TRAITS
   template <class T>
   expected& operator=(BOOST_COPY_ASSIGN_REF(rebind_traits<T>) e)
   {
@@ -1731,7 +1773,7 @@ public:
     this_type(boost::move(e)).swap(*this);
     return *this;
   }
-
+#endif
 
   void emplace()
   {
@@ -1766,12 +1808,13 @@ private:
   }
 
 public:
+#ifdef BOOST_EXPECTED_SUPPORT_REBIND_TRAITS
   template <class T>
   void swap(rebind_traits<T>& rhs)
   {
     swap_impl(rhs);
   }
-
+#endif
   void swap(expected& rhs)
   {
     swap_impl(rhs);
