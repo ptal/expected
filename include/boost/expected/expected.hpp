@@ -27,7 +27,7 @@
 #include <type_traits>
 #include <system_error>
 
-#define BOOST_EXPECTED_SUPPORT_REBIND_TRAITS
+//#define BOOST_EXPECTED_SUPPORT_REBIND_TRAITS
 
 # define REQUIRES(...) typename ::boost::enable_if_c<__VA_ARGS__, void*>::type = 0
 # define T_REQUIRES(...) typename = typename ::boost::enable_if_c<(__VA_ARGS__)>::type
@@ -150,12 +150,11 @@ namespace error {
   }
 }
 
-template <class E, class V>
+template <class E>
 class expected_traits
 {
  public:
   typedef E error_type;
-  typedef V value_type;
 
   static void bad_access(const error_type& e)
   {
@@ -168,12 +167,11 @@ class expected_traits
   }
 };
 
-template <class V>
-class expected_traits<std::exception_ptr, V>
+template <>
+class expected_traits<std::exception_ptr>
 {
  public:
   typedef std::exception_ptr error_type;
-  typedef V value_type;
 
   static void bad_access(const error_type& e)
   {
@@ -186,12 +184,11 @@ class expected_traits<std::exception_ptr, V>
   }
 };
 
-template <class V>
-class expected_traits<std::error_code, V>
+template <>
+class expected_traits<std::error_code>
 {
  public:
   typedef std::error_code error_type;
-  typedef V value_type;
 
   static void bad_access(const error_type& ec)
   {
@@ -564,7 +561,7 @@ struct holder;
 template <
   typename ErrorType=std::exception_ptr,
   typename ValueType=holder,
-  typename Traits=expected_traits<ErrorType, ValueType> >
+  typename Traits=expected_traits<ErrorType> >
 class expected;
 
 namespace expected_detail

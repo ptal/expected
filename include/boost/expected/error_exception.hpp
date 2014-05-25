@@ -74,12 +74,11 @@ error_exception<ErrorType, Exception> make_error_from_current_exception(error_ex
 }
 
 
-template <class ErrorType, class Exception, class V>
-class expected_traits<error_exception<ErrorType, Exception>, V>
+template <class ErrorType, class Exception>
+class expected_traits<error_exception<ErrorType, Exception>>
 {
  public:
   typedef error_exception<ErrorType, Exception> error_type;
-  typedef V value_type;
 
   static void bad_access(const error_type& e)
   {
