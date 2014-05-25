@@ -560,7 +560,7 @@ template <typename T, typename E >
 struct holder;
 
 template <
-  typename ErrorType=std::exception_ptr, 
+  typename ErrorType=std::exception_ptr,
   typename ValueType=holder,
   typename Traits=expected_traits<ErrorType, ValueType> >
 class expected;
@@ -606,7 +606,7 @@ private:
   typedef detail::expected_base<value_type, error_type> base_type;
 
   template <class E, class V, class T>
-  friend class expected; 
+  friend class expected;
 
   // Static asserts.
   typedef boost::is_unexpected<value_type> is_unexpected_value_t;
@@ -2299,6 +2299,11 @@ BOOST_CONSTEXPR bool operator>=(const unexpected_type<E>& e, const expected<E, V
 }
 
 // Specialized algorithms
+template <class E, class V, class T>
+void swap(expected<E, V, T>& x, expected<E, V, T>& y) BOOST_NOEXCEPT_IF(BOOST_NOEXCEPT_EXPR(x.swap(y)))
+{
+  x.swap(y);
+}
 template <class E, class V, class T1, class T2>
 void swap(expected<E, V, T1>& x, expected<E, V, T2>& y) BOOST_NOEXCEPT_IF(BOOST_NOEXCEPT_EXPR(x.swap(y)))
 {
