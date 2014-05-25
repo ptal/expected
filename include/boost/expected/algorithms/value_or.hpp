@@ -33,20 +33,20 @@ namespace expected_alg
     return just_t<decay_t<T>>(std::forward<T>(v));
   }
 
-  template <class T, class E>
-  BOOST_CONSTEXPR T value_or(expected<E,T> const& e, BOOST_FWD_REF(T) v)
+  template <class V, class E, class T>
+  BOOST_CONSTEXPR V value_or(expected<E,V,T> const& e, BOOST_FWD_REF(V) v)
   {
-    // We are sure that e.catch_error(just(std::forward<T>(v))) will be valid or a exception will be thrown
+    // We are sure that e.catch_error(just(std::forward<V>(v))) will be valid or a exception will be thrown
     // so the dereference is safe
-    return * e.catch_error(just(std::forward<T>(v)));
+    return * e.catch_error(just(std::forward<V>(v)));
   }
 
-  template <class T, class E>
-  BOOST_CONSTEXPR T value_or(expected<E,T> && e, BOOST_FWD_REF(T) v)
+  template <class V, class E, class T>
+  BOOST_CONSTEXPR V value_or(expected<E,V,T> && e, BOOST_FWD_REF(V) v)
   {
-    // We are sure that e.catch_error(just(std::forward<T>(v))) will be valid or a exception will be thrown
+    // We are sure that e.catch_error(just(std::forward<V>(v))) will be valid or a exception will be thrown
     // so the dereference is safe
-    return * e.catch_error(just(std::forward<T>(v)));
+    return * e.catch_error(just(std::forward<V>(v)));
   }
 
 } // namespace expected_alg

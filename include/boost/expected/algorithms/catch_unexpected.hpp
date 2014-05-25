@@ -13,8 +13,8 @@ namespace boost
 namespace expected_alg
 {
 
-  template <class Ex, class T, class F>
-  expected<std::exception_ptr, T> catch_unexpected(expected<std::exception_ptr, T> const& e, BOOST_RV_REF(F) f)
+  template <class Ex, class V, class T, class F>
+  expected<std::exception_ptr, V, T> catch_unexpected(expected<std::exception_ptr, V, T> const& e, BOOST_RV_REF(F) f)
   {
     try {
       if(! e) std::rethrow_exception(e.error());
@@ -22,15 +22,15 @@ namespace expected_alg
     }
     catch(Ex& e)
     {
-      return expected<std::exception_ptr,T>(f(e));
+      return expected<std::exception_ptr, V, T>(f(e));
     }
     catch (...)
     {
       return e;
     }
   }
-  template <class Ex, class T, class F>
-  expected<boost::exception_ptr, T> catch_unexpected(expected<boost::exception_ptr,T> const& e, BOOST_RV_REF(F) f)
+  template <class Ex, class V, class T, class F>
+  expected<boost::exception_ptr, V, T> catch_unexpected(expected<boost::exception_ptr, V, T> const& e, BOOST_RV_REF(F) f)
   {
     try {
       if(! e) boost::rethrow_exception(e.error());
@@ -38,7 +38,7 @@ namespace expected_alg
     }
     catch(Ex& e)
     {
-      return expected<boost::exception_ptr,T>(f(e));
+      return expected<boost::exception_ptr, V, T>(f(e));
     }
     catch (...)
     {

@@ -35,16 +35,16 @@ namespace expected_alg
     return defer_t<decay_t<F> >(std::forward<F>(f));
   }
 
-  template <class T, class E, class F>
-  BOOST_CONSTEXPR T value_or_call(expected<E,T> const& e, BOOST_FWD_REF(F) f)
+  template <class V, class E, class T, class F>
+  BOOST_CONSTEXPR V value_or_call(expected<E,V,T> const& e, BOOST_FWD_REF(F) f)
   {
     // We are sure that e.catch_error(just(std::forward<T>(v))) will be valid or a exception will be thrown
     // so the derefference is safe
     return * e.catch_error(defer(std::forward<F>(f)));
   }
 
-  template <class T, class E, class F>
-  BOOST_CONSTEXPR T value_or_call(expected<E,T> && e, BOOST_FWD_REF(F) f)
+  template <class V, class E, class T, class F>
+  BOOST_CONSTEXPR V value_or_call(expected<E,V,T> && e, BOOST_FWD_REF(F) f)
   {
     // We are sure that e.catch_error(just(std::forward<T>(v))) will be valid or a exception will be thrown
     // so the derefference is safe

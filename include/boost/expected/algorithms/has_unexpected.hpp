@@ -13,8 +13,8 @@ namespace boost
 namespace expected_alg
 {
 
-  template <class Ex, class T>
-  bool has_unexpected(expected<std::exception_ptr, T> const& e)
+  template <class Ex, class V, class T>
+  bool has_unexpected(expected<std::exception_ptr, V, T> const& e)
   {
     try {
       if(!e) std::rethrow_exception(e.error());
@@ -29,8 +29,8 @@ namespace expected_alg
     return false;
   }
 
-  template <class Ex, class T>
-  bool has_unexpected(expected<boost::exception_ptr,T> const& e)
+  template <class Ex, class V, class T>
+  bool has_unexpected(expected<boost::exception_ptr, V, T> const& e)
   {
     try {
       if(!e) boost::rethrow_exception(e.error());

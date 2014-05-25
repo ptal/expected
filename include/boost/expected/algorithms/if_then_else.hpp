@@ -14,8 +14,8 @@ namespace boost
 namespace expected_alg
 {
 
-  template <class T, class E, class True, class False>
-  auto if_then_else(expected<E,T> e, True&& t, False&& f)
+  template <class V, class E, class T, class True, class False>
+  auto if_then_else(expected<E,V,T> e, True&& t, False&& f)
   -> decltype(unwrap(e.map(std::forward<True>(t)).catch_error(std::forward<False>(f))))
   {
     return unwrap(e.map(std::forward<True>(t)).catch_error(std::forward<False>(f)));

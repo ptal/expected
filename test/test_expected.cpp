@@ -1279,4 +1279,109 @@ BOOST_AUTO_TEST_CASE(ValueOr)
 //////////////////////////////////////////////////
 BOOST_AUTO_TEST_SUITE_END()
 
+class BadAccess : public std::exception {};
+class BadContinuation : public std::exception {
+public:
+  virtual const char* what() const noexcept
+  {
+    return "bad continuation";
+  }
+};
 
+template <class E, class V>
+class my_expected_traits
+{
+ public:
+  typedef E error_type;
+  typedef V value_type;
+
+  static void bad_access(const error_type& e)
+  {
+    throw BadAccess();
+  }
+
+  static error_type catch_exception(std::exception_ptr e)
+  {
+    throw BadContinuation();
+  }
+};
+
+template <class E, class V>
+using my_expected = expected<E,V,my_expected_traits<E,V> >;
+
+my_expected<std::exception_ptr, int> compute_add(int i)
+{
+  return i + 9;
+}
+
+expected<std::exception_ptr, int> throwing_compute_add(int i)
+{
+  throw test_exception();
+}
+
+expected<std::exception_ptr, int> throwing_compute_add_then(const expected<std::exception_ptr, int>& i)
+{
+  throw test_exception();
+}
+
+BOOST_AUTO_TEST_SUITE(TestTraits)
+
+BOOST_AUTO_TEST_CASE(TestTraitsCase)
+{
+  expected<std::exception_ptr, int> oi = make_unexpected(test_exception());
+  my_expected<std::exception_ptr, int> moi(oi);
+  my_expected<std::exception_ptr, int> moi2 = oi;
+
+  try{
+    oi.value();
+    BOOST_CHECK(false);
+  } catch(test_exception) {
+  } catch(...) {
+    BOOST_CHECK(false);
+  }
+
+  try{
+    moi.value();
+    BOOST_CHECK(false);
+  } catch(BadAccess) {
+  } catch(...) {
+    BOOST_CHECK(false);
+  }
+
+  moi = 89;
+
+  try{
+    moi.map(throwing_compute_add);
+    BOOST_CHECK(false);
+  } catch(BadContinuation){
+  } catch(...){
+    BOOST_CHECK(false);
+  }
+
+  try{
+    moi.bind(throwing_compute_add);
+    BOOST_CHECK(false);
+  } catch(BadContinuation){
+  } catch(...){
+    BOOST_CHECK(false);
+  }
+
+  try{
+    moi.then(throwing_compute_add_then);
+    BOOST_CHECK(false);
+  } catch(BadContinuation){
+  } catch(...){
+    BOOST_CHECK(false);
+  }
+
+  oi = 5;
+
+  try{
+    my_expected<std::exception_ptr, int> moi3 = oi.bind(compute_add);
+    BOOST_CHECK(*moi3 == 14);
+  } catch(...){
+    BOOST_CHECK(false);
+  }
+}
+
+BOOST_AUTO_TEST_SUITE_END()

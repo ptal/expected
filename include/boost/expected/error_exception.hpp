@@ -74,6 +74,24 @@ error_exception<ErrorType, Exception> make_error_from_current_exception(error_ex
 }
 
 
+template <class ErrorType, class Exception, class V>
+class expected_traits<error_exception<ErrorType, Exception>, V>
+{
+ public:
+  typedef error_exception<ErrorType, Exception> error_type;
+  typedef V value_type;
+
+  static void bad_access(const error_type& e)
+  {
+    throw Exception(e);
+  }
+
+  static error_type catch_exception(std::exception_ptr e)
+  {
+    return error_type();
+  }
+};
+
 } // namespace boost
 
 #endif // BOOST_EXPECTED_ERROR_EXCEPTION_HPP

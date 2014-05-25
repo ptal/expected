@@ -13,8 +13,8 @@
 
 namespace boost
 {
-  template <class T>
-  expected<std::exception_ptr, T> make_expected(std::future<T>&& f) {
+  template <class V>
+  expected<std::exception_ptr, V> make_expected(std::future<V>&& f) {
     //assert (f.ready() && "future not ready");
     try {
       return f.get();
@@ -23,18 +23,18 @@ namespace boost
     }
   }
 
-  template <class T, class E>
-  std::future<T> make_unexpected_future(E e)  {
-    std::promise<T> p;
-    std::future<T> f = p.get_future();
+  template <class V, class E>
+  std::future<V> make_unexpected_future(E e)  {
+    std::promise<V> p;
+    std::future<V> f = p.get_future();
     p.set_exception(std::make_exception_ptr(e));
     return std::move(f);
   }
 
-  template <class T>
-  std::future<T> make_ready_future(expected<std::exception_ptr, T> e) {
+  template <class V, class T>
+  std::future<T> make_ready_future(expected<std::exception_ptr, V, T> e) {
     if (e.valid()) return make_ready_future(*e);
-    else return make_unexpected_future<T>(e.error());
+    else return make_unexpected_future<V>(e.error());
   }
 
 

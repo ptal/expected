@@ -16,33 +16,33 @@ namespace boost
 {
 namespace functional
 {
-  template <class T, class E>
-  struct rebindable_traits<expected<E, T> > : rebindable_traits<category::forward> {};
+  template <class V, class E, class T>
+  struct rebindable_traits<expected<E, V, T> > : rebindable_traits<category::forward> {};
 
-  template <class E, class T>
-  struct valued_traits<expected<E, T>> : valued_traits<category::pointer_like>
+  template <class E, class V, class T>
+  struct valued_traits<expected<E, V, T>> : valued_traits<category::pointer_like>
   {
     template <class M>
     static constexpr auto get_value(M&& m) -> decltype(m.value())
     { return m.value(); }
   };
 
-  template <class T, class E>
-  struct errored_traits<expected<E, T> > : errored_traits<category::forward> {
+  template <class V, class E, class T>
+  struct errored_traits<expected<E, V, T> > : errored_traits<category::forward> {
     template <class M>
     static constexpr auto get_errored(M&& m) -> decltype(m.get_unexpected())
     { return m.get_unexpected();};
 
   };
 
-  template <class T, class E>
-  struct functor_traits<expected<E, T> > : functor_traits<category::errored> {};
+  template <class V, class E, class T>
+  struct functor_traits<expected<E, V, T> > : functor_traits<category::errored> {};
 
-  template <class T, class E>
-  struct monad_traits<expected<E,T> > : monad_traits<category::forward> { };
+  template <class V, class E, class T>
+  struct monad_traits<expected<E,V,T> > : monad_traits<category::forward> { };
 
-  template <class T1, class E1>
-  struct monad_error_traits<expected<E1,T1> > : monad_error_traits<category::forward>
+  template <class V1, class E1, class T1>
+  struct monad_error_traits<expected<E1,V1,T1> > : monad_error_traits<category::forward>
   {
     template <class M, class E>
     static auto make_error(E&& e) -> decltype(make_unexpected(std::forward<E>(e)))
@@ -51,8 +51,8 @@ namespace functional
     }
   };
 
-  template <class T1, class E1>
-  struct monad_exception_traits<expected<E1,T1> > : monad_exception_traits<category::forward>
+  template <class V1, class E1, class T1>
+  struct monad_exception_traits<expected<E1,V1,T1> > : monad_exception_traits<category::forward>
   {
     template <class M, class E>
     static auto make_exception(E&& e) -> decltype(make_unexpected(std::forward<E>(e)))

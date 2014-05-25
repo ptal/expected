@@ -45,20 +45,20 @@ namespace expected_alg
   // free function value to get the value of an expected or throw.
   // Note that this function could not be equivalent to the e.value() as it creates a temporary and so
   // it can not return the address.
-  template <class T, class E>
-  BOOST_CONSTEXPR T value(expected<E,T> const& e)
+  template <class V, class E, class T>
+  BOOST_CONSTEXPR V value(expected<E,V,T> const& e)
   {
-    // We are sure that e.catch_error(thrower<T>()) will be valid or a exception will be thrown
+    // We are sure that e.catch_error(thrower<V>()) will be valid or a exception will be thrown
     // so the derefference is safe
-    return * e.catch_error(thrower<T>());
+    return * e.catch_error(thrower<V>());
   }
 
-  template <class T, class E>
-  BOOST_CONSTEXPR T value(expected<E,T> && e)
+  template <class V, class E, class T>
+  BOOST_CONSTEXPR V value(expected<E,V,T> && e)
   {
-    // We are sure that e.catch_error(thrower<T>()) will be valid or a exception will be thrown
+    // We are sure that e.catch_error(thrower<V>()) will be valid or a exception will be thrown
     // so the derefference is safe
-    return * e.catch_error(thrower<T>());
+    return * e.catch_error(thrower<V>());
   }
 
 } // namespace expected_alg

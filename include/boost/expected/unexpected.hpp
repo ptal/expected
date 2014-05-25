@@ -10,7 +10,6 @@
 #include <boost/expected/detail/constexpr_utility.hpp>
 #include <boost/functional/type_traits_t.hpp>
 
-
 #include <boost/exception_ptr.hpp>
 #include <boost/type_traits.hpp>
 
@@ -31,32 +30,38 @@ namespace boost
       error_(e)
     {
     }
+
     BOOST_FORCEINLINE BOOST_CONSTEXPR explicit unexpected_type(ErrorType&& e) :
       error_(std::move(e))
     {
     }
+
 #if ! defined BOOST_EXPECTED_NO_CXX11_MOVE_ACCESSORS
     BOOST_CONSTEXPR
     BOOST_FORCEINLINE ErrorType const& value() const&
     {
       return error_;
     }
+
     BOOST_CONSTEXPR
     BOOST_FORCEINLINE ErrorType& value() &
     {
       return error_;
     }
+
     BOOST_CONSTEXPR
     BOOST_FORCEINLINE ErrorType& value() &&
     {
       return constexpr_move(error_);
     }
+
 #else
     BOOST_CONSTEXPR
     BOOST_FORCEINLINE ErrorType const& value() const
     {
       return error_;
     }
+
     BOOST_FORCEINLINE ErrorType& value()
     {
       return error_;
@@ -120,6 +125,7 @@ namespace boost
       error_(std::make_exception_ptr(e))
     {
     }
+
     BOOST_FORCEINLINE std::exception_ptr const& value() const
     {
       return error_;
@@ -197,6 +203,7 @@ namespace boost
 
   template <typename E>
   struct is_unexpected : false_type {};
+  
   template <typename E>
   struct is_unexpected<unexpected_type<E> > : true_type {};
 

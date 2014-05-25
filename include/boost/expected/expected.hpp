@@ -2,7 +2,7 @@
 // accompanying file LICENSE_1_0.txt or copy at
 // http://www.boost.org/LICENSE_1_0.txt)
 // (C) Copyright 2013,2014 Vicente J. Botet Escriba
-// (C) Copyright 2013 Pierre Talbot
+// (C) Copyright 2013,2014 Pierre Talbot
 
 #ifndef BOOST_EXPECTED_EXPECTED_HPP
 #define BOOST_EXPECTED_EXPECTED_HPP
@@ -21,9 +21,11 @@
 #include <boost/utility/swap.hpp>
 
 #include <stdexcept>
+#include <exception>
 #include <utility>
 #include <initializer_list>
 #include <type_traits>
+#include <system_error>
 
 # define REQUIRES(...) typename ::boost::enable_if_c<__VA_ARGS__, void*>::type = 0
 # define T_REQUIRES(...) typename = typename ::boost::enable_if_c<(__VA_ARGS__)>::type
@@ -145,6 +147,65 @@ namespace error {
     return make_error_from_current_exception(E());
   }
 }
+
+template <class E, class V>
+class expected_traits
+{
+ public:
+  typedef E error_type;
+  typedef V value_type;
+
+  static void bad_access(const error_type& e)
+  {
+    throw bad_expected_access<error_type>(e);
+  }
+
+  static error_type catch_exception(std::exception_ptr e)
+  {
+    std::rethrow_exception(e);
+  }
+};
+
+template <class V>
+class expected_traits<std::exception_ptr, V>
+{
+ public:
+  typedef std::exception_ptr error_type;
+  typedef V value_type;
+
+  static void bad_access(const error_type& e)
+  {
+    std::rethrow_exception(e);
+  }
+
+  static error_type catch_exception(std::exception_ptr e)
+  {
+    return e;
+  }
+};
+
+template <class V>
+class expected_traits<std::error_code, V>
+{
+ public:
+  typedef std::error_code error_type;
+  typedef V value_type;
+
+  static void bad_access(const error_type& ec)
+  {
+    throw std::system_error(ec);
+  }
+
+  static error_type catch_exception(std::exception_ptr e)
+  {
+    try {
+      std::rethrow_exception(e);
+    } catch(const std::system_error& e) {
+      return e.code();
+    }
+  }
+};
+
 
 struct in_place_t {};
 BOOST_CONSTEXPR_OR_CONST in_place_t in_place2 = {};
@@ -497,7 +558,11 @@ template <typename T, typename E >
 } // namespace detail
 
 struct holder;
-template <typename ErrorType=std::exception_ptr, typename ValueType=holder>
+
+template <
+  typename ErrorType=std::exception_ptr, 
+  typename ValueType=holder,
+  typename Traits=expected_traits<ErrorType, ValueType> >
 class expected;
 
 namespace expected_detail
@@ -506,14 +571,14 @@ namespace expected_detail
   template <class C>
   struct unwrap_result_type;
 
-  template <class E, class T>
-  struct unwrap_result_type<expected<E,T>> {
-    using type = expected<E, T>;
+  template <class E, class V, class T>
+  struct unwrap_result_type<expected<E, V, T>> {
+    using type = expected<E, V, T>;
   };
 
-  template <class E, class T>
-  struct unwrap_result_type<expected<E,expected<E,T>>> {
-    using type = expected<E, T>;
+  template <class E, class V, class T, class T2>
+  struct unwrap_result_type<expected<E, expected<E,V,T>, T2>> {
+    using type = expected<E, V, T>;
   };
 
   template <class C>
@@ -523,21 +588,25 @@ namespace expected_detail
 
 template <typename T>
 struct is_expected : false_type {};
-template <typename E, typename T>
-struct is_expected<expected<E,T> > : true_type {};
+template <typename E, typename V, typename T>
+struct is_expected<expected<E,V,T> > : true_type {};
 
-template <typename ErrorType, typename ValueType>
+template <typename ErrorType, typename ValueType, typename Traits>
 class expected
-: private detail::expected_base<ValueType, ErrorType >
+: private detail::expected_base<ValueType, ErrorType>
 {
 public:
   typedef ValueType value_type;
   typedef ErrorType error_type;
+  typedef Traits traits_type;
   using errored_type = boost::unexpected_type<error_type>;
 
 private:
-  typedef expected<ErrorType, value_type> this_type;
-  typedef detail::expected_base<ValueType, ErrorType> base_type;
+  typedef expected<error_type, value_type, traits_type> this_type;
+  typedef detail::expected_base<value_type, error_type> base_type;
+
+  template <class E, class V, class T>
+  friend class expected; 
 
   // Static asserts.
   typedef boost::is_unexpected<value_type> is_unexpected_value_t;
@@ -595,8 +664,11 @@ private:
 
 public:
 
+  template <class V>
+  using rebind = expected<error_type, V, traits_type>;
+
   template <class T>
-  using rebind = expected<error_type, T>;
+  using rebind_traits = expected<error_type, value_type, T>;
 
   using type_constructor = expected<error_type>;
 
@@ -606,23 +678,23 @@ public:
   BOOST_CONSTEXPR expected(
      //REQUIRES(std::is_default_constructible<error_type>::value)
   ) BOOST_NOEXCEPT_IF(
-  has_nothrow_default_constructor<error_type>::value
+    has_nothrow_default_constructor<error_type>::value
   )
   : base_type()
   {}
 
   BOOST_CONSTEXPR expected(const value_type& v
     //, REQUIRES(std::is_copy_constructible<value_type>::value)
+  ) BOOST_NOEXCEPT_IF(
+    has_nothrow_copy_constructor<value_type>::value
   )
-  BOOST_NOEXCEPT_IF(has_nothrow_copy_constructor<value_type>::value)
   : base_type(v)
   {}
 
   BOOST_CONSTEXPR expected(BOOST_RV_REF(value_type) v
     //, REQUIRES(std::is_move_constructible<value_type>::value)
-  )
-  BOOST_NOEXCEPT_IF(
-        std::is_nothrow_move_constructible<value_type>::value
+  ) BOOST_NOEXCEPT_IF(
+    std::is_nothrow_move_constructible<value_type>::value
   )
   : base_type(constexpr_move(v))
   {}
@@ -667,6 +739,48 @@ public:
     }
   }
 
+  template <class T>
+  expected(const rebind_traits<T>& rhs
+    //, REQUIRES( std::is_copy_constructible<value_type>::value
+      //         && std::is_copy_constructible<error_type>::value)
+  )
+  BOOST_NOEXCEPT_IF(
+    has_nothrow_copy_constructor<value_type>::value &&
+    has_nothrow_copy_constructor<error_type>::value
+  )
+  : base_type(detail::only_set_valid, rhs.valid())
+  {
+    if (rhs.valid())
+    {
+      ::new (dataptr()) value_type(rhs.contained_val());
+    }
+    else
+    {
+      ::new (errorptr()) error_type(rhs.contained_err());
+    }
+  }
+
+  template <class T>
+  expected(BOOST_RV_REF(rebind_traits<T>) rhs
+    //, REQUIRES( std::is_move_constructible<value_type>::value
+      //         && std::is_move_constructible<error_type>::value)
+  )
+  BOOST_NOEXCEPT_IF(
+    std::is_nothrow_move_constructible<value_type>::value &&
+    std::is_nothrow_move_constructible<error_type>::value
+  )
+  : base_type(detail::only_set_valid, rhs.valid())
+  {
+    if (rhs.valid())
+    {
+      ::new (dataptr()) value_type(boost::move(rhs.contained_val()));
+    }
+    else
+    {
+      ::new (errorptr()) error_type(boost::move(rhs.contained_err()));
+    }
+  }
+
   expected(unexpected_type<error_type> const& e
     //, REQUIRES(std::is_copy_constructible<error_type>::value)
   )
@@ -675,6 +789,7 @@ public:
   )
   : base_type(e)
   {}
+
   expected(unexpected_type<error_type> && e
     //, REQUIRES(std::is_move_constructible<error_type>::value)
   )
@@ -694,6 +809,7 @@ public:
   //)
   : base_type(e)
   {}
+
   template <class Err>
   expected(unexpected_type<Err> && e
 //    , REQUIRES(std::is_constructible<error_type, Err&&>::value)
@@ -769,6 +885,20 @@ public:
     return *this;
   }
 
+  template <class T>
+  expected& operator=(BOOST_COPY_ASSIGN_REF(rebind_traits<T>) e)
+  {
+    this_type(e).swap(*this);
+    return *this;
+  }
+
+  template <class T>
+  expected& operator=(BOOST_RV_REF(rebind_traits<T>) e)
+  {
+    this_type(boost::move(e)).swap(*this);
+    return *this;
+  }
+
   template <class U, T_REQUIRES(is_same<decay_t<U>, value_type>::value)>
   expected& operator=(BOOST_COPY_ASSIGN_REF(U) value)
   {
@@ -789,22 +919,24 @@ public:
 #endif
     >
   void emplace(BOOST_FWD_REF(Args)... args)
-    {
-      this_type(in_place_t{}, constexpr_forward<Args>(args)...).swap(*this);
-    }
+  {
+    this_type(in_place_t{}, constexpr_forward<Args>(args)...).swap(*this);
+  }
 
-    template <class U, class... Args
+  template <class U, class... Args
 #if !defined BOOST_EXPECTED_NO_CXX11_FUNCTION_TEMPLATE_DEFAULT_ARGS
       //, T_REQUIRES(std::is_constructible<value_type, Args&...>::value)
 #endif
-      >
-    void emplace(std::initializer_list<U> il, BOOST_FWD_REF(Args)... args)
-    {
-      this_type(in_place_t{}, il, constexpr_forward<Args>(args)...).swap(*this);
-    }
+  >
+  void emplace(std::initializer_list<U> il, BOOST_FWD_REF(Args)... args)
+  {
+    this_type(in_place_t{}, il, constexpr_forward<Args>(args)...).swap(*this);
+  }
 
   // Modifiers
-  void swap(expected& rhs)
+private:
+  template <class T>
+  void swap_impl(rebind_traits<T>& rhs)
   {
     if (valid())
     {
@@ -833,6 +965,19 @@ public:
     }
   }
 
+public:
+  template <class T>
+  void swap(expected<error_type, value_type, T>& rhs)
+  {
+    swap_impl(rhs);
+  }
+
+  void swap(expected& rhs)
+  {
+    swap_impl(rhs);
+  }
+
+
   // Observers
   BOOST_CONSTEXPR bool valid() const BOOST_NOEXCEPT
   {
@@ -852,26 +997,28 @@ public:
     return valid()
       ? contained_val()
       : (
-          error::rethrow<error_type>(contained_err()),
+          traits_type::bad_access(contained_err()),
           contained_val()
         )
       ;
   }
+
   BOOST_CONSTEXPR value_type& value() &
   {
-    if (!valid()) error::rethrow<error_type>(contained_err());
+    if (!valid()) traits_type::bad_access(contained_err());
     return contained_val();
   }
+
   BOOST_CONSTEXPR value_type&& value() &&
   {
-    if (!valid()) error::rethrow<error_type>(contained_err());
+    if (!valid()) traits_type::bad_access(contained_err());
     return std::move(contained_val());
   }
 
 #else
   value_type& value()
   {
-    if (!valid()) error::rethrow<error_type>(contained_err());
+    if (!valid()) traits_type::bad_access(contained_err());
     return contained_val();
   }
 
@@ -880,12 +1027,13 @@ public:
     return valid()
       ? contained_val()
       : (
-          error::rethrow<error_type>(contained_err()),
+          traits_type::bad_access(contained_err()),
           contained_val()
         )
       ;
   }
 #endif
+
 #if ! defined BOOST_EXPECTED_NO_CXX11_MOVE_ACCESSORS
   BOOST_CONSTEXPR value_type const& operator*() const& BOOST_NOEXCEPT
   {
@@ -896,10 +1044,12 @@ public:
   {
     return contained_val();
   }
+
   BOOST_CONSTEXPR value_type&& operator*() && BOOST_NOEXCEPT
   {
     return constexpr_move(contained_val());
   }
+
 #else
   BOOST_CONSTEXPR value_type const& operator*() const BOOST_NOEXCEPT
   {
@@ -928,19 +1078,23 @@ public:
   {
     return contained_err();
   }
+
   BOOST_CONSTEXPR error_type& error() & BOOST_NOEXCEPT
   {
     return contained_err();
   }
+
   BOOST_CONSTEXPR error_type&& error() && BOOST_NOEXCEPT
   {
     return constexpr_move(contained_err());
   }
+
 #else
   BOOST_CONSTEXPR error_type const& error() const BOOST_NOEXCEPT
   {
     return contained_err();
   }
+
   error_type& error() BOOST_NOEXCEPT
   {
     return contained_err();
@@ -958,6 +1112,7 @@ public:
   {
     return unexpected_type<error_type>(constexpr_move(contained_err()));
   }
+
 #else
   BOOST_CONSTEXPR unexpected_type<error_type> get_unexpected() const BOOST_NOEXCEPT
   {
@@ -1035,7 +1190,7 @@ public:
     try {
       f(std::move(**this));
     } catch (...) {
-      return make_unexpected(error::make_error_from_current_exception<error_type>());
+      return make_unexpected(traits_type::catch_exception(std::current_exception()));
     }
     return result_type(in_place_t{});
   }
@@ -1048,7 +1203,7 @@ public:
     try {
       return f(std::move(**this));
     } catch (...) {
-      return make_unexpected(error::make_error_from_current_exception<error_type>());
+      return make_unexpected(traits_type::catch_exception(std::current_exception()));
     }
   }
   template <typename F>
@@ -1059,7 +1214,7 @@ public:
     try {
       return f(std::move(**this));
     } catch (...) {
-      return make_unexpected(error::make_error_from_current_exception<error_type>());
+      return make_unexpected(traits_type::catch_exception(std::current_exception()));
     }
   }
   template <typename F>
@@ -1070,7 +1225,7 @@ public:
     try {
       f(std::move(*this));
     } catch (...) {
-      return make_unexpected(error::make_error_from_current_exception<error_type>());
+      return make_unexpected(traits_type::catch_exception(std::current_exception()));
     }
     return result_type(in_place_t{});
   }
@@ -1083,7 +1238,7 @@ public:
     try {
       return f(std::move(*this));
     } catch (...) {
-      return make_unexpected(error::make_error_from_current_exception<error_type>());
+      return make_unexpected(traits_type::catch_exception(std::current_exception()));
     }
   }
   template <typename F>
@@ -1094,7 +1249,7 @@ public:
     try {
       return f(std::move(*this));
     } catch (...) {
-      return make_unexpected(error::make_error_from_current_exception<error_type>());
+      return make_unexpected(traits_type::catch_exception(std::current_exception()));
     }
   }
 
@@ -1197,7 +1352,7 @@ public:
     return get_unexpected();
 #else
      return valid()
-         ? f(value())
+         ? catch_all_type_type(std::forward<F>(f))
          : typename result_of<F(value_type)>::type(get_unexpected());
 #endif
   }
@@ -1346,32 +1501,36 @@ public:
 
 };
 
-template <typename E>
-class expected<E,holder> {
+template <typename E, typename T>
+class expected<E,holder, T> {
 public:
-  template <class T>
-  using type = expected<E,T>;
-  template <class T>
-  expected<E,T> make(T&& v) {
-    return expected<E,T>(std::forward(v));
+  template <class V>
+  using type = expected<E,V,T>;
+  template <class V>
+  expected<E,V,T> make(V&& v) {
+    return expected<E,V,T>(std::forward(v));
   }
 };
 
 template <typename T>
 using exception_or = expected<std::exception_ptr,T>;
 
-template <typename ErrorType>
-class expected<ErrorType,void>
-: detail::expected_base<void, ErrorType >
+template <typename ErrorType, typename Traits>
+class expected<ErrorType, void, Traits>
+: detail::expected_base<void, ErrorType>
 {
 public:
   typedef void value_type;
   typedef ErrorType error_type;
+  typedef Traits traits_type;
   using errored_type = boost::unexpected_type<error_type>;
 
 private:
-  typedef expected<error_type, void> this_type;
+  typedef expected<error_type, void, traits_type> this_type;
   typedef detail::expected_base<void, ErrorType> base_type;
+
+  template <class E, class V, class T>
+  friend class expected;
 
   // Static asserts.
   typedef boost::is_unexpected<error_type> is_unexpected_error_t;
@@ -1411,29 +1570,61 @@ private:
 
 public:
 
+  template <class V>
+  using rebind = expected<error_type, V, traits_type>;
+
   template <class T>
-  using rebind = expected<error_type, T>;
+  using rebind_traits = expected<error_type, value_type, T>;
 
   using type_constructor = expected<error_type>;
 
   // Constructors/Destructors/Assignments
-
   expected(const expected& rhs
-    , REQUIRES( std::is_copy_constructible<error_type>::value)
+    , REQUIRES(std::is_copy_constructible<error_type>::value)
   )
   BOOST_NOEXCEPT_IF(
     has_nothrow_copy_constructor<error_type>::value
   )
   : base_type(detail::only_set_valid, rhs.valid())
   {
-    if (! rhs.valid())
+    if (!rhs.valid())
     {
       ::new (errorptr()) error_type(rhs.contained_err());
     }
   }
 
   expected(BOOST_RV_REF(expected) rhs
-    , REQUIRES( std::is_move_constructible<error_type>::value)
+    , REQUIRES(std::is_move_constructible<error_type>::value)
+  )
+  BOOST_NOEXCEPT_IF(
+    std::is_nothrow_move_constructible<error_type>::value
+  )
+  : base_type(detail::only_set_valid, rhs.valid())
+  {
+    if (! rhs.valid())
+    {
+      ::new (errorptr()) error_type(boost::move(rhs.contained_err()));
+    }
+  }
+
+  template <class T>
+  expected(const rebind_traits<T>& rhs
+    , REQUIRES(std::is_copy_constructible<error_type>::value)
+  )
+  BOOST_NOEXCEPT_IF(
+    has_nothrow_copy_constructor<error_type>::value
+  )
+  : base_type(detail::only_set_valid, rhs.valid())
+  {
+    if (!rhs.valid())
+    {
+      ::new (errorptr()) error_type(rhs.contained_err());
+    }
+  }
+
+  template <class T>
+  expected(BOOST_RV_REF(rebind_traits<T>) rhs
+    , REQUIRES(std::is_move_constructible<error_type>::value)
   )
   BOOST_NOEXCEPT_IF(
     std::is_nothrow_move_constructible<error_type>::value
@@ -1461,7 +1652,6 @@ public:
   : base_type()
   {}
 
-
   expected(unexpected_type<error_type> const& e
     , REQUIRES(std::is_copy_constructible<error_type>::value)
   )
@@ -1470,6 +1660,7 @@ public:
   )
   : base_type(e)
   {}
+
   expected(unexpected_type<error_type> && e
     , REQUIRES(std::is_move_constructible<error_type>::value)
   )
@@ -1488,6 +1679,7 @@ public:
 //  )
   : base_type(e)
   {}
+
   template <class Err>
   expected(unexpected_type<Err> && e
 //    , REQUIRES(std::is_copy_constructible<error_type>::value)
@@ -1526,6 +1718,20 @@ public:
     return *this;
   }
 
+  template <class T>
+  expected& operator=(BOOST_COPY_ASSIGN_REF(rebind_traits<T>) e)
+  {
+    this_type(e).swap(*this);
+    return *this;
+  }
+
+  template <class T>
+  expected& operator=(BOOST_RV_REF(rebind_traits<T>) e)
+  {
+    this_type(boost::move(e)).swap(*this);
+    return *this;
+  }
+
 
   void emplace()
   {
@@ -1533,7 +1739,9 @@ public:
   }
 
   // Modifiers
-  void swap(expected& rhs)
+private:
+  template <class E>
+  void swap_impl(E& rhs)
   {
     if (valid())
     {
@@ -1557,6 +1765,18 @@ public:
     }
   }
 
+public:
+  template <class T>
+  void swap(rebind_traits<T>& rhs)
+  {
+    swap_impl(rhs);
+  }
+
+  void swap(expected& rhs)
+  {
+    swap_impl(rhs);
+  }
+
   // Observers
   BOOST_CONSTEXPR bool valid() const BOOST_NOEXCEPT
   {
@@ -1574,7 +1794,7 @@ public:
   {
     if(!valid())
     {
-      error::rethrow<error_type>(contained_err());
+      traits_type::bad_access(contained_err());
     }
   }
 
@@ -1583,19 +1803,23 @@ public:
   {
     return contained_err();
   }
+
   BOOST_CONSTEXPR error_type& error() & BOOST_NOEXCEPT
   {
     return contained_err();
   }
+
   BOOST_CONSTEXPR error_type&& error() && BOOST_NOEXCEPT
   {
     return constexpr_move(contained_err());
   }
+
 #else
   BOOST_CONSTEXPR error_type const& error() const BOOST_NOEXCEPT
   {
     return contained_err();
   }
+
   error_type & error() BOOST_NOEXCEPT
   {
     return contained_err();
@@ -1612,6 +1836,7 @@ public:
   {
     return unexpected_type<error_type>(constexpr_move(contained_err()));
   }
+
 #else
   BOOST_CONSTEXPR unexpected_type<error_type> get_unexpected() const BOOST_NOEXCEPT
   {
@@ -1634,10 +1859,11 @@ public:
     try {
       f();
     } catch (...) {
-      return make_unexpected(error::make_error_from_current_exception<error_type>());
+      return make_unexpected(traits_type::catch_exception(std::current_exception()));
     }
     return result_type(in_place_t{});
   }
+
   template <typename F>
   typename result_of<F()>::type
   catch_all_void_type(BOOST_RV_REF(F) f)
@@ -1646,9 +1872,10 @@ public:
     try {
       return f();
     } catch (...) {
-      return make_unexpected(error::make_error_from_current_exception<error_type>());
+      return make_unexpected(traits_type::catch_exception(std::current_exception()));
     }
   }
+
   template <typename F>
   rebind<typename result_of<F()>::type>
   catch_all_void_etype(BOOST_RV_REF(F) f)
@@ -1657,9 +1884,10 @@ public:
     try {
       return f();
     } catch (...) {
-      return make_unexpected(error::make_error_from_current_exception<error_type>());
+      return make_unexpected(traits_type::catch_exception(std::current_exception()));
     }
   }
+
   template <typename F>
   rebind<void>
   catch_all_evoid_void(BOOST_RV_REF(F) f)
@@ -1668,10 +1896,11 @@ public:
     try {
       f(std::move(*this));
     } catch (...) {
-      return make_unexpected(error::make_error_from_current_exception<error_type>());
+      return make_unexpected(traits_type::catch_exception(std::current_exception()));
     }
     return result_type(in_place_t{});
   }
+
   template <typename F>
   typename result_of<F(expected)>::type
   catch_all_evoid_type(BOOST_RV_REF(F) f)
@@ -1680,9 +1909,10 @@ public:
     try {
       return f(std::move(*this));
     } catch (...) {
-      return make_unexpected(error::make_error_from_current_exception<error_type>());
+      return make_unexpected(traits_type::catch_exception(std::current_exception()));
     }
   }
+
   template <typename F>
   rebind<typename result_of<F(expected)>::type>
   catch_all_evoid_etype(BOOST_RV_REF(F) f)
@@ -1691,7 +1921,7 @@ public:
     try {
       return f(std::move(*this));
     } catch (...) {
-      return make_unexpected(error::make_error_from_current_exception<error_type>());
+      return make_unexpected(traits_type::catch_exception(std::current_exception()));
     }
   }
 
@@ -1732,7 +1962,7 @@ public:
 #else
     return ( valid()
         ? result_type(f())
-        :  result_type(get_unexpected())
+        : result_type(get_unexpected())
         );
 #endif
   }
@@ -1869,8 +2099,8 @@ public:
 };
 
 // Relational operators
-template <class E, class T>
-BOOST_CONSTEXPR bool operator==(const expected<E, T>& x, const expected<E, T>& y)
+template <class E, class V, class T1, class T2>
+BOOST_CONSTEXPR bool operator==(const expected<E, V, T1>& x, const expected<E, V, T2>& y)
 {
   return (x && y)
     ? *x == *y
@@ -1879,8 +2109,8 @@ BOOST_CONSTEXPR bool operator==(const expected<E, T>& x, const expected<E, T>& y
       : false;
 }
 
-template <class E>
-BOOST_CONSTEXPR bool operator==(const expected<E, void>& x, const expected<E, void>& y)
+template <class E, class T1, class T2>
+BOOST_CONSTEXPR bool operator==(const expected<E, void, T1>& x, const expected<E, void, T2>& y)
 {
   return (x && y)
     ? true
@@ -1889,192 +2119,198 @@ BOOST_CONSTEXPR bool operator==(const expected<E, void>& x, const expected<E, vo
       : false;
 }
 
-template <class E, class T>
-BOOST_CONSTEXPR bool operator!=(const expected<E, T>& x, const expected<E, T>& y)
+template <class E, class V, class T1, class T2>
+BOOST_CONSTEXPR bool operator!=(const expected<E, V, T1>& x, const expected<E, V, T2>& y)
 {
   return !(x == y);
 }
 
-template <class E, class T>
-BOOST_CONSTEXPR bool operator<(const expected<E, T>& x, const expected<E, T>& y)
+template <class E, class V, class T1, class T2>
+BOOST_CONSTEXPR bool operator<(const expected<E, V, T1>& x, const expected<E, V, T2>& y)
 {
   return (x)
     ? (y) ? *x < *y : false
     : (y) ? true : x.get_unexpected() < y.get_unexpected();
 }
 
-template <class E>
-BOOST_CONSTEXPR bool operator<(const expected<E, void>& x, const expected<E, void>& y)
+template <class E, class T1, class T2>
+BOOST_CONSTEXPR bool operator<(const expected<E, void, T1>& x, const expected<E, void, T2>& y)
 {
   return (x)
     ? (y) ? false : false
     : (y) ? true : x.get_unexpected() < y.get_unexpected();
 }
 
-template <class E, class T>
-BOOST_CONSTEXPR bool operator>(const expected<E, T>& x, const expected<E, T>& y)
+template <class E, class V, class T1, class T2>
+BOOST_CONSTEXPR bool operator>(const expected<E, V, T1>& x, const expected<E, V, T2>& y)
 {
   return (y < x);
 }
 
-template <class E, class T>
-BOOST_CONSTEXPR bool operator<=(const expected<E, T>& x, const expected<E, T>& y)
+template <class E, class V, class T1, class T2>
+BOOST_CONSTEXPR bool operator<=(const expected<E, V, T1>& x, const expected<E, V, T2>& y)
 {
   return !(y < x);
 }
 
-template <class E, class T>
-BOOST_CONSTEXPR bool operator>=(const expected<E, T>& x, const expected<E, T>& y)
+template <class E, class V, class T1, class T2>
+BOOST_CONSTEXPR bool operator>=(const expected<E, V, T1>& x, const expected<E, V, T2>& y)
 {
   return !(x < y);
 }
 
 // Relational operators with T
-template <class E, class T>
-BOOST_CONSTEXPR bool operator==(const expected<E, T>& x, const T& v)
+template <class E, class V, class T>
+BOOST_CONSTEXPR bool operator==(const expected<E, V, T>& x, const V& v)
 {
   return (x) ? *x == v :  false;
 }
-template <class E>
-BOOST_CONSTEXPR bool operator==(const E& v, const expected<E, void>& x)
+
+template <class E, class T>
+BOOST_CONSTEXPR bool operator==(const E& v, const expected<E, void, T>& x)
 {
   return x == v;
 }
 
-template <class E, class T>
-BOOST_CONSTEXPR bool operator!=(const expected<E, T>& x, const T& v)
+template <class E, class V, class T>
+BOOST_CONSTEXPR bool operator!=(const expected<E, V, T>& x, const V& v)
 {
   return ! (x == v);
 }
-template <class E, class T>
-BOOST_CONSTEXPR bool operator!=(const T& v, const expected<E, T>& x)
+
+template <class E, class V, class T>
+BOOST_CONSTEXPR bool operator!=(const V& v, const expected<E, V, T>& x)
 {
   return x != v;
 }
 
-template <class E, class T>
-BOOST_CONSTEXPR bool operator<(const expected<E, T>& x, const T& v)
+template <class E, class V, class T>
+BOOST_CONSTEXPR bool operator<(const expected<E, V, T>& x, const V& v)
 {
   return (x) ? (*x < v) : true ;
 }
-template <class E, class T>
-BOOST_CONSTEXPR bool operator<(const T& v, const expected<E, T>& x)
+
+template <class E, class V, class T>
+BOOST_CONSTEXPR bool operator<(const V& v, const expected<E, V, T>& x)
 {
   return (x) ? (v < x) : false ;
 }
 
-template <class E, class T>
-BOOST_CONSTEXPR bool operator>(const expected<E, T>& x, const T& v)
+template <class E, class V, class T>
+BOOST_CONSTEXPR bool operator>(const expected<E, V, T>& x, const V& v)
 {
   return v < x;
 }
-template <class E, class T>
-BOOST_CONSTEXPR bool operator>(const T& v, const expected<E, T>& x)
+
+template <class E, class V, class T>
+BOOST_CONSTEXPR bool operator>(const V& v, const expected<E, V, T>& x)
 {
   return x < v;
 }
 
-template <class E, class T>
-BOOST_CONSTEXPR bool operator<=(const expected<E, T>& x, const T& v)
+template <class E, class V, class T>
+BOOST_CONSTEXPR bool operator<=(const expected<E, V, T>& x, const V& v)
 {
   return ! (v < x);
 }
-template <class E, class T>
-BOOST_CONSTEXPR bool operator<=(const T& v, const expected<E, T>& x)
+
+template <class E, class V, class T>
+BOOST_CONSTEXPR bool operator<=(const V& v, const expected<E, V, T>& x)
 {
   return ! (x < v);
 }
 
-template <class E, class T>
-BOOST_CONSTEXPR bool operator>=(const expected<E, T>& x, const T& v)
+template <class E, class V, class T>
+BOOST_CONSTEXPR bool operator>=(const expected<E, V, T>& x, const V& v)
 {
   return ! (x < v);
 }
-template <class E, class T>
-BOOST_CONSTEXPR bool operator>=(const T& v, const expected<E, T>& x)
+
+template <class E, class V, class T>
+BOOST_CONSTEXPR bool operator>=(const V& v, const expected<E, V, T>& x)
 {
   return ! (v < x);
 }
 
 // Relational operators with unexpected_type<E>
-template <class E, class T>
-BOOST_CONSTEXPR bool operator==(const expected<E, T>& x, const unexpected_type<E>& e)
+template <class E, class V, class T>
+BOOST_CONSTEXPR bool operator==(const expected<E, V, T>& x, const unexpected_type<E>& e)
 {
   return (!x) ? x.get_unexpected() == e :  false;
 }
-template <class E, class T>
-BOOST_CONSTEXPR bool operator==(const unexpected_type<E>& e, const expected<E, T>& x)
+template <class E, class V, class T>
+BOOST_CONSTEXPR bool operator==(const unexpected_type<E>& e, const expected<E, V, T>& x)
 {
   return (x == e);
 }
-template <class E, class T>
-BOOST_CONSTEXPR bool operator!=(const expected<E, T>& x, const unexpected_type<E>& e)
+template <class E, class V, class T>
+BOOST_CONSTEXPR bool operator!=(const expected<E, V, T>& x, const unexpected_type<E>& e)
 {
   return ! (x == e);
 }
-template <class E, class T>
+template <class E, class V, class T>
 BOOST_CONSTEXPR bool operator!=(const unexpected_type<E>& e , const expected<E, T>& x)
 {
   return ! (x == e);
 }
 
-template <class E, class T>
-BOOST_CONSTEXPR bool operator<(const expected<E, T>& x, const unexpected_type<E>& e)
+template <class E, class V, class T>
+BOOST_CONSTEXPR bool operator<(const expected<E, V, T>& x, const unexpected_type<E>& e)
 {
   return (!x) ? (x.get_unexpected() < e) : false ;
 }
-template <class E, class T>
-BOOST_CONSTEXPR bool operator<(const unexpected_type<E>& e, const expected<E, T>& x)
+template <class E, class V, class T>
+BOOST_CONSTEXPR bool operator<(const unexpected_type<E>& e, const expected<E, V, T>& x)
 {
   return (!x) ? (e < x.get_unexpected()) : true ;
 }
 
-template <class E, class T>
-BOOST_CONSTEXPR bool operator>(const expected<E, T>& x, const unexpected_type<E>& e)
+template <class E, class V, class T>
+BOOST_CONSTEXPR bool operator>(const expected<E, V, T>& x, const unexpected_type<E>& e)
 {
   return (e <  x);
 }
-template <class E, class T>
-BOOST_CONSTEXPR bool operator>(const unexpected_type<E>& e, const expected<E, T>& x)
+template <class E, class V, class T>
+BOOST_CONSTEXPR bool operator>(const unexpected_type<E>& e, const expected<E, V, T>& x)
 {
   return (x <  e);
 }
 
-template <class E, class T>
-BOOST_CONSTEXPR bool operator<=(const expected<E, T>& x, const unexpected_type<E>& e)
+template <class E, class V, class T>
+BOOST_CONSTEXPR bool operator<=(const expected<E, V, T>& x, const unexpected_type<E>& e)
 {
   return ! (e < x);
 }
-template <class E, class T>
-BOOST_CONSTEXPR bool operator<=(const unexpected_type<E>& e, const expected<E, T>& x)
+template <class E, class V, class T>
+BOOST_CONSTEXPR bool operator<=(const unexpected_type<E>& e, const expected<E, V, T>& x)
 {
   return ! (x < e);
 }
 
-template <class E, class T>
-BOOST_CONSTEXPR bool operator>=(const expected<E, T>& x, const unexpected_type<E>& e)
+template <class E, class V, class T>
+BOOST_CONSTEXPR bool operator>=(const expected<E, V, T>& x, const unexpected_type<E>& e)
 {
   return ! (e > x);
 }
-template <class E, class T>
-BOOST_CONSTEXPR bool operator>=(const unexpected_type<E>& e, const expected<E, T>& x)
+template <class E, class V, class T>
+BOOST_CONSTEXPR bool operator>=(const unexpected_type<E>& e, const expected<E, V, T>& x)
 {
   return ! (x > e);
 }
 
 // Specialized algorithms
-template <class E, class T>
-void swap(expected<E,T>& x, expected<E, T>& y) BOOST_NOEXCEPT_IF(BOOST_NOEXCEPT_EXPR(x.swap(y)))
+template <class E, class V, class T1, class T2>
+void swap(expected<E, V, T1>& x, expected<E, V, T2>& y) BOOST_NOEXCEPT_IF(BOOST_NOEXCEPT_EXPR(x.swap(y)))
 {
   x.swap(y);
 }
 
 // Factories
 
-template<typename T>
-BOOST_CONSTEXPR expected<std::exception_ptr, decay_t<T> > make_expected(BOOST_FWD_REF(T) v )
+template <typename V>
+BOOST_CONSTEXPR expected<std::exception_ptr, decay_t<V> > make_expected(BOOST_FWD_REF(V) v )
 {
-  return expected<std::exception_ptr, decay_t<T> >(constexpr_forward<T>(v));
+  return expected<std::exception_ptr, decay_t<V> >(constexpr_forward<V>(v));
 }
 
 BOOST_FORCEINLINE expected<std::exception_ptr, void> make_expected()
@@ -2082,35 +2318,35 @@ BOOST_FORCEINLINE expected<std::exception_ptr, void> make_expected()
   return expected<std::exception_ptr, void>(in_place2);
 }
 
-template<typename E>
+template <typename E>
 BOOST_FORCEINLINE expected<E, void> make_expected()
 {
   return expected<E, void>(in_place2);
 }
 
-template <typename T>
-BOOST_FORCEINLINE expected<std::exception_ptr, T> make_expected_from_current_exception() BOOST_NOEXCEPT
+template <typename V>
+BOOST_FORCEINLINE expected<std::exception_ptr, V> make_expected_from_current_exception() BOOST_NOEXCEPT
 {
-  return expected<std::exception_ptr, T>(make_unexpected_from_current_exception());
+  return expected<std::exception_ptr, V>(make_unexpected_from_current_exception());
 }
 
-template <typename T>
-BOOST_FORCEINLINE expected<std::exception_ptr, T> make_expected_from_exception(std::exception_ptr e) BOOST_NOEXCEPT
+template <typename V>
+BOOST_FORCEINLINE expected<std::exception_ptr, V> make_expected_from_exception(std::exception_ptr e) BOOST_NOEXCEPT
 {
-  return expected<std::exception_ptr, T>(unexpected_type<>(e));
+  return expected<std::exception_ptr, V>(unexpected_type<>(e));
 }
 
-template <typename T, typename E>
-BOOST_FORCEINLINE expected<std::exception_ptr, T> make_expected_from_exception(E e) BOOST_NOEXCEPT
+template <typename V, typename E>
+BOOST_FORCEINLINE expected<std::exception_ptr, V> make_expected_from_exception(E e) BOOST_NOEXCEPT
 {
-  return expected<std::exception_ptr, T>(unexpected_type<>(e));
+  return expected<std::exception_ptr, V>(unexpected_type<>(e));
 }
 
-template <typename T, typename E>
+template <typename V, typename E>
 BOOST_FORCEINLINE BOOST_CONSTEXPR
-expected<decay_t<E>, T> make_expected_from_error(E e) BOOST_NOEXCEPT
+expected<decay_t<E>, V> make_expected_from_error(E e) BOOST_NOEXCEPT
 {
-  return expected<decay_t<E>, T >(make_unexpected(e));
+  return expected<decay_t<E>, V>(make_unexpected(e));
 }
 
 template <typename F>
@@ -2146,8 +2382,8 @@ make_expected_from_call(F funct
   }
 }
 
-template <class E, class T>
-BOOST_FORCEINLINE BOOST_CONSTEXPR unexpected_type<E> make_unexpected(expected<E,T>& ex)
+template <class E, class V, class T>
+BOOST_FORCEINLINE BOOST_CONSTEXPR unexpected_type<E> make_unexpected(expected<E,V,T>& ex)
 {
   return unexpected_type<E>(ex.error());
 }
@@ -2157,23 +2393,25 @@ namespace expected_detail
 
   // Factories
 
-  template <class E, class T>
-  inline BOOST_CONSTEXPR expected<E,T> unwrap(expected<E, expected<E,T> > const& ee)
+  template <class E, class V, class T1, class T2>
+  inline BOOST_CONSTEXPR expected<E,V,T1> unwrap(expected<E, expected<E, V, T1>, T2> const& ee)
   {
      return (ee) ? *ee : ee.get_unexpected();
   }
-  template <class E, class T>
-  inline BOOST_CONSTEXPR expected<E,T> unwrap(expected<E, expected<E,T> >&& ee)
+
+  template <class E, class V, class T1, class T2>
+  inline BOOST_CONSTEXPR expected<E,V,T1> unwrap(expected<E, expected<E, V, T1>, T2>&& ee)
   {
     return (ee) ? std::move(*ee) : ee.get_unexpected();
   }
-  template <class E, class T>
-  inline BOOST_CONSTEXPR expected<E,T> unwrap(expected<E, T> const& e)
+
+  template <class E, class V, class T>
+  inline BOOST_CONSTEXPR expected<E,V,T> unwrap(expected<E, V, T> const& e)
   {
     return e;
   }
-  template <class E, class T>
-  inline BOOST_CONSTEXPR expected<E,T> unwrap(expected<E, T> && e)
+  template <class E, class V, class T>
+  inline BOOST_CONSTEXPR expected<E,V,T> unwrap(expected<E, V, T> && e)
   {
     return std::move(e);
   }
@@ -2181,22 +2419,23 @@ namespace expected_detail
 } // namespace expected_detail
 
 #if ! defined BOOST_EXPECTED_NO_CXX11_RVALUE_REFERENCE_FOR_THIS
-  template <typename E, typename T>
-  inline BOOST_CONSTEXPR expected_detail::unwrap_result_type_t<expected<E, T>>
-  expected<E, T>::unwrap() const&
+  template <typename E, typename V, typename T>
+  inline BOOST_CONSTEXPR expected_detail::unwrap_result_type_t<expected<E, V, T>>
+  expected<E, V, T>::unwrap() const&
   {
     return expected_detail::unwrap(*this);
   }
-  template <typename E, typename T>
-  inline BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS expected_detail::unwrap_result_type_t<expected<E, T>>
-  expected<E, T>::unwrap() &&
+
+  template <typename E, typename V, typename T>
+  inline BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS expected_detail::unwrap_result_type_t<expected<E, V, T>>
+  expected<E, V, T>::unwrap() &&
   {
     return expected_detail::unwrap(*this);
   }
 #else
-  template <typename E, typename T>
-  inline BOOST_CONSTEXPR expected_detail::unwrap_result_type_t<expected<E, T>>
-  expected<E, T>::unwrap() const
+  template <typename E, typename V, typename T>
+  inline BOOST_CONSTEXPR expected_detail::unwrap_result_type_t<expected<E, V, T>>
+  expected<E, V, T>::unwrap() const
   {
     return expected_detail::unwrap(*this);
   }
@@ -2205,6 +2444,5 @@ namespace expected_detail
 
 #undef REQUIRES
 #undef T_REQUIRES
-
 
 #endif // BOOST_EXPECTED_EXPECTED_HPP
