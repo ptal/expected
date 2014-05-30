@@ -52,4 +52,4 @@ namespace expected_alg
 } // namespace expected_alg
 } // namespace boost
 
-#endif // BOOST_EXPECTED_HPP
+#endif // BOOST_EXPECTED_ALGORITHMS_VALUE_OR_HPP
