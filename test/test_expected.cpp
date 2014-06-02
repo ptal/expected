@@ -1288,12 +1288,11 @@ public:
   }
 };
 
-template <class E, class V>
+template <class E>
 class my_expected_traits
 {
  public:
   typedef E error_type;
-  typedef V value_type;
 
   static void bad_access(const error_type& e)
   {
@@ -1307,7 +1306,7 @@ class my_expected_traits
 };
 
 template <class E, class V>
-using my_expected = expected<E,V,my_expected_traits<E,V> >;
+using my_expected = expected<E,V,my_expected_traits<E> >;
 
 my_expected<std::exception_ptr, int> compute_add(int i)
 {
@@ -1340,6 +1339,7 @@ BOOST_AUTO_TEST_CASE(TestTraitsCase)
     BOOST_CHECK(false);
   }
 
+#ifdef BOOST_EXPECTED_SUPPORT_REBIND_TRAITS
   try{
     moi.value();
     BOOST_CHECK(false);
@@ -1382,6 +1382,7 @@ BOOST_AUTO_TEST_CASE(TestTraitsCase)
   } catch(...){
     BOOST_CHECK(false);
   }
+#endif
 }
 
 BOOST_AUTO_TEST_SUITE_END()
