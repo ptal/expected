@@ -1329,8 +1329,8 @@ BOOST_AUTO_TEST_SUITE(TestTraits)
 BOOST_AUTO_TEST_CASE(TestTraitsCase)
 {
   expected<std::exception_ptr, int> oi = make_unexpected(test_exception());
-  my_expected<std::exception_ptr, int> moi(oi);
-  my_expected<std::exception_ptr, int> moi2 = oi;
+  my_expected<std::exception_ptr, int> moi = oi.get_unexpected();
+  my_expected<std::exception_ptr, int> moi2 = moi;
 
   try{
     oi.value();

@@ -667,9 +667,6 @@ public:
   template <class V>
   using rebind = expected<error_type, V, traits_type>;
 
-  template <class T>
-  using rebind_traits = expected<error_type, value_type, T>;
-
   using type_constructor = expected<error_type>;
 
 
@@ -720,48 +717,6 @@ public:
   }
 
   expected(BOOST_RV_REF(expected) rhs
-    //, REQUIRES( std::is_move_constructible<value_type>::value
-      //         && std::is_move_constructible<error_type>::value)
-  )
-  BOOST_NOEXCEPT_IF(
-    std::is_nothrow_move_constructible<value_type>::value &&
-    std::is_nothrow_move_constructible<error_type>::value
-  )
-  : base_type(detail::only_set_valid, rhs.valid())
-  {
-    if (rhs.valid())
-    {
-      ::new (dataptr()) value_type(boost::move(rhs.contained_val()));
-    }
-    else
-    {
-      ::new (errorptr()) error_type(boost::move(rhs.contained_err()));
-    }
-  }
-
-  template <class T>
-  expected(const rebind_traits<T>& rhs
-    //, REQUIRES( std::is_copy_constructible<value_type>::value
-      //         && std::is_copy_constructible<error_type>::value)
-  )
-  BOOST_NOEXCEPT_IF(
-    has_nothrow_copy_constructor<value_type>::value &&
-    has_nothrow_copy_constructor<error_type>::value
-  )
-  : base_type(detail::only_set_valid, rhs.valid())
-  {
-    if (rhs.valid())
-    {
-      ::new (dataptr()) value_type(rhs.contained_val());
-    }
-    else
-    {
-      ::new (errorptr()) error_type(rhs.contained_err());
-    }
-  }
-
-  template <class T>
-  expected(BOOST_RV_REF(rebind_traits<T>) rhs
     //, REQUIRES( std::is_move_constructible<value_type>::value
       //         && std::is_move_constructible<error_type>::value)
   )
@@ -885,20 +840,6 @@ public:
     return *this;
   }
 
-  template <class T>
-  expected& operator=(BOOST_COPY_ASSIGN_REF(rebind_traits<T>) e)
-  {
-    this_type(e).swap(*this);
-    return *this;
-  }
-
-  template <class T>
-  expected& operator=(BOOST_RV_REF(rebind_traits<T>) e)
-  {
-    this_type(boost::move(e)).swap(*this);
-    return *this;
-  }
-
   template <class U, T_REQUIRES(is_same<decay_t<U>, value_type>::value)>
   expected& operator=(BOOST_COPY_ASSIGN_REF(U) value)
   {
@@ -934,9 +875,7 @@ public:
   }
 
   // Modifiers
-private:
-  template <class T>
-  void swap_impl(rebind_traits<T>& rhs)
+  void swap(expected& rhs)
   {
     if (valid())
     {
@@ -963,18 +902,6 @@ private:
         boost::swap(contained_err(), rhs.contained_err());
       }
     }
-  }
-
-public:
-  template <class T>
-  void swap(expected<error_type, value_type, T>& rhs)
-  {
-    swap_impl(rhs);
-  }
-
-  void swap(expected& rhs)
-  {
-    swap_impl(rhs);
   }
 
 
@@ -1573,9 +1500,6 @@ public:
   template <class V>
   using rebind = expected<error_type, V, traits_type>;
 
-  template <class T>
-  using rebind_traits = expected<error_type, value_type, T>;
-
   using type_constructor = expected<error_type>;
 
   // Constructors/Destructors/Assignments
@@ -1594,36 +1518,6 @@ public:
   }
 
   expected(BOOST_RV_REF(expected) rhs
-    , REQUIRES(std::is_move_constructible<error_type>::value)
-  )
-  BOOST_NOEXCEPT_IF(
-    std::is_nothrow_move_constructible<error_type>::value
-  )
-  : base_type(detail::only_set_valid, rhs.valid())
-  {
-    if (! rhs.valid())
-    {
-      ::new (errorptr()) error_type(boost::move(rhs.contained_err()));
-    }
-  }
-
-  template <class T>
-  expected(const rebind_traits<T>& rhs
-    , REQUIRES(std::is_copy_constructible<error_type>::value)
-  )
-  BOOST_NOEXCEPT_IF(
-    has_nothrow_copy_constructor<error_type>::value
-  )
-  : base_type(detail::only_set_valid, rhs.valid())
-  {
-    if (!rhs.valid())
-    {
-      ::new (errorptr()) error_type(rhs.contained_err());
-    }
-  }
-
-  template <class T>
-  expected(BOOST_RV_REF(rebind_traits<T>) rhs
     , REQUIRES(std::is_move_constructible<error_type>::value)
   )
   BOOST_NOEXCEPT_IF(
@@ -1718,30 +1612,13 @@ public:
     return *this;
   }
 
-  template <class T>
-  expected& operator=(BOOST_COPY_ASSIGN_REF(rebind_traits<T>) e)
-  {
-    this_type(e).swap(*this);
-    return *this;
-  }
-
-  template <class T>
-  expected& operator=(BOOST_RV_REF(rebind_traits<T>) e)
-  {
-    this_type(boost::move(e)).swap(*this);
-    return *this;
-  }
-
-
   void emplace()
   {
     this_type(in_place_t{}).swap(*this);
   }
 
   // Modifiers
-private:
-  template <class E>
-  void swap_impl(E& rhs)
+  void swap(expected& rhs)
   {
     if (valid())
     {
@@ -1763,18 +1640,6 @@ private:
         boost::swap(contained_err(), rhs.contained_err());
       }
     }
-  }
-
-public:
-  template <class T>
-  void swap(rebind_traits<T>& rhs)
-  {
-    swap_impl(rhs);
-  }
-
-  void swap(expected& rhs)
-  {
-    swap_impl(rhs);
   }
 
   // Observers
@@ -2099,8 +1964,8 @@ public:
 };
 
 // Relational operators
-template <class E, class V, class T1, class T2>
-BOOST_CONSTEXPR bool operator==(const expected<E, V, T1>& x, const expected<E, V, T2>& y)
+template <class E, class V, class T>
+BOOST_CONSTEXPR bool operator==(const expected<E, V, T>& x, const expected<E, V, T>& y)
 {
   return (x && y)
     ? *x == *y
@@ -2109,8 +1974,8 @@ BOOST_CONSTEXPR bool operator==(const expected<E, V, T1>& x, const expected<E, V
       : false;
 }
 
-template <class E, class T1, class T2>
-BOOST_CONSTEXPR bool operator==(const expected<E, void, T1>& x, const expected<E, void, T2>& y)
+template <class E, class T>
+BOOST_CONSTEXPR bool operator==(const expected<E, void, T>& x, const expected<E, void, T>& y)
 {
   return (x && y)
     ? true
@@ -2119,42 +1984,42 @@ BOOST_CONSTEXPR bool operator==(const expected<E, void, T1>& x, const expected<E
       : false;
 }
 
-template <class E, class V, class T1, class T2>
-BOOST_CONSTEXPR bool operator!=(const expected<E, V, T1>& x, const expected<E, V, T2>& y)
+template <class E, class V, class T>
+BOOST_CONSTEXPR bool operator!=(const expected<E, V, T>& x, const expected<E, V, T>& y)
 {
   return !(x == y);
 }
 
-template <class E, class V, class T1, class T2>
-BOOST_CONSTEXPR bool operator<(const expected<E, V, T1>& x, const expected<E, V, T2>& y)
+template <class E, class V, class T>
+BOOST_CONSTEXPR bool operator<(const expected<E, V, T>& x, const expected<E, V, T>& y)
 {
   return (x)
     ? (y) ? *x < *y : false
     : (y) ? true : x.get_unexpected() < y.get_unexpected();
 }
 
-template <class E, class T1, class T2>
-BOOST_CONSTEXPR bool operator<(const expected<E, void, T1>& x, const expected<E, void, T2>& y)
+template <class E, class T>
+BOOST_CONSTEXPR bool operator<(const expected<E, void, T>& x, const expected<E, void, T>& y)
 {
   return (x)
     ? (y) ? false : false
     : (y) ? true : x.get_unexpected() < y.get_unexpected();
 }
 
-template <class E, class V, class T1, class T2>
-BOOST_CONSTEXPR bool operator>(const expected<E, V, T1>& x, const expected<E, V, T2>& y)
+template <class E, class V, class T>
+BOOST_CONSTEXPR bool operator>(const expected<E, V, T>& x, const expected<E, V, T>& y)
 {
   return (y < x);
 }
 
-template <class E, class V, class T1, class T2>
-BOOST_CONSTEXPR bool operator<=(const expected<E, V, T1>& x, const expected<E, V, T2>& y)
+template <class E, class V, class T>
+BOOST_CONSTEXPR bool operator<=(const expected<E, V, T>& x, const expected<E, V, T>& y)
 {
   return !(y < x);
 }
 
-template <class E, class V, class T1, class T2>
-BOOST_CONSTEXPR bool operator>=(const expected<E, V, T1>& x, const expected<E, V, T2>& y)
+template <class E, class V, class T>
+BOOST_CONSTEXPR bool operator>=(const expected<E, V, T>& x, const expected<E, V, T>& y)
 {
   return !(x < y);
 }
@@ -2299,8 +2164,8 @@ BOOST_CONSTEXPR bool operator>=(const unexpected_type<E>& e, const expected<E, V
 }
 
 // Specialized algorithms
-template <class E, class V, class T1, class T2>
-void swap(expected<E, V, T1>& x, expected<E, V, T2>& y) BOOST_NOEXCEPT_IF(BOOST_NOEXCEPT_EXPR(x.swap(y)))
+template <class E, class V, class T>
+void swap(expected<E, V, T>& x, expected<E, V, T>& y) BOOST_NOEXCEPT_IF(BOOST_NOEXCEPT_EXPR(x.swap(y)))
 {
   x.swap(y);
 }
