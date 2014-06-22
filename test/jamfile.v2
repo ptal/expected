@@ -58,38 +58,38 @@ project expected
 
 test-suite expected
     : 
-      [ run test_expected.cpp  boost_unit_test ]
-      [ run test_expected2.cpp  boost_unit_test ]
-      [ run test_expected_constructor.cpp  boost_unit_test ]
+      [ run test_expected.cpp  boost_unit_test : --log_format=XML --log_sink=results_expected.xml --log_level=all --report_level=no ]
+      [ run test_expected2.cpp  boost_unit_test : --log_format=XML --log_sink=results_expected2.xml --log_level=all --report_level=no ]
+      [ run test_expected_constructor.cpp  boost_unit_test : --log_format=XML --log_sink=results_expected_constructor.xml --log_level=all --report_level=no ]
     ;
 
 test-suite algorithms
     : 
-      [ run algorithms/test_if_then_else.cpp  boost_unit_test ]
-      [ run algorithms/test_value_or.cpp  boost_unit_test ]
-      [ run algorithms/test_value_or_call.cpp  boost_unit_test ]
-      [ run algorithms/test_error_or.cpp  boost_unit_test ]
-      [ run algorithms/test_has_error.cpp  boost_unit_test ]
+      [ run algorithms/test_if_then_else.cpp  boost_unit_test : --log_format=XML --log_sink=results_if_then_else.xml --log_level=all --report_level=no ]
+      [ run algorithms/test_value_or.cpp  boost_unit_test : --log_format=XML --log_sink=results_value_or.xml --log_level=all --report_level=no ]
+      [ run algorithms/test_value_or_call.cpp  boost_unit_test : --log_format=XML --log_sink=results_value_or_call.xml --log_level=all --report_level=no ]
+      [ run algorithms/test_error_or.cpp  boost_unit_test : --log_format=XML --log_sink=results_error_or.xml --log_level=all --report_level=no ]
+      [ run algorithms/test_has_error.cpp  boost_unit_test : --log_format=XML --log_sink=results_has_error.xml --log_level=all --report_level=no ]
     ;
 
 test-suite expected_ex
     : 
-      [ run ../example/safe_divide.cpp ]
-      [ run ../example/num_get.cpp ]
-      [ run ../example/num_get_2.cpp ]
-      [ run ../example/num_get_3.cpp ]
-      [ run ../example/get_interval.cpp ]
+      [ run ../example/safe_divide.cpp : --log_format=XML --log_sink=results_safe_divide.xml --log_level=all --report_level=no ]
+      [ run ../example/num_get.cpp : --log_format=XML --log_sink=results_get.xml --log_level=all --report_level=no ]
+      [ run ../example/num_get_2.cpp : --log_format=XML --log_sink=results_num_get_2.xml --log_level=all --report_level=no ]
+      [ run ../example/num_get_3.cpp : --log_format=XML --log_sink=results_num_get_3.xml --log_level=all --report_level=no ]
+      [ run ../example/get_interval.cpp : --log_format=XML --log_sink=results_get_interval.xml --log_level=all --report_level=no ]
     ;
 
 test-suite monads_ex
     : 
-      [ run ../example/safe_divide_monad.cpp ]
+      [ run ../example/safe_divide_monad.cpp : --log_format=XML --log_sink=results_safe_divide_monad.xml --log_level=all --report_level=no ]
     ;
 
 test-suite monads_algo
     : 
-      [ run monads/algorithms/test_m_value_or.cpp ]
-      [ run monads/algorithms/test_m_equal.cpp ]
+      [ run monads/algorithms/test_m_value_or.cpp : --log_format=XML --log_sink=results_m_value_or.xml --log_level=all --report_level=no ]
+      [ run monads/algorithms/test_m_equal.cpp : --log_format=XML --log_sink=results_m_equal.xml --log_level=all --report_level=no ]
     ;
 
 explicit fix ;
