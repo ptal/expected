@@ -18,12 +18,12 @@ namespace expected_alg
   // Factories
   // unwrap and if_then_else factories could be added as member functions
   template <class T, class E>
-  expected<E,T> unwrap(expected<E, expected<E,T> > ee) {
+  expected<T, E> unwrap(expected<expected<T, E>, E > ee) {
     if (ee) return *ee;
     return ee.get_unexpected();
   }
   template <class T, class E>
-  expected<E,T> unwrap(expected<E,T> e) {
+  expected<T, E> unwrap(expected<T, E> e) {
     return e;
   }
 

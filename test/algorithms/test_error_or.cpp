@@ -30,35 +30,35 @@ BOOST_AUTO_TEST_SUITE(ErrorOr)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 BOOST_AUTO_TEST_CASE(ErrorOr_Valued)
 {
-  expected<std::string, int> ei = 1;
+  expected<int, std::string> ei = 1;
   std::string err = error_or(std::move(ei),"0");
   BOOST_CHECK (err == "0");
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 BOOST_AUTO_TEST_CASE(ErrorOr_Valued2)
 {
-  expected<std::string, int> ei = 1;
+  expected<int, std::string> ei = 1;
   std::string err = error_or(ei,"0");
   BOOST_CHECK (err == "0");
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 BOOST_AUTO_TEST_CASE(ErrorOr_Unexpected)
 {
-  expected<std::string, int> ei;
+  expected<int, std::string> ei;
   std::string err = error_or(std::move(ei), "0");
   BOOST_CHECK (err == "");
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 BOOST_AUTO_TEST_CASE(ErrorOr_Unexpected2)
 {
-  expected<std::string, int> ei;
+  expected<int, std::string> ei;
   std::string err = error_or(ei, "0");
   BOOST_CHECK (err == "");
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 BOOST_AUTO_TEST_CASE(ErrorOr_Unexpected3)
 {
-  expected<std::string, int> ei;
+  expected<int, std::string> ei;
   std::string err = error_or(std::move(ei), "0");
   BOOST_CHECK (err != "0");
 }

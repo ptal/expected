@@ -28,7 +28,7 @@ Output& operator<<(Output& out, const std::error_condition& e)
 /* Print an expected, the value and error of this expected
 must implement the << operator. */
 template <class Output, class T, class E>
-Output& operator<<(Output& out, const boost::expected<E, T>& v)
+Output& operator<<(Output& out, const boost::expected<T, E>& v)
 {
   if(v.valid())
     return out << *v;
@@ -41,7 +41,7 @@ namespace moca{
 
 // Expected helpers for the std::error_condition error type.
 template <class T>
-using expected = boost::expected<std::error_condition, T>;
+using expected = boost::expected<T, std::error_condition>;
 
 boost::unexpected_type<std::error_condition> make_unexpected_condition(error e)
 {

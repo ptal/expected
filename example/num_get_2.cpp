@@ -16,18 +16,18 @@
 #include <type_traits>
 
 template <class I, typename T, class E >
-using pair_expected = std::pair<I, boost::expected<E,T> >;
+using pair_expected = std::pair<I, boost::expected<T, E> >;
 
 template <class E, class I, typename T>
 pair_expected<I, T, E> make_pair_expected(I i, T v)
 {
-  return std::make_pair(i, boost::expected<E,T>(v));
+  return std::make_pair(i, boost::expected<T, E>(v));
 }
 
 template <class T, class I, typename E>
 pair_expected<I, T, E> make_pair_expected_from_error(I i, E e)
 {
-  return std::make_pair(i, boost::expected<E,T>(boost::make_unexpected(e)));
+  return std::make_pair(i, boost::expected<T, E>(boost::make_unexpected(e)));
 }
 
 // making pair_expected a monad

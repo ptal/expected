@@ -34,8 +34,8 @@ BOOST_AUTO_TEST_CASE(Equal_Valued_Valued_eq)
 {
   using namespace boost::functional::valued;
 
-  expected<std::exception_ptr, int> e1 = 1;
-  expected<std::exception_ptr, int> e2 = 1;
+  expected<int> e1 = 1;
+  expected<int> e2 = 1;
   BOOST_CHECK ( equal(e1, e2) );
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -50,8 +50,8 @@ BOOST_AUTO_TEST_CASE(Equal_Valued_Valued_neq)
 {
   using namespace boost::functional::valued;
 
-  expected<std::exception_ptr, int> e1 = 1;
-  expected<std::exception_ptr, int> e2 = 2;
+  expected<int> e1 = 1;
+  expected<int> e2 = 2;
   BOOST_CHECK ( ! equal(e1, e2) );
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -59,8 +59,8 @@ BOOST_AUTO_TEST_CASE(Equal_Valued_Unexpected)
 {
   using namespace boost::functional::valued;
 
-  expected<std::exception_ptr, int> e1 = 1;
-  expected<std::exception_ptr, int> e2;
+  expected<int> e1 = 1;
+  expected<int> e2;
   BOOST_CHECK ( ! equal(e1, e2) );
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -68,8 +68,8 @@ BOOST_AUTO_TEST_CASE(Equal_Unexpected_Valued)
 {
   using namespace boost::functional::valued;
 
-  expected<std::exception_ptr, int> e1 = 1;
-  expected<std::exception_ptr, int> e2;
+  expected<int> e1 = 1;
+  expected<int> e2;
   BOOST_CHECK ( ! equal(e2, e1) );
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -77,8 +77,8 @@ BOOST_AUTO_TEST_CASE(Equal_Unexpected_Unexpected)
 {
   using namespace boost::functional::valued;
 
-  expected<std::exception_ptr, int> e1;
-  expected<std::exception_ptr, int> e2;
+  expected<int> e1;
+  expected<int> e2;
   BOOST_CHECK ( equal(e1, e2) );
   BOOST_CHECK ( equal(e2, e1) );
 }

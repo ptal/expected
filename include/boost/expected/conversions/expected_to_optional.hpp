@@ -15,13 +15,13 @@ namespace boost
   struct conversion_from_nullopt {};
 
   template <class T>
-  expected<std::exception_ptr, T> make_expected(optional<T> v) {
+  expected<T> make_expected(optional<T> v) {
     if (v) return make_expected(*v);
     else make_unexpected(conversion_from_nullopt());
   }
 
   template <class T>
-  optional<T> make_optional(expected<std::exception_ptr, T> e) {
+  optional<T> make_optional(expected<T> e) {
     if (e.valid()) return optional<T>(*e);
     else return none;
   }

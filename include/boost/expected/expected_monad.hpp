@@ -17,10 +17,10 @@ namespace boost
 namespace functional
 {
   template <class T, class E>
-  struct rebindable_traits<expected<E, T> > : rebindable_traits<category::forward> {};
+  struct rebindable_traits<expected<T, E> > : rebindable_traits<category::forward> {};
 
-  template <class E, class T>
-  struct valued_traits<expected<E, T>> : valued_traits<category::pointer_like>
+  template <class T, class E>
+  struct valued_traits<expected<T, E>> : valued_traits<category::pointer_like>
   {
     template <class M>
     static constexpr auto get_value(M&& m) -> decltype(m.value())
@@ -28,7 +28,7 @@ namespace functional
   };
 
   template <class T, class E>
-  struct errored_traits<expected<E, T> > : errored_traits<category::forward> {
+  struct errored_traits<expected<T, E> > : errored_traits<category::forward> {
     template <class M>
     static constexpr auto get_errored(M&& m) -> decltype(m.get_unexpected())
     { return m.get_unexpected();};
@@ -36,7 +36,7 @@ namespace functional
   };
 
   template <class T, class E>
-  struct functor_traits<expected<E, T> > : functor_traits<category::errored> {};
+  struct functor_traits<expected<T, E> > : functor_traits<category::errored> {};
 
   template <class T, class E>
   struct monad_traits<expected<E,T> > : monad_traits<category::forward> { };

@@ -30,7 +30,7 @@ BOOST_AUTO_TEST_SUITE(ValueOr)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 BOOST_AUTO_TEST_CASE(ValueOr_Valued)
 {
-  expected<std::exception_ptr, int> ei = 1;
+  expected<int> ei = 1;
   int i = value_or(std::move(ei), 0);
   BOOST_CHECK (i == 1);
 
@@ -38,7 +38,7 @@ BOOST_AUTO_TEST_CASE(ValueOr_Valued)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 BOOST_AUTO_TEST_CASE(ValueOr_Unexpected)
 {
-  expected<std::exception_ptr, int> ei;
+  expected<int> ei;
   int i = value_or(std::move(ei), 0);
   BOOST_CHECK (i == 0);
 }

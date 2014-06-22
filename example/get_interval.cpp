@@ -43,7 +43,7 @@ struct ios_range {
  */
 
 template <class Num, class CharT=char, class InputIterator = std::istreambuf_iterator<CharT> >
-boost::expected<std::ios_base::iostate, Num> get_num(ios_range<CharT, InputIterator>& r) {
+boost::expected<Num, std::ios_base::iostate> get_num(ios_range<CharT, InputIterator>& r) {
 
   std::ios_base::iostate err = std::ios_base::goodbit;
   Num v;
@@ -56,7 +56,7 @@ boost::expected<std::ios_base::iostate, Num> get_num(ios_range<CharT, InputItera
 
 // todo finish this function
 template <class CharT=char, class InputIterator = std::istreambuf_iterator<CharT> >
-boost::expected<std::ios_base::iostate, void>
+boost::expected<void, std::ios_base::iostate>
 matchedString(std::string str, ios_range<CharT, InputIterator>& r) {
   if (*r.begin != str[0]) {
       return boost::make_unexpected(std::ios_base::failbit);
@@ -66,7 +66,7 @@ matchedString(std::string str, ios_range<CharT, InputIterator>& r) {
       return boost::make_unexpected(std::ios_base::failbit);
   }
   ++r.begin;
-  return boost::expected<std::ios_base::iostate, void>(boost::in_place2);
+  return boost::expected<void, std::ios_base::iostate>(boost::in_place2);
 }
 
 /**
@@ -76,7 +76,7 @@ matchedString(std::string str, ios_range<CharT, InputIterator>& r) {
  */
 
 template <class Num, class CharT=char, class InputIterator = std::istreambuf_iterator<CharT> >
-boost::expected<std::ios_base::iostate, std::pair<Num,Num>> get_interval(ios_range<CharT, InputIterator>& r) {
+boost::expected<std::pair<Num,Num>, std::ios_base::iostate> get_interval(ios_range<CharT, InputIterator>& r) {
   auto  f = get_num<Num>(r);
   if (! f.valid()) return f.get_unexpected();
 
@@ -90,7 +90,7 @@ boost::expected<std::ios_base::iostate, std::pair<Num,Num>> get_interval(ios_ran
 }
 
 template <class Num, class CharT=char, class InputIterator = std::istreambuf_iterator<CharT> >
-boost::expected<std::ios_base::iostate, std::pair<Num,Num>> get_interval2(ios_range<CharT, InputIterator>& r)
+boost::expected<std::pair<Num,Num>, std::ios_base::iostate> get_interval2(ios_range<CharT, InputIterator>& r)
 {
   expect(f, get_num<Num>(r));
   expect_void(m, matchedString("..", r));
@@ -100,7 +100,7 @@ boost::expected<std::ios_base::iostate, std::pair<Num,Num>> get_interval2(ios_ra
 
 #if 0
 template <class Num, class CharT=char, class InputIterator = std::istreambuf_iterator<CharT> >
-boost::expected<std::ios_base::iostate, std::pair<Num,Num>> get_interval2(ios_range<CharT, InputIterator>& r)
+boost::expected<std::pair<Num,Num>, std::ios_base::iostate> get_interval2(ios_range<CharT, InputIterator>& r)
 {
   auto f = expect get_num<Num>(r);
            expect matchedString("..", r);
@@ -111,7 +111,7 @@ boost::expected<std::ios_base::iostate, std::pair<Num,Num>> get_interval2(ios_ra
 
 
 template <class Num, class CharT=char, class InputIterator = std::istreambuf_iterator<CharT> >
-boost::expected<std::ios_base::iostate, std::pair<Num,Num>> get_interval3(ios_range<CharT, InputIterator>& r)
+boost::expected<std::pair<Num,Num>, std::ios_base::iostate> get_interval3(ios_range<CharT, InputIterator>& r)
 {
   return get_num<Num>(r)
    .bind( [&r](Num f)
@@ -128,7 +128,7 @@ boost::expected<std::ios_base::iostate, std::pair<Num,Num>> get_interval3(ios_ra
 #if 0
 
 template <class Num, class CharT=char, class InputIterator = std::istreambuf_iterator<CharT> >
-boost::expected<std::ios_base::iostate, std::pair<Num,Num>> get_interval3(ios_range<CharT, InputIterator>& r)
+boost::expected<std::pair<Num,Num>, std::ios_base::iostate> get_interval3(ios_range<CharT, InputIterator>& r)
 {
   return get_num<Num>(r)
     & [&r](Num f) { return matchedString("..", r) & [f]() { return f; }; }
@@ -161,7 +161,7 @@ template <class T>
 lpair_t<T> lpair(T v) { return lpair_t<T>(v); }
 
 template <class Num, class CharT=char, class InputIterator = std::istreambuf_iterator<CharT> >
-boost::expected<std::ios_base::iostate, std::pair<Num,Num>> get_interval4(ios_range<CharT, InputIterator>& r)
+boost::expected<std::pair<Num,Num>, std::ios_base::iostate> get_interval4(ios_range<CharT, InputIterator>& r)
 {
   return get_num<Num>(r)
      .catch_error([](std::ios_base::iostate st) {
@@ -174,7 +174,7 @@ boost::expected<std::ios_base::iostate, std::pair<Num,Num>> get_interval4(ios_ra
 }
 
 template <class Num, class CharT=char, class InputIterator = std::istreambuf_iterator<CharT> >
-boost::expected<std::ios_base::iostate, std::pair<Num,Num>> get_interval5(ios_range<CharT, InputIterator>& r)
+boost::expected<std::pair<Num,Num>, std::ios_base::iostate> get_interval5(ios_range<CharT, InputIterator>& r)
 {
   using namespace boost::functional::monad_error;
 
@@ -192,7 +192,7 @@ boost::expected<std::ios_base::iostate, std::pair<Num,Num>> get_interval5(ios_ra
 #if 0
 
 template <class Num, class CharT=char, class InputIterator = std::istreambuf_iterator<CharT> >
-boost::expected<std::ios_base::iostate, std::pair<Num,Num>> get_interval4(ios_range<CharT, InputIterator>& r)
+boost::expected<std::pair<Num,Num>, std::ios_base::iostate> get_interval4(ios_range<CharT, InputIterator>& r)
 {
   return get_num<Num>(r)
     & [&r](Num f) { return matchedString("..", r) & identity(f) ; }

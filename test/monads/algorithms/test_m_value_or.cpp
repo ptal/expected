@@ -34,7 +34,7 @@ BOOST_AUTO_TEST_CASE(ValueOr_Valued)
 {
   using namespace boost::functional::valued;
 
-  expected<std::exception_ptr, int> ei = 1;
+  expected<int> ei = 1;
   int i = value_or(std::move(ei), 0);
   BOOST_CHECK (i == 1);
 
@@ -44,7 +44,7 @@ BOOST_AUTO_TEST_CASE(ValueOr_Unexpected)
 {
   using namespace boost::functional::valued;
 
-  expected<std::exception_ptr, int> ei;
+  expected<int> ei;
   int i = value_or(std::move(ei), 0);
   BOOST_CHECK (i == 0);
 }
