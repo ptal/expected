@@ -36,7 +36,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <NMakeBuildCommandLine>..\..\..\b2 toolset=msvc-14.0 ../test</NMakeBuildCommandLine>
+    <NMakeBuildCommandLine>..\..\..\b2 toolset=msvc-14.0 ../test -j 4</NMakeBuildCommandLine>
     <NMakeOutput>boost.spinlock.exe</NMakeOutput>
     <NMakePreprocessorDefinitions>WIN32;_DEBUG;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
   </PropertyGroup>

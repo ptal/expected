@@ -39,8 +39,17 @@ namespace rebindable
   template <class M, class Traits = if_rebindable<M> >
   using type_constructor = typename Traits::template type_constructor<M>;
 
+#ifdef BOOST_MSVC
+  // Work around ICE in VS2013 and VS14 CTP 3
+  template <class M, class U, class Traits = if_rebindable<M> >
+  struct rebind
+    : public rebindable_traits<M>::template rebind<M, U>
+  {
+  };
+#else
   template <class M, class U, class Traits = if_rebindable<M> >
   using rebind = typename Traits::template rebind<M, U>;
+#endif
 }
 
 template <>
