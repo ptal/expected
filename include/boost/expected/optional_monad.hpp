@@ -42,7 +42,7 @@ namespace functional
   struct valued_traits<optional<T>> : valued_traits<category::pointer_like>
   {
     template <class M>
-    static constexpr auto get_value(M&& m) -> decltype(m.value())
+    static BOOST_CONSTEXPR auto get_value(M&& m) -> decltype(m.value())
     { return m.value(); }
   };
 
@@ -58,11 +58,11 @@ namespace functional
     static M make_error(E&&)
     { return none; }
 
-    static constexpr none_t get_errored(optional<T> const& )
+    static BOOST_CONSTEXPR none_t get_errored(optional<T> const& )
     { return none; }
 
     template< class M >
-    static constexpr none_t error(M && m)
+    static BOOST_CONSTEXPR none_t error(M && m)
     { return none; }
   };
 

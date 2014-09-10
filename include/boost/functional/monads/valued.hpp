@@ -50,21 +50,21 @@ namespace valued
   };
 
   template <class M, class Traits = if_pvalued<decay_t<M>> >
-  constexpr auto
+  BOOST_CONSTEXPR auto
   has_value(M&& e) -> decltype(Traits::has_value(std::forward<M>(e)))
   {
     return Traits::has_value(std::forward<M>(e));
   }
 
   template <class M, class Traits = if_pvalued<decay_t<M>> >
-  constexpr auto
+  BOOST_CONSTEXPR auto
   deref(M&& e) -> decltype(Traits::deref(std::forward<M>(e)))
   {
     return Traits::deref(std::forward<M>(e));
   }
 
   template <class M, class Traits = if_pvalued<decay_t<M>> >
-  static constexpr auto
+  static BOOST_CONSTEXPR auto
   value(M&& e) -> decltype(Traits::get_value(std::forward<M>(e)))
   {
     return Traits::get_value(std::forward<M>(e));
@@ -75,7 +75,7 @@ namespace valued
 template <>
 struct valued_traits<category::default_> : std::true_type {
   template <class M>
-  static constexpr auto get_value(M&& m) -> decltype (has_value(m) ? deref(m) : throw valued::bad_access(),deref(m) )
+  static BOOST_CONSTEXPR auto get_value(M&& m) -> decltype (has_value(m) ? deref(m) : throw valued::bad_access(),deref(m) )
   {
     return has_value(m) ? deref(m) : throw valued::bad_access(),deref(m);
   }
@@ -85,11 +85,11 @@ template <>
 struct valued_traits<category::forward> : valued_traits<category::default_>
 {
   template <class M>
-  static constexpr bool has_value(M&& m)
+  static BOOST_CONSTEXPR bool has_value(M&& m)
   { return m.has_value(); }
 
   template <class M>
-  static constexpr auto deref(M&& m) -> decltype(m.deref())
+  static BOOST_CONSTEXPR auto deref(M&& m) -> decltype(m.deref())
   { return m.deref(); }
 
 };

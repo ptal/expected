@@ -39,7 +39,7 @@ namespace boost
     template <class T, class I, typename E>
     struct rebindable_traits<pair_expected<I, T, E>> : rebindable_traits<category::default_>
     {
-      constexpr static bool value = true;
+      BOOST_CONSTEXPR static bool value = true;
 
       template <class M>
       using value_type = typename M::value_type;

@@ -13,7 +13,7 @@
 
 namespace boost {
 
-// workaround: std utility functions aren't constexpr yet
+// workaround: std utility functions aren't BOOST_CONSTEXPR yet
 template <class T> inline
 BOOST_CONSTEXPR T&& constexpr_forward(typename std::remove_reference<T>::type& t) BOOST_NOEXCEPT
 {
