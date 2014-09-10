@@ -595,8 +595,18 @@ private:
 
 public:
 
+#ifdef BOOST_MSVC
+  // Work around ICE in VS2013 and VS14 CTP 3
+  template<class T>
+  struct rebind
+    : public expected<T, error_type>
+  {
+    using expected<T, error_type>::expected;
+  };
+#else
   template <class T>
   using rebind = expected<T, error_type>;
+#endif
 
   using type_constructor = expected<holder, error_type>;
 
@@ -1411,8 +1421,18 @@ private:
 
 public:
 
+#ifdef BOOST_MSVC
+  // Work around ICE in VS2013 and VS14 CTP 3
+  template<class T>
+  struct rebind
+    : public expected<T, error_type>
+  {
+    using expected<T, error_type>::expected;
+  };
+#else
   template <class T>
   using rebind = expected<T, error_type>;
+#endif
 
   using type_constructor = expected<holder, error_type>;
 
