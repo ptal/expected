@@ -34,7 +34,7 @@ namespace expected_alg
   }
 
   template <class T, class E>
-  BOOST_CONSTEXPR T value_or(expected<T, E> const& e, BOOST_FWD_REF(T) v)
+  BOOST_EXPECTED_RELAXED_CONSTEXPR T value_or(expected<T, E> const& e, BOOST_FWD_REF(T) v)
   {
     // We are sure that e.catch_error(just(std::forward<T>(v))) will be valid or a exception will be thrown
     // so the dereference is safe
@@ -42,7 +42,7 @@ namespace expected_alg
   }
 
   template <class T, class E>
-  BOOST_CONSTEXPR T value_or(expected<T, E> && e, BOOST_FWD_REF(T) v)
+  BOOST_EXPECTED_RELAXED_CONSTEXPR T value_or(expected<T, E> && e, BOOST_FWD_REF(T) v)
   {
     // We are sure that e.catch_error(just(std::forward<T>(v))) will be valid or a exception will be thrown
     // so the dereference is safe

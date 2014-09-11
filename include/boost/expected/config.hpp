@@ -19,6 +19,27 @@
 #endif
 #endif
 
+#if defined BOOST_NO_CXX11_CONSTEXPR
+#if defined BOOST_MSVC && _MSC_VER>=1900  // VS 14 with partial constexpr support
+#define BOOST_EXPECTED_CONSTEXPR constexpr
+#define BOOST_EXPECTED_CONSTEXPR_OR_CONST constexpr
+#endif
+#endif
+
+#ifndef BOOST_EXPECTED_CONSTEXPR
+#define BOOST_EXPECTED_CONSTEXPR BOOST_CONSTEXPR
+#endif
+#ifndef BOOST_EXPECTED_CONSTEXPR_OR_CONST
+#define BOOST_EXPECTED_CONSTEXPR_OR_CONST BOOST_CONSTEXPR_OR_CONST
+#endif
+#ifndef BOOST_EXPECTED_RELAXED_CONSTEXPR
+#ifdef BOOST_NO_CXX14_RELAXED_CONSTEXPR
+#define BOOST_EXPECTED_RELAXED_CONSTEXPR
+#else
+#define BOOST_EXPECTED_RELAXED_CONSTEXPR constexpr
+#endif
+#endif
+
 # if defined __clang__
 #  if (__clang_major__ < 2) || (__clang_major__ == 2) && (__clang_minor__ < 9)
 #   define BOOST_EXPECTED_NO_CXX11_RVALUE_REFERENCE_FOR_THIS

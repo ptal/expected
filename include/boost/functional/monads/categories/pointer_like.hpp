@@ -34,10 +34,10 @@ namespace functional
   struct valued_traits<category::pointer_like> : valued_traits<category::default_>
   {
     template <class M>
-    static BOOST_CONSTEXPR bool has_value(M&& m) { return bool(m); }
+    static BOOST_EXPECTED_RELAXED_CONSTEXPR bool has_value(M&& m) { return bool(m); }
 
     template <class M>
-    static BOOST_CONSTEXPR auto deref(M&& m) -> decltype(*m) { return *m; }
+    static BOOST_EXPECTED_RELAXED_CONSTEXPR auto deref(M&& m) -> decltype(*m) { return *m; }
 
   };
 
@@ -53,11 +53,11 @@ namespace functional
     using errored_type = std::nullptr_t;
 
     template <class M>
-    static BOOST_CONSTEXPR std::nullptr_t get_errored(M&& m)
+    static BOOST_EXPECTED_CONSTEXPR std::nullptr_t get_errored(M&& m)
     { return nullptr;}
 
     template <class M>
-    static BOOST_CONSTEXPR std::nullptr_t error(M&& m)
+    static BOOST_EXPECTED_CONSTEXPR std::nullptr_t error(M&& m)
     { return nullptr;}
   };
 }

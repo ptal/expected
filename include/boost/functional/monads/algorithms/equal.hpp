@@ -20,7 +20,7 @@ namespace valued
       , class = if_pvalued<decay_t<PV>>
       //, class = std::enable_if<is_equality_comparable<value_type<decay_t<PV>>::value>
   >
-  BOOST_CONSTEXPR bool equal( const PV& x, const PV& y ) {
+  BOOST_EXPECTED_RELAXED_CONSTEXPR bool equal(const PV& x, const PV& y) {
       using namespace valued;
 
       return has_value(x) != has_value(y)

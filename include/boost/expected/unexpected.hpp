@@ -27,32 +27,34 @@ namespace boost
   public:
     unexpected_type() = delete;
 
-    BOOST_FORCEINLINE BOOST_CONSTEXPR explicit unexpected_type(ErrorType const& e) :
+    BOOST_FORCEINLINE BOOST_EXPECTED_RELAXED_CONSTEXPR explicit unexpected_type(ErrorType const& e) :
       error_(e)
     {
     }
-    BOOST_FORCEINLINE BOOST_CONSTEXPR explicit unexpected_type(ErrorType&& e) :
+    BOOST_FORCEINLINE BOOST_EXPECTED_RELAXED_CONSTEXPR explicit unexpected_type(ErrorType&& e) :
       error_(std::move(e))
     {
     }
 #if ! defined BOOST_EXPECTED_NO_CXX11_MOVE_ACCESSORS
-    BOOST_CONSTEXPR
+#ifndef BOOST_NO_CXX14_RELAXED_CONSTEXPR
+    BOOST_EXPECTED_CONSTEXPR
     BOOST_FORCEINLINE ErrorType const& value() const&
     {
       return error_;
     }
-    BOOST_CONSTEXPR
+#endif
+    BOOST_EXPECTED_RELAXED_CONSTEXPR
     BOOST_FORCEINLINE ErrorType& value() &
     {
       return error_;
     }
-    BOOST_CONSTEXPR
+    BOOST_EXPECTED_RELAXED_CONSTEXPR
     BOOST_FORCEINLINE ErrorType& value() &&
     {
       return constexpr_move(error_);
     }
 #else
-    BOOST_CONSTEXPR
+    BOOST_EXPECTED_RELAXED_CONSTEXPR
     BOOST_FORCEINLINE ErrorType const& value() const
     {
       return error_;
@@ -65,7 +67,7 @@ namespace boost
   };
 
   template <class E>
-  BOOST_FORCEINLINE BOOST_CONSTEXPR unexpected_type<decay_t<E> > make_unexpected(E&& ex)
+  BOOST_FORCEINLINE BOOST_EXPECTED_RELAXED_CONSTEXPR unexpected_type<decay_t<E> > make_unexpected(E&& ex)
   {
     return unexpected_type<decay_t<E>> (std::forward<E>(ex));
   }
@@ -127,70 +129,70 @@ namespace boost
   };
 
   template <class E>
-  BOOST_CONSTEXPR bool operator==(const unexpected_type<E>& x, const unexpected_type<E>& y)
+  BOOST_EXPECTED_RELAXED_CONSTEXPR bool operator==(const unexpected_type<E>& x, const unexpected_type<E>& y)
   {
     return x.value() == y.value();
   }
   template <class E>
-  BOOST_CONSTEXPR bool operator!=(const unexpected_type<E>& x, const unexpected_type<E>& y)
+  BOOST_EXPECTED_RELAXED_CONSTEXPR bool operator!=(const unexpected_type<E>& x, const unexpected_type<E>& y)
   {
     return !(x == y);
   }
 
   template <class E>
-  BOOST_CONSTEXPR bool operator<(const unexpected_type<E>& x, const unexpected_type<E>& y)
+  BOOST_EXPECTED_RELAXED_CONSTEXPR bool operator<(const unexpected_type<E>& x, const unexpected_type<E>& y)
   {
     return x.value() < y.value();
   }
 
   template <class E>
-  BOOST_CONSTEXPR bool operator>(const unexpected_type<E>& x, const unexpected_type<E>& y)
+  BOOST_EXPECTED_RELAXED_CONSTEXPR bool operator>(const unexpected_type<E>& x, const unexpected_type<E>& y)
   {
     return (y < x);
   }
 
   template <class E>
-  BOOST_CONSTEXPR bool operator<=(const unexpected_type<E>& x, const unexpected_type<E>& y)
+  BOOST_EXPECTED_RELAXED_CONSTEXPR bool operator<=(const unexpected_type<E>& x, const unexpected_type<E>& y)
   {
     return !(y < x);
   }
 
   template <class E>
-  BOOST_CONSTEXPR bool operator>=(const unexpected_type<E>& x, const unexpected_type<E>& y)
+  BOOST_EXPECTED_RELAXED_CONSTEXPR bool operator>=(const unexpected_type<E>& x, const unexpected_type<E>& y)
   {
     return !(x < y);
   }
 
-  inline BOOST_CONSTEXPR bool operator<(const unexpected_type<std::exception_ptr>& x, const unexpected_type<std::exception_ptr>& y)
+  inline BOOST_EXPECTED_RELAXED_CONSTEXPR bool operator<(const unexpected_type<std::exception_ptr>& x, const unexpected_type<std::exception_ptr>& y)
   {
     return false;
   }
-  inline BOOST_CONSTEXPR bool operator>(const unexpected_type<std::exception_ptr>& x, const unexpected_type<std::exception_ptr>& y)
+  inline BOOST_EXPECTED_RELAXED_CONSTEXPR bool operator>(const unexpected_type<std::exception_ptr>& x, const unexpected_type<std::exception_ptr>& y)
   {
     return false;
   }
-  inline BOOST_CONSTEXPR bool operator<=(const unexpected_type<std::exception_ptr>& x, const unexpected_type<std::exception_ptr>& y)
+  inline BOOST_EXPECTED_RELAXED_CONSTEXPR bool operator<=(const unexpected_type<std::exception_ptr>& x, const unexpected_type<std::exception_ptr>& y)
   {
     return x==y;
   }
-  inline BOOST_CONSTEXPR bool operator>=(const unexpected_type<std::exception_ptr>& x, const unexpected_type<std::exception_ptr>& y)
+  inline BOOST_EXPECTED_RELAXED_CONSTEXPR bool operator>=(const unexpected_type<std::exception_ptr>& x, const unexpected_type<std::exception_ptr>& y)
   {
     return x==y;
   }
 
-  inline BOOST_CONSTEXPR bool operator<(const unexpected_type<boost::exception_ptr>& x, const unexpected_type<boost::exception_ptr>& y)
+  inline BOOST_EXPECTED_RELAXED_CONSTEXPR bool operator<(const unexpected_type<boost::exception_ptr>& x, const unexpected_type<boost::exception_ptr>& y)
   {
     return false;
   }
-  inline BOOST_CONSTEXPR bool operator>(const unexpected_type<boost::exception_ptr>& x, const unexpected_type<boost::exception_ptr>& y)
+  inline BOOST_EXPECTED_RELAXED_CONSTEXPR bool operator>(const unexpected_type<boost::exception_ptr>& x, const unexpected_type<boost::exception_ptr>& y)
   {
     return false;
   }
-  inline BOOST_CONSTEXPR bool operator<=(const unexpected_type<boost::exception_ptr>& x, const unexpected_type<boost::exception_ptr>& y)
+  inline BOOST_EXPECTED_RELAXED_CONSTEXPR bool operator<=(const unexpected_type<boost::exception_ptr>& x, const unexpected_type<boost::exception_ptr>& y)
   {
     return x==y;
   }
-  inline BOOST_CONSTEXPR bool operator>=(const unexpected_type<boost::exception_ptr>& x, const unexpected_type<boost::exception_ptr>& y)
+  inline BOOST_EXPECTED_RELAXED_CONSTEXPR bool operator>=(const unexpected_type<boost::exception_ptr>& x, const unexpected_type<boost::exception_ptr>& y)
   {
     return x==y;
   }

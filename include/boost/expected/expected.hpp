@@ -243,7 +243,7 @@ union no_trivial_expected_storage
   {}
 
   template <class Err>
-  BOOST_CONSTEXPR no_trivial_expected_storage(unexpected_type<Err> const& e)
+  BOOST_EXPECTED_RELAXED_CONSTEXPR no_trivial_expected_storage(unexpected_type<Err> const& e)
   : err(error::make_error<error_type>(e.value()))
   {}
 
@@ -275,7 +275,7 @@ union no_trivial_expected_storage<void, E>
   {}
 
   template <class Err>
-  BOOST_CONSTEXPR no_trivial_expected_storage(unexpected_type<Err> const& e)
+  BOOST_EXPECTED_RELAXED_CONSTEXPR no_trivial_expected_storage(unexpected_type<Err> const& e)
   : err(error::make_error<error_type>(e.value()))
   {}
 
@@ -908,7 +908,7 @@ public:
   }
   BOOST_CONSTEXPR value_type&& operator*() && BOOST_NOEXCEPT
   {
-    return constexpr_move(contained_val());
+    return static_cast<value_type&&>(constexpr_move(contained_val()));
   }
 #else
   BOOST_CONSTEXPR value_type const& operator*() const BOOST_NOEXCEPT

@@ -14,7 +14,7 @@ namespace expected_alg
 {
 
   template <class T, class E, class E1>
-  BOOST_CONSTEXPR bool has_error(expected<T, E> const& e, E1 const& err)
+  BOOST_EXPECTED_CONSTEXPR bool has_error(expected<T, E> const& e, E1 const& err)
   {
     return (e) ? false : (e.error() == err) ;
  }
