@@ -46,7 +46,7 @@ namespace expected_alg
   // Note that this function could not be equivalent to the e.value() as it creates a temporary and so
   // it can not return the address.
   template <class T, class E>
-  BOOST_EXPECTED_CONSTEXPR T value(expected<T, E> const& e)
+  BOOST_CONSTEXPR T value(expected<T, E> const& e)
   {
     // We are sure that e.catch_error(thrower<T>()) will be valid or a exception will be thrown
     // so the derefference is safe
@@ -54,7 +54,7 @@ namespace expected_alg
   }
 
   template <class T, class E>
-  BOOST_EXPECTED_CONSTEXPR T value(expected<T, E> && e)
+  BOOST_CONSTEXPR T value(expected<T, E> && e)
   {
     // We are sure that e.catch_error(thrower<T>()) will be valid or a exception will be thrown
     // so the derefference is safe

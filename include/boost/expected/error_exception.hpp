@@ -23,36 +23,36 @@ private:
 };
 
 template <class E, class X>
-BOOST_EXPECTED_CONSTEXPR bool operator==(const error_exception<E,X>& x, const error_exception<E,X>& y)
+BOOST_CONSTEXPR bool operator==(const error_exception<E,X>& x, const error_exception<E,X>& y)
 {
   return x.value() == y.value();
 }
 template <class E, class X>
-BOOST_EXPECTED_CONSTEXPR bool operator!=(const error_exception<E,X>& x, const error_exception<E,X>& y)
+BOOST_CONSTEXPR bool operator!=(const error_exception<E,X>& x, const error_exception<E,X>& y)
 {
   return !(x == y);
 }
 
 template <class E, class X>
-BOOST_EXPECTED_CONSTEXPR bool operator<(const error_exception<E,X>& x, const error_exception<E,X>& y)
+BOOST_CONSTEXPR bool operator<(const error_exception<E,X>& x, const error_exception<E,X>& y)
 {
   return x.value() < y.value();
 }
 
 template <class E, class X>
-BOOST_EXPECTED_CONSTEXPR bool operator>(const error_exception<E,X>& x, const error_exception<E,X>& y)
+BOOST_CONSTEXPR bool operator>(const error_exception<E,X>& x, const error_exception<E,X>& y)
 {
   return (y < x);
 }
 
 template <class E, class X>
-BOOST_EXPECTED_CONSTEXPR bool operator<=(const error_exception<E,X>& x, const error_exception<E,X>& y)
+BOOST_CONSTEXPR bool operator<=(const error_exception<E,X>& x, const error_exception<E,X>& y)
 {
   return !(y < x);
 }
 
 template <class E, class X>
-BOOST_EXPECTED_CONSTEXPR bool operator>=(const error_exception<E,X>& x, const error_exception<E,X>& y)
+BOOST_CONSTEXPR bool operator>=(const error_exception<E,X>& x, const error_exception<E,X>& y)
 {
   return !(x < y);
 }

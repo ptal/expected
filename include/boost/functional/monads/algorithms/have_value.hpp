@@ -17,13 +17,13 @@ namespace functional
 namespace valued
 {
   template < class M, class = if_pvalued<decay_t<M>> >
-  BOOST_EXPECTED_CONSTEXPR bool have_value( M&& m )
+  BOOST_CONSTEXPR bool have_value( M&& m )
   {
     return has_value(std::forward<M>(m));
   }
   // todo: create a variadic if_pvalued
   template< class M1, class ...Ms, class = if_pvalued<decay_t<M1>> >
-  BOOST_EXPECTED_CONSTEXPR bool have_value( M1&& m1, Ms&& ...ms )
+  BOOST_CONSTEXPR bool have_value( M1&& m1, Ms&& ...ms )
   {
     return has_value(std::forward<M1>(m1)) && have_value( std::forward<Ms>(ms)... );
   }

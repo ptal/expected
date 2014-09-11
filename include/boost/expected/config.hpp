@@ -19,20 +19,6 @@
 #endif
 #endif
 
-#if defined BOOST_NO_CXX11_CONSTEXPR
-#if defined BOOST_MSVC && _MSC_VER>=1900  // VS 14 with partial constexpr support
-//#define BOOST_EXPECTED_CONSTEXPR constexpr
-#define BOOST_EXPECTED_CONSTEXPR_OR_CONST constexpr
-#endif
-#endif
-
-#ifndef BOOST_EXPECTED_CONSTEXPR
-#define BOOST_EXPECTED_CONSTEXPR BOOST_CONSTEXPR
-#endif
-#ifndef BOOST_EXPECTED_CONSTEXPR_OR_CONST
-#define BOOST_EXPECTED_CONSTEXPR_OR_CONST BOOST_CONSTEXPR_OR_CONST
-#endif
-
 # if defined __clang__
 #  if (__clang_major__ < 2) || (__clang_major__ == 2) && (__clang_minor__ < 9)
 #   define BOOST_EXPECTED_NO_CXX11_RVALUE_REFERENCE_FOR_THIS
@@ -54,9 +40,9 @@
 # endif
 
 # if defined BOOST_EXPECTED_NO_CXX11_MOVE_ACCESSORS
-#define BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS
+#define BOOST_CONSTEXPR_IF_MOVE_ACCESSORS
 #else
-#define BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS BOOST_CONSTEXPR
+#define BOOST_CONSTEXPR_IF_MOVE_ACCESSORS BOOST_CONSTEXPR
 #endif
 
 // ../../../boost/expected/expected.hpp: In instantiation of ‘class boost::expected<int>’:

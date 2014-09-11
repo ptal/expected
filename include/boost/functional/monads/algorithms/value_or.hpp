@@ -16,7 +16,7 @@ namespace valued {
 
 #if defined __clang
   template <class PV, class U, class = if_pvalued<decay_t<PV>> >
-  BOOST_EXPECTED_CONSTEXPR value_type<PV> value_or(PV const& e, U&& v)
+  BOOST_CONSTEXPR value_type<PV> value_or(PV const& e, U&& v)
   {
     return has_value(e)
       ? deref(e)
@@ -32,7 +32,7 @@ namespace valued {
   }
 #else
   template <class PV, class U, class = if_pvalued<decay_t<PV>> >
-  BOOST_EXPECTED_CONSTEXPR U value_or(PV const& e, U&& v)
+  BOOST_CONSTEXPR U value_or(PV const& e, U&& v)
   {
     return has_value(e)
       ? deref(e)

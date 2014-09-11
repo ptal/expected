@@ -26,23 +26,23 @@ template <typename T>
 struct has_overloaded_addressof
 {
   template <class X>
-  static BOOST_EXPECTED_CONSTEXPR bool has_overload(...) { return false; }
+  static BOOST_CONSTEXPR bool has_overload(...) { return false; }
 
   template <class X, size_t S = sizeof(std::declval< X&>().operator&()) >
-  static BOOST_EXPECTED_CONSTEXPR bool has_overload(bool) { return true; }
+  static BOOST_CONSTEXPR bool has_overload(bool) { return true; }
 
-  static BOOST_EXPECTED_CONSTEXPR_OR_CONST bool value = has_overload<T>(true);
+  static BOOST_CONSTEXPR_OR_CONST bool value = has_overload<T>(true);
 };
 
 template <typename T>
-BOOST_EXPECTED_CONSTEXPR T* static_addressof(T& ref,
+BOOST_CONSTEXPR T* static_addressof(T& ref,
   REQUIRES(!has_overloaded_addressof<T>::value))
 {
   return &ref;
 }
 
 template <typename T>
-BOOST_EXPECTED_CONSTEXPR T* static_addressof(T& ref,
+BOOST_CONSTEXPR T* static_addressof(T& ref,
   REQUIRES(has_overloaded_addressof<T>::value))
 {
   return std::addressof(ref);
