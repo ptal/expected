@@ -523,11 +523,14 @@ namespace generic_based
     apply<M, int> divide2(int i, int j)
   {
     using namespace boost::functional::monad_exception;
+    // MSVC requires a bit of help here, long run the operator|| overload should
+    // really take a lambda type instead of a function pointer
+    apply<M, int>(*efunc)(NotDivisible& e)=[](NotDivisible& e) -> apply<M, int>
+    {
+      return e.i / e.j;
+    };
     return
-    safe_divide<M>(i,j) || [](NotDivisible& e) -> apply<M, int>
-        {
-          return e.i / e.j;
-        };
+    safe_divide<M>(i,j) || efunc;
   }
 
   template <class M>

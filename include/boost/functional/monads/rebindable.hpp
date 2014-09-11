@@ -39,14 +39,24 @@ namespace rebindable
   template <class M, class Traits = if_rebindable<M> >
   using type_constructor = typename Traits::template type_constructor<M>;
 
+  // Using a template alias here causes an ICE in VS2013 and VS14 CTP 3
+  // so back to the old fashioned way
   template <class M, class U, class Traits = if_rebindable<M> >
-  using rebind = typename Traits::template rebind<M, U>;
+  struct rebind
+  {
+    typedef typename Traits::template rebind<M, U>::type type;
+  };
 }
 
 template <>
 struct rebindable_traits<category::default_>  : std::true_type {
-  template <class M, class U>
-  using rebind = apply<rebindable::type_constructor<M>,U>;
+  // Using a template alias here causes an ICE in VS2013 and VS14 CTP 3
+  // so back to the old fashioned way
+  template <class M, class U, class Traits = if_rebindable<M> >
+  struct rebind
+  {
+    typedef apply<rebindable::type_constructor<M>, U> type;
+  };
 
 };
 template <>

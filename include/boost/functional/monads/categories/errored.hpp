@@ -45,10 +45,10 @@ namespace functional
 
     template <class F, class M0, class ...M,
     class FR = decltype( std::declval<F>()(errored::deref(std::declval<M0>()), errored::deref(std::declval<M>())...) )>
-    static BOOST_CONSTEXPR auto map(F&& f, M0&& m0, M&& ...m) -> errored::rebind<decay_t<M0>, FR>
+    static BOOST_CONSTEXPR auto map(F&& f, M0&& m0, M&& ...m) -> typename errored::rebind<decay_t<M0>, FR>::type
     {
       using namespace errored;
-      typedef rebind<decay_t<M0>, FR> result_type;
+      typedef typename rebind<decay_t<M0>, FR>::type result_type;
       return have_value( std::forward<M0>(m0), std::forward<M>(m)... )
       ? result_type( std::forward<F>(f)( deref(std::forward<M0>(m0)), deref(std::forward<M>(m))... ) )
       : first_unexpected( std::forward<M0>(m0), std::forward<M>(m)... )
@@ -63,10 +63,10 @@ namespace functional
     static BOOST_CONSTEXPR auto
     bind(M&& m, F&& f,
         REQUIRES(boost::is_same<FR, void>::value)
-    ) -> errored::rebind<decay_t<M>, FR>
+    ) -> typename errored::rebind<decay_t<M>, FR>::type
     {
       using namespace errored;
-      typedef rebind<decay_t<M>, FR> result_type;
+      typedef typename rebind<decay_t<M>, FR>::type result_type;
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
       if(has_value(m))
       {
@@ -87,10 +87,10 @@ namespace functional
     bind(M&& m, F&& f,
         REQUIRES((! boost::is_same<FR, void>::value
                 && ! boost::functional::is_monad<FR>::value)
-        )) -> errored::rebind<decay_t<M>, FR>
+        )) -> typename errored::rebind<decay_t<M>, FR>::type
     {
       using namespace errored;
-      typedef rebind<decay_t<M>, FR> result_type;
+      typedef typename rebind<decay_t<M>, FR>::type result_type;
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
       if(has_value(m))
       {

@@ -27,12 +27,20 @@
 #  if (__GNUC__*10000 + __GNUC_MINOR__*100 + __GNUC_PATCHLEVEL__ < 40801) || !defined(__GXX_EXPERIMENTAL_CXX0X__)
 #   define BOOST_EXPECTED_NO_CXX11_RVALUE_REFERENCE_FOR_THIS
 #  endif
-# else
+# elif defined BOOST_NO_CXX11_REF_QUALIFIERS
 #  define BOOST_EXPECTED_NO_CXX11_RVALUE_REFERENCE_FOR_THIS
 # endif
 
 # if defined __clang__
 #  if (__clang_major__ < 3) || (__clang_major__ == 3) && (__clang_minor__ < 5)
+#   define BOOST_EXPECTED_NO_CXX11_MOVE_ACCESSORS
+#  endif
+# elif defined __GNUC__
+#  if (__GNUC__*10000 + __GNUC_MINOR__*100 + __GNUC_PATCHLEVEL__ < 50000)
+#   define BOOST_EXPECTED_NO_CXX11_MOVE_ACCESSORS
+#  endif
+# elif defined _MSC_VER
+#  if _MSC_VER < 1900 // VS14
 #   define BOOST_EXPECTED_NO_CXX11_MOVE_ACCESSORS
 #  endif
 # else
@@ -42,7 +50,7 @@
 # if defined BOOST_EXPECTED_NO_CXX11_MOVE_ACCESSORS
 #define BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS
 #else
-#define BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS constexpr
+#define BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS BOOST_CONSTEXPR
 #endif
 
 // ../../../boost/expected/expected.hpp: In instantiation of ‘class boost::expected<int>’:

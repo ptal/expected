@@ -30,7 +30,7 @@ namespace functional
 
     template <class F, class M0, class ...M, class FR = decltype( std::declval<F>()(*std::declval<M0>(), *std::declval<M>()...) )>
     static auto
-    map(F&& f, M0&& m0, M&& ...ms) -> rebindable::rebind<decay_t<M0>, FR>
+    map(F&& f, M0&& m0, M&& ...ms) -> typename rebindable::rebind<decay_t<M0>, FR>::type
     {
       return M0::map(std::forward<F>(f), std::forward<M0>(m0), std::forward<M>(ms)...);
     }

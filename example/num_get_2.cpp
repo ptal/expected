@@ -39,7 +39,7 @@ namespace boost
     template <class T, class I, typename E>
     struct rebindable_traits<pair_expected<I, T, E>> : rebindable_traits<category::default_>
     {
-      constexpr static bool value = true;
+      static BOOST_CONSTEXPR_OR_CONST bool value = true;
 
       template <class M>
       using value_type = typename M::value_type;
@@ -181,12 +181,12 @@ pair_expected<InputIterator, long, std::ios_base::iostate> matchedString(std::st
 {
   if (*s != str[0])
   {
-    return make_pair_expected_from_error<long> (s, std::ios_base::goodbit);
+    return make_pair_expected_from_error<long>(s, (std::ios_base::iostate) std::ios_base::goodbit);
   }
   ++s;
   if (*s != str[1])
   {
-    return make_pair_expected_from_error<long> (s, std::ios_base::goodbit);
+    return make_pair_expected_from_error<long>(s, (std::ios_base::iostate) std::ios_base::goodbit);
   }
   ++s;
   return make_pair_expected<std::ios_base::iostate> (s, 0L); // todo check the match

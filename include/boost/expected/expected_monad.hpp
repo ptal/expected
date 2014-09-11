@@ -23,14 +23,14 @@ namespace functional
   struct valued_traits<expected<T, E>> : valued_traits<category::pointer_like>
   {
     template <class M>
-    static constexpr auto get_value(M&& m) -> decltype(m.value())
+    static BOOST_CONSTEXPR auto get_value(M&& m) -> decltype(m.value())
     { return m.value(); }
   };
 
   template <class T, class E>
   struct errored_traits<expected<T, E> > : errored_traits<category::forward> {
     template <class M>
-    static constexpr auto get_errored(M&& m) -> decltype(m.get_unexpected())
+    static BOOST_CONSTEXPR auto get_errored(M&& m) -> decltype(m.get_unexpected())
     { return m.get_unexpected();};
 
   };

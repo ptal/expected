@@ -51,6 +51,8 @@ project expected
 
       # Warning suppression:
       <toolset>msvc:<cxxflags>/wd4100 # unreferenced formal parameter.
+      <toolset>msvc:<cxxflags>/wd4456 # declaration hides previous declaration.
+      <toolset>msvc:<cxxflags>/wd4459 # declaration hides global declaration.
 
       <toolset>msvc:<iterator_debugging>off
       <toolset>intel-win:<iterator_debugging>off

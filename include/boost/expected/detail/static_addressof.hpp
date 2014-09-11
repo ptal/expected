@@ -31,7 +31,7 @@ struct has_overloaded_addressof
   template <class X, size_t S = sizeof(std::declval< X&>().operator&()) >
   static BOOST_CONSTEXPR bool has_overload(bool) { return true; }
 
-  BOOST_CONSTEXPR static bool value = has_overload<T>(true);
+  static BOOST_CONSTEXPR_OR_CONST bool value = has_overload<T>(true);
 };
 
 template <typename T>
