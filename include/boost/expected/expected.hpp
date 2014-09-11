@@ -1296,7 +1296,7 @@ public:
   template <typename Ex, typename F>
   this_type catch_exception(BOOST_RV_REF(F) f,
     REQUIRES(
-        boost::is_same<typename result_of<F(Ex &)>::type, this_type>::value
+        boost::is_same<typename std::result_of<F(Ex &)>::type, this_type>::value
         )) const
   {
     try {
@@ -1316,7 +1316,7 @@ public:
   template <typename Ex, typename F>
   this_type catch_exception(BOOST_RV_REF(F) f,
     REQUIRES(
-        boost::is_same<typename result_of<F(Ex &)>::type, value_type>::value
+        boost::is_same<typename std::result_of<F(Ex &)>::type, value_type>::value
         )) const
   {
     try {
@@ -1824,7 +1824,7 @@ public:
   template <typename Ex, typename F>
   this_type catch_exception(BOOST_RV_REF(F) f,
     REQUIRES(
-        boost::is_same<typename result_of<F(Ex &)>::type, this_type>::value
+        boost::is_same<typename std::result_of<F(Ex &)>::type, this_type>::value
         )) const
   {
     try {
@@ -1844,7 +1844,7 @@ public:
   template <typename Ex, typename F>
   this_type catch_exception(BOOST_RV_REF(F) f,
     REQUIRES(
-        boost::is_same<typename result_of<F(Ex &)>::type, value_type>::value
+        boost::is_same<typename std::result_of<F(Ex &)>::type, value_type>::value
         )) const
   {
     try {

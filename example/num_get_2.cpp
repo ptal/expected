@@ -181,12 +181,12 @@ pair_expected<InputIterator, long, std::ios_base::iostate> matchedString(std::st
 {
   if (*s != str[0])
   {
-    return make_pair_expected_from_error<long> (s, std::ios_base::goodbit);
+    return make_pair_expected_from_error<long>(s, (std::ios_base::iostate) std::ios_base::goodbit);
   }
   ++s;
   if (*s != str[1])
   {
-    return make_pair_expected_from_error<long> (s, std::ios_base::goodbit);
+    return make_pair_expected_from_error<long>(s, (std::ios_base::iostate) std::ios_base::goodbit);
   }
   ++s;
   return make_pair_expected<std::ios_base::iostate> (s, 0L); // todo check the match

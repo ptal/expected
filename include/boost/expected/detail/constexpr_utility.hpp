@@ -14,28 +14,6 @@
 namespace boost {
 
 // workaround: std utility functions aren't constexpr yet
-#ifdef BOOST_MSVC
-template <class T> inline
-BOOST_EXPECTED_CONSTEXPR T&& constexpr_forward(T& t) BOOST_NOEXCEPT
-{
-  return static_cast<T&&>(t);
-}
-
-template <class T> inline
-BOOST_EXPECTED_CONSTEXPR T&& constexpr_forward(T&& t) BOOST_NOEXCEPT
-{
-  static_assert(!std::is_lvalue_reference<T>::value, "!!");
-  return static_cast<T&&>(t);
-}
-
-template <class T> inline
-BOOST_EXPECTED_CONSTEXPR T&& constexpr_move(T&& t) BOOST_NOEXCEPT
-{
-  return static_cast<T&&>(t);
-}
-
-#else
-
 template <class T> inline
 BOOST_EXPECTED_CONSTEXPR T&& constexpr_forward(typename std::remove_reference<T>::type& t) BOOST_NOEXCEPT
 {
@@ -45,16 +23,15 @@ BOOST_EXPECTED_CONSTEXPR T&& constexpr_forward(typename std::remove_reference<T>
 template <class T> inline
 BOOST_EXPECTED_CONSTEXPR T&& constexpr_forward(typename std::remove_reference<T>::type&& t) BOOST_NOEXCEPT
 {
-  static_assert(!std::is_lvalue_reference<T>::value, "!!");
-  return static_cast<T&&>(t);
+    static_assert(!std::is_lvalue_reference<T>::value, "!!");
+    return static_cast<T&&>(t);
 }
 
 template <class T> inline
 BOOST_EXPECTED_CONSTEXPR typename std::remove_reference<T>::type&& constexpr_move(T&& t) BOOST_NOEXCEPT
 {
-  return static_cast<typename std::remove_reference<T>::type&&>(t);
+    return static_cast<typename std::remove_reference<T>::type&&>(t);
 }
-#endif
 
 template<class T> inline
 BOOST_EXPECTED_CONSTEXPR T * constexpr_addressof(T& Val)
