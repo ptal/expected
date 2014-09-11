@@ -27,8 +27,8 @@
 #endif
 #endif
 
-# define REQUIRES(...) typename ::boost::enable_if_c<__VA_ARGS__, void*>::type = 0
-# define T_REQUIRES(...) typename = typename ::boost::enable_if_c<(__VA_ARGS__)>::type
+#define REQUIRES(...) typename ::boost::enable_if_c<__VA_ARGS__, void*>::type = 0
+#define T_REQUIRES(...) typename = typename ::boost::enable_if_c<(__VA_ARGS__)>::type
 
 namespace boost
 {

@@ -755,7 +755,7 @@ public:
     , T_REQUIRES(std::is_constructible<value_type, std::initializer_list<U> >::value)
 #endif
     >
-    BOOST_CONSTEXPR explicit expected(expect_t, std::initializer_list<U> il, BOOST_FWD_REF(Args)... args)
+  BOOST_CONSTEXPR explicit expected(expect_t, std::initializer_list<U> il, BOOST_FWD_REF(Args)... args)
   : base_type(in_place_t{}, il, constexpr_forward<Args>(args)...)
   {}
 
@@ -903,7 +903,7 @@ public:
   }
   BOOST_CONSTEXPR value_type&& operator*() && BOOST_NOEXCEPT
   {
-    return static_cast<value_type&&>(constexpr_move(contained_val()));
+    return constexpr_move(contained_val());
   }
 #else
   BOOST_CONSTEXPR value_type const& operator*() const BOOST_NOEXCEPT
@@ -1880,7 +1880,7 @@ public:
 
 // Relational operators
 template <class T, class E>
-BOOST_CONSTEXPR bool operator==(const expected<T, E>& x, const expected<T, E>& y)
+BOOST_CONSTEXPR bool operator==(const expected<T,E>& x, const expected<T,E>& y)
 {
   return (x && y)
     ? *x == *y
@@ -1890,7 +1890,7 @@ BOOST_CONSTEXPR bool operator==(const expected<T, E>& x, const expected<T, E>& y
 }
 
 template <class E>
-BOOST_CONSTEXPR bool operator==(const expected<E, void>& x, const expected<E, void>& y)
+BOOST_CONSTEXPR bool operator==(const expected<E,void>& x, const expected<E,void>& y)
 {
   return (x && y)
     ? true
@@ -1900,13 +1900,13 @@ BOOST_CONSTEXPR bool operator==(const expected<E, void>& x, const expected<E, vo
 }
 
 template <class T, class E>
-BOOST_CONSTEXPR bool operator!=(const expected<T, E>& x, const expected<T, E>& y)
+BOOST_CONSTEXPR bool operator!=(const expected<T,E>& x, const expected<T,E>& y)
 {
   return !(x == y);
 }
 
 template <class T, class E>
-BOOST_CONSTEXPR bool operator<(const expected<T, E>& x, const expected<T, E>& y)
+BOOST_CONSTEXPR bool operator<(const expected<T,E>& x, const expected<T,E>& y)
 {
   return (x)
     ? (y) ? *x < *y : false
@@ -1914,7 +1914,7 @@ BOOST_CONSTEXPR bool operator<(const expected<T, E>& x, const expected<T, E>& y)
 }
 
 template <class E>
-BOOST_CONSTEXPR bool operator<(const expected<E, void>& x, const expected<E, void>& y)
+BOOST_CONSTEXPR bool operator<(const expected<E,void>& x, const expected<E,void>& y)
 {
   return (x)
     ? (y) ? false : false
@@ -1922,152 +1922,152 @@ BOOST_CONSTEXPR bool operator<(const expected<E, void>& x, const expected<E, voi
 }
 
 template <class T, class E>
-BOOST_CONSTEXPR bool operator>(const expected<T, E>& x, const expected<T, E>& y)
+BOOST_CONSTEXPR bool operator>(const expected<T,E>& x, const expected<T,E>& y)
 {
   return (y < x);
 }
 
 template <class T, class E>
-BOOST_CONSTEXPR bool operator<=(const expected<T, E>& x, const expected<T, E>& y)
+BOOST_CONSTEXPR bool operator<=(const expected<T,E>& x, const expected<T,E>& y)
 {
   return !(y < x);
 }
 
 template <class T, class E>
-BOOST_CONSTEXPR bool operator>=(const expected<T, E>& x, const expected<T, E>& y)
+BOOST_CONSTEXPR bool operator>=(const expected<T,E>& x, const expected<T,E>& y)
 {
   return !(x < y);
 }
 
 // Relational operators with T
 template <class T, class E>
-BOOST_CONSTEXPR bool operator==(const expected<T, E>& x, const T& v)
+BOOST_CONSTEXPR bool operator==(const expected<T,E>& x, const T& v)
 {
   return (x) ? *x == v :  false;
 }
 template <class E>
-BOOST_CONSTEXPR bool operator==(const E& v, const expected<E, void>& x)
+BOOST_CONSTEXPR bool operator==(const E& v, const expected<E,void>& x)
 {
   return x == v;
 }
 
 template <class T, class E>
-BOOST_CONSTEXPR bool operator!=(const expected<T, E>& x, const T& v)
+BOOST_CONSTEXPR bool operator!=(const expected<T,E>& x, const T& v)
 {
   return ! (x == v);
 }
 template <class T, class E>
-BOOST_CONSTEXPR bool operator!=(const T& v, const expected<T, E>& x)
+BOOST_CONSTEXPR bool operator!=(const T& v, const expected<T,E>& x)
 {
   return x != v;
 }
 
 template <class T, class E>
-BOOST_CONSTEXPR bool operator<(const expected<T, E>& x, const T& v)
+BOOST_CONSTEXPR bool operator<(const expected<T,E>& x, const T& v)
 {
   return (x) ? (*x < v) : true ;
 }
 template <class T, class E>
-BOOST_CONSTEXPR bool operator<(const T& v, const expected<T, E>& x)
+BOOST_CONSTEXPR bool operator<(const T& v, const expected<T,E>& x)
 {
   return (x) ? (v < x) : false ;
 }
 
 template <class T, class E>
-BOOST_CONSTEXPR bool operator>(const expected<T, E>& x, const T& v)
+BOOST_CONSTEXPR bool operator>(const expected<T,E>& x, const T& v)
 {
   return v < x;
 }
 template <class T, class E>
-BOOST_CONSTEXPR bool operator>(const T& v, const expected<T, E>& x)
+BOOST_CONSTEXPR bool operator>(const T& v, const expected<T,E>& x)
 {
   return x < v;
 }
 
 template <class T, class E>
-BOOST_CONSTEXPR bool operator<=(const expected<T, E>& x, const T& v)
+BOOST_CONSTEXPR bool operator<=(const expected<T,E>& x, const T& v)
 {
   return ! (v < x);
 }
 template <class T, class E>
-BOOST_CONSTEXPR bool operator<=(const T& v, const expected<T, E>& x)
+BOOST_CONSTEXPR bool operator<=(const T& v, const expected<T,E>& x)
 {
   return ! (x < v);
 }
 
 template <class T, class E>
-BOOST_CONSTEXPR bool operator>=(const expected<T, E>& x, const T& v)
+BOOST_CONSTEXPR bool operator>=(const expected<T,E>& x, const T& v)
 {
   return ! (x < v);
 }
 template <class T, class E>
-BOOST_CONSTEXPR bool operator>=(const T& v, const expected<T, E>& x)
+BOOST_CONSTEXPR bool operator>=(const T& v, const expected<T,E>& x)
 {
   return ! (v < x);
 }
 
 // Relational operators with unexpected_type<E>
 template <class T, class E>
-BOOST_CONSTEXPR bool operator==(const expected<T, E>& x, const unexpected_type<E>& e)
+BOOST_CONSTEXPR bool operator==(const expected<T,E>& x, const unexpected_type<E>& e)
 {
   return (!x) ? x.get_unexpected() == e :  false;
 }
 template <class T, class E>
-BOOST_CONSTEXPR bool operator==(const unexpected_type<E>& e, const expected<T, E>& x)
+BOOST_CONSTEXPR bool operator==(const unexpected_type<E>& e, const expected<T,E>& x)
 {
   return (x == e);
 }
 template <class T, class E>
-BOOST_CONSTEXPR bool operator!=(const expected<T, E>& x, const unexpected_type<E>& e)
+BOOST_CONSTEXPR bool operator!=(const expected<T,E>& x, const unexpected_type<E>& e)
 {
   return ! (x == e);
 }
 template <class T, class E>
-BOOST_CONSTEXPR bool operator!=(const unexpected_type<E>& e, const expected<T, E>& x)
+BOOST_CONSTEXPR bool operator!=(const unexpected_type<E>& e, const expected<T,E>& x)
 {
   return ! (x == e);
 }
 
 template <class T, class E>
-BOOST_CONSTEXPR bool operator<(const expected<T, E>& x, const unexpected_type<E>& e)
+BOOST_CONSTEXPR bool operator<(const expected<T,E>& x, const unexpected_type<E>& e)
 {
   return (!x) ? (x.get_unexpected() < e) : false ;
 }
 template <class T, class E>
-BOOST_CONSTEXPR bool operator<(const unexpected_type<E>& e, const expected<T, E>& x)
+BOOST_CONSTEXPR bool operator<(const unexpected_type<E>& e, const expected<T,E>& x)
 {
   return (!x) ? (e < x.get_unexpected()) : true ;
 }
 
 template <class T, class E>
-BOOST_CONSTEXPR bool operator>(const expected<T, E>& x, const unexpected_type<E>& e)
+BOOST_CONSTEXPR bool operator>(const expected<T,E>& x, const unexpected_type<E>& e)
 {
   return (e <  x);
 }
 template <class T, class E>
-BOOST_CONSTEXPR bool operator>(const unexpected_type<E>& e, const expected<T, E>& x)
+BOOST_CONSTEXPR bool operator>(const unexpected_type<E>& e, const expected<T,E>& x)
 {
   return (x <  e);
 }
 
 template <class T, class E>
-BOOST_CONSTEXPR bool operator<=(const expected<T, E>& x, const unexpected_type<E>& e)
+BOOST_CONSTEXPR bool operator<=(const expected<T,E>& x, const unexpected_type<E>& e)
 {
   return ! (e < x);
 }
 template <class T, class E>
-BOOST_CONSTEXPR bool operator<=(const unexpected_type<E>& e, const expected<T, E>& x)
+BOOST_CONSTEXPR bool operator<=(const unexpected_type<E>& e, const expected<T,E>& x)
 {
   return ! (x < e);
 }
 
 template <class T, class E>
-BOOST_CONSTEXPR bool operator>=(const expected<T, E>& x, const unexpected_type<E>& e)
+BOOST_CONSTEXPR bool operator>=(const expected<T,E>& x, const unexpected_type<E>& e)
 {
   return ! (e > x);
 }
 template <class T, class E>
-BOOST_CONSTEXPR bool operator>=(const unexpected_type<E>& e, const expected<T, E>& x)
+BOOST_CONSTEXPR bool operator>=(const unexpected_type<E>& e, const expected<T,E>& x)
 {
   return ! (x > e);
 }
@@ -2082,7 +2082,7 @@ void swap(expected<T,E>& x, expected<T,E>& y) BOOST_NOEXCEPT_IF(BOOST_NOEXCEPT_E
 // Factories
 
 template<typename T>
-BOOST_CONSTEXPR expected<decay_t<T>, std::exception_ptr> make_expected(BOOST_FWD_REF(T) v)
+BOOST_CONSTEXPR expected<decay_t<T>, std::exception_ptr> make_expected(BOOST_FWD_REF(T) v )
 {
   return expected<decay_t<T>, std::exception_ptr>(constexpr_forward<T>(v));
 }
@@ -2157,7 +2157,7 @@ make_expected_from_call(F funct
 }
 
 template <class T, class E>
-BOOST_FORCEINLINE BOOST_CONSTEXPR unexpected_type<E> make_unexpected(expected<T, E>& ex)
+BOOST_FORCEINLINE BOOST_CONSTEXPR unexpected_type<E> make_unexpected(expected<T,E>& ex)
 {
   return unexpected_type<E>(ex.error());
 }
@@ -2168,22 +2168,22 @@ namespace expected_detail
   // Factories
 
   template <class T, class E>
-  inline BOOST_CONSTEXPR expected<T, E> unwrap(expected<expected<T, E>, E > const& ee)
+  inline BOOST_CONSTEXPR expected<T,E> unwrap(expected<expected<T,E>, E > const& ee)
   {
      return (ee) ? *ee : ee.get_unexpected();
   }
   template <class T, class E>
-  inline BOOST_CONSTEXPR expected<T, E> unwrap(expected<expected<T, E>, E >&& ee)
+  inline BOOST_CONSTEXPR expected<T,E> unwrap(expected<expected<T,E>, E >&& ee)
   {
     return (ee) ? std::move(*ee) : ee.get_unexpected();
   }
   template <class T, class E>
-  inline BOOST_CONSTEXPR expected<T, E> unwrap(expected<T, E> const& e)
+  inline BOOST_CONSTEXPR expected<T,E> unwrap(expected<T,E> const& e)
   {
     return e;
   }
   template <class T, class E>
-  inline BOOST_CONSTEXPR expected<T, E> unwrap(expected<T, E> && e)
+  inline BOOST_CONSTEXPR expected<T,E> unwrap(expected<T,E> && e)
   {
     return std::move(e);
   }
@@ -2192,7 +2192,7 @@ namespace expected_detail
 
 #if ! defined BOOST_EXPECTED_NO_CXX11_RVALUE_REFERENCE_FOR_THIS
   template <class T, class E>
-  inline BOOST_CONSTEXPR expected_detail::unwrap_result_type_t<expected<T, E>>
+  inline BOOST_CONSTEXPR expected_detail::unwrap_result_type_t<expected<T,E>>
   expected<T,E>::unwrap() const&
   {
     return expected_detail::unwrap(*this);

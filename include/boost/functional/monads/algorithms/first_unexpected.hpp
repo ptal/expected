@@ -17,7 +17,7 @@ namespace errored
 {
 
   template< class M, class = if_errored<decay_t<M>> >
-  BOOST_CONSTEXPR errored_type<M> first_unexpected(M&& m)
+  BOOST_CONSTEXPR errored_type<M> first_unexpected( M&& m )
   {
     return get_errored(std::forward<M>(m));
   }
