@@ -39,7 +39,11 @@
 #  if (__GNUC__*10000 + __GNUC_MINOR__*100 + __GNUC_PATCHLEVEL__ < 50000)
 #   define BOOST_EXPECTED_NO_CXX11_MOVE_ACCESSORS
 #  endif
-# elif ! defined _MSC_VER  // Only works on MSVC because constexpr is disabled
+# elif defined _MSC_VER
+#  if _MSC_VER < 1900 // VS14
+#   define BOOST_EXPECTED_NO_CXX11_MOVE_ACCESSORS
+#  endif
+# else
 #  define BOOST_EXPECTED_NO_CXX11_MOVE_ACCESSORS
 # endif
 
