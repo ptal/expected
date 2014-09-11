@@ -35,14 +35,14 @@ struct has_overloaded_addressof
 };
 
 template <typename T>
-BOOST_EXPECTED_RELAXED_CONSTEXPR T* static_addressof(T& ref,
+BOOST_EXPECTED_CONSTEXPR T* static_addressof(T& ref,
   REQUIRES(!has_overloaded_addressof<T>::value))
 {
   return &ref;
 }
 
 template <typename T>
-BOOST_EXPECTED_RELAXED_CONSTEXPR T* static_addressof(T& ref,
+BOOST_EXPECTED_CONSTEXPR T* static_addressof(T& ref,
   REQUIRES(has_overloaded_addressof<T>::value))
 {
   return std::addressof(ref);

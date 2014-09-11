@@ -21,7 +21,7 @@
 
 #if defined BOOST_NO_CXX11_CONSTEXPR
 #if defined BOOST_MSVC && _MSC_VER>=1900  // VS 14 with partial constexpr support
-#define BOOST_EXPECTED_CONSTEXPR constexpr
+//#define BOOST_EXPECTED_CONSTEXPR constexpr
 #define BOOST_EXPECTED_CONSTEXPR_OR_CONST constexpr
 #endif
 #endif
@@ -31,13 +31,6 @@
 #endif
 #ifndef BOOST_EXPECTED_CONSTEXPR_OR_CONST
 #define BOOST_EXPECTED_CONSTEXPR_OR_CONST BOOST_CONSTEXPR_OR_CONST
-#endif
-#ifndef BOOST_EXPECTED_RELAXED_CONSTEXPR
-#ifdef BOOST_NO_CXX14_RELAXED_CONSTEXPR
-#define BOOST_EXPECTED_RELAXED_CONSTEXPR
-#else
-#define BOOST_EXPECTED_RELAXED_CONSTEXPR constexpr
-#endif
 #endif
 
 # if defined __clang__

@@ -32,11 +32,11 @@ namespace functional
     using errored_type = typename M::errored_type;
 
     template <class M>
-    static BOOST_EXPECTED_RELAXED_CONSTEXPR auto get_errored(M&& m) -> decltype(m.get_errored())
+    static BOOST_EXPECTED_CONSTEXPR auto get_errored(M&& m) -> decltype(m.get_errored())
     { return m.get_errored();}
 
     template <class M>
-    static BOOST_EXPECTED_RELAXED_CONSTEXPR auto error(M&& m) -> decltype(m.error())
+    static BOOST_EXPECTED_CONSTEXPR auto error(M&& m) -> decltype(m.error())
     { return m.error();}
   };
 
@@ -60,13 +60,13 @@ namespace errored
   using error_type = typename Traits::template error_type<M>;
 
   template <class M, class Traits = if_errored<decay_t<M>> >
-  static BOOST_EXPECTED_RELAXED_CONSTEXPR auto
+  static BOOST_EXPECTED_CONSTEXPR auto
   get_errored(M&& e) -> decltype(Traits::get_errored(std::forward<M>(e)))
   {
     return Traits::get_errored(std::forward<M>(e));
   }
   template <class M, class Traits = if_errored<decay_t<M>> >
-  static BOOST_EXPECTED_RELAXED_CONSTEXPR auto
+  static BOOST_EXPECTED_CONSTEXPR auto
   error(M&& e) -> decltype(Traits::error(std::forward<M>(e)))
   {
     return Traits::error(std::forward<M>(e));

@@ -147,13 +147,13 @@ namespace error {
 }
 
 struct in_place_t {};
-BOOST_CONSTEXPR_OR_CONST in_place_t in_place2 = {};
+BOOST_EXPECTED_CONSTEXPR_OR_CONST in_place_t in_place2 = {};
 
 struct expect_t {};
-BOOST_CONSTEXPR_OR_CONST expect_t expect = {};
+BOOST_EXPECTED_CONSTEXPR_OR_CONST expect_t expect = {};
 
 struct unexpect_t {};
-BOOST_CONSTEXPR_OR_CONST unexpect_t unexpect = {};
+BOOST_EXPECTED_CONSTEXPR_OR_CONST unexpect_t unexpect = {};
 
 namespace detail {
 
@@ -166,26 +166,26 @@ union trivial_expected_storage
   error_type err;
   value_type val;
 
-  BOOST_CONSTEXPR trivial_expected_storage()
+  BOOST_EXPECTED_CONSTEXPR trivial_expected_storage()
     BOOST_NOEXCEPT_IF(has_nothrow_default_constructor<value_type>::value)
   : err()
   {}
 
-  BOOST_CONSTEXPR trivial_expected_storage(unexpected_type<error_type> const& e)
+  BOOST_EXPECTED_CONSTEXPR trivial_expected_storage(unexpected_type<error_type> const& e)
   : err(e.value())
   {}
 
-  BOOST_CONSTEXPR trivial_expected_storage(unexpected_type<error_type> && e)
+  BOOST_EXPECTED_CONSTEXPR trivial_expected_storage(unexpected_type<error_type> && e)
   : err(std::move(e.value()))
   {}
 
   template <class Err>
-  BOOST_CONSTEXPR trivial_expected_storage(unexpected_type<Err> const& e)
+  BOOST_EXPECTED_CONSTEXPR trivial_expected_storage(unexpected_type<Err> const& e)
   : err(error::make_error<error_type>(e.value()))
   {}
 
   template <class... Args>
-  BOOST_CONSTEXPR trivial_expected_storage(in_place_t, BOOST_FWD_REF(Args)... args)
+  BOOST_EXPECTED_CONSTEXPR trivial_expected_storage(in_place_t, BOOST_FWD_REF(Args)... args)
   : val(constexpr_forward<Args>(args)...)
   {}
 
@@ -200,23 +200,23 @@ union trivial_expected_storage<void, E>
   error_type err;
   unsigned char dummy;
 
-  BOOST_CONSTEXPR trivial_expected_storage()
+  BOOST_EXPECTED_CONSTEXPR trivial_expected_storage()
   : err()
   {}
 
-  BOOST_CONSTEXPR trivial_expected_storage(unexpected_type<error_type> const& e)
+  BOOST_EXPECTED_CONSTEXPR trivial_expected_storage(unexpected_type<error_type> const& e)
   : err(e.value())
   {}
-  BOOST_CONSTEXPR trivial_expected_storage(unexpected_type<error_type> && e)
+  BOOST_EXPECTED_CONSTEXPR trivial_expected_storage(unexpected_type<error_type> && e)
   : err(std::move(e.value()))
   {}
 
   template <class Err>
-  BOOST_CONSTEXPR trivial_expected_storage(unexpected_type<Err> const& e)
+  BOOST_EXPECTED_CONSTEXPR trivial_expected_storage(unexpected_type<Err> const& e)
   : err(error::make_error<error_type>(e.value()))
   {}
 
-  BOOST_CONSTEXPR trivial_expected_storage(in_place_t)
+  BOOST_EXPECTED_CONSTEXPR trivial_expected_storage(in_place_t)
   : dummy(0)
   {}
   ~trivial_expected_storage() = default;
@@ -231,24 +231,24 @@ union no_trivial_expected_storage
   error_type err;
   value_type val;
 
-  BOOST_CONSTEXPR no_trivial_expected_storage()
+  BOOST_EXPECTED_CONSTEXPR no_trivial_expected_storage()
   : err()
   {}
 
-  BOOST_CONSTEXPR no_trivial_expected_storage(unexpected_type<error_type> const& e)
+  BOOST_EXPECTED_CONSTEXPR no_trivial_expected_storage(unexpected_type<error_type> const& e)
   : err(e.value())
   {}
-  BOOST_CONSTEXPR no_trivial_expected_storage(unexpected_type<error_type> && e)
+  BOOST_EXPECTED_CONSTEXPR no_trivial_expected_storage(unexpected_type<error_type> && e)
   : err(std::move(e.value()))
   {}
 
   template <class Err>
-  BOOST_EXPECTED_RELAXED_CONSTEXPR no_trivial_expected_storage(unexpected_type<Err> const& e)
+  BOOST_EXPECTED_CONSTEXPR no_trivial_expected_storage(unexpected_type<Err> const& e)
   : err(error::make_error<error_type>(e.value()))
   {}
 
   template <class... Args>
-  BOOST_CONSTEXPR no_trivial_expected_storage(in_place_t, BOOST_FWD_REF(Args)... args) //BOOST_NOEXCEPT_IF()
+  BOOST_EXPECTED_CONSTEXPR no_trivial_expected_storage(in_place_t, BOOST_FWD_REF(Args)... args) //BOOST_NOEXCEPT_IF()
   : val(constexpr_forward<Args>(args)...)
   {}
 
@@ -263,30 +263,30 @@ union no_trivial_expected_storage<void, E>
   error_type err;
   unsigned char dummy;
 
-  BOOST_CONSTEXPR no_trivial_expected_storage()
+  BOOST_EXPECTED_CONSTEXPR no_trivial_expected_storage()
   : err()
   {}
 
-  BOOST_CONSTEXPR no_trivial_expected_storage(unexpected_type<error_type> const& e)
+  BOOST_EXPECTED_CONSTEXPR no_trivial_expected_storage(unexpected_type<error_type> const& e)
   : err(e.value())
   {}
-  BOOST_CONSTEXPR no_trivial_expected_storage(unexpected_type<error_type> && e)
+  BOOST_EXPECTED_CONSTEXPR no_trivial_expected_storage(unexpected_type<error_type> && e)
   : err(boost::move(e.value()))
   {}
 
   template <class Err>
-  BOOST_EXPECTED_RELAXED_CONSTEXPR no_trivial_expected_storage(unexpected_type<Err> const& e)
+  BOOST_EXPECTED_CONSTEXPR no_trivial_expected_storage(unexpected_type<Err> const& e)
   : err(error::make_error<error_type>(e.value()))
   {}
 
-  BOOST_CONSTEXPR no_trivial_expected_storage(in_place_t)
+  BOOST_EXPECTED_CONSTEXPR no_trivial_expected_storage(in_place_t)
   : dummy(0)
   {}
 
   ~no_trivial_expected_storage() {};
 };
 
-BOOST_CONSTEXPR struct only_set_valid_t{} only_set_valid{};
+BOOST_EXPECTED_CONSTEXPR struct only_set_valid_t{} only_set_valid{};
 
 template <typename T, typename E >
 struct trivial_expected_base
@@ -297,50 +297,50 @@ struct trivial_expected_base
   bool has_value;
   trivial_expected_storage<T, E> storage;
 
-  BOOST_CONSTEXPR trivial_expected_base()
+  BOOST_EXPECTED_CONSTEXPR trivial_expected_base()
     //BOOST_NOEXCEPT_IF(has_nothrow_default_constructor<value_type>::value)
   : has_value(false), storage()
   {}
 
-  BOOST_CONSTEXPR trivial_expected_base(only_set_valid_t, bool has_value)
+  BOOST_EXPECTED_CONSTEXPR trivial_expected_base(only_set_valid_t, bool has_value)
   : has_value(has_value)
   {}
 
-  BOOST_CONSTEXPR trivial_expected_base(const value_type& v)
+  BOOST_EXPECTED_CONSTEXPR trivial_expected_base(const value_type& v)
   : has_value(true), storage(in_place2, v)
   {}
 
-  BOOST_CONSTEXPR trivial_expected_base(BOOST_FWD_REF(value_type) v)
+  BOOST_EXPECTED_CONSTEXPR trivial_expected_base(BOOST_FWD_REF(value_type) v)
   : has_value(true), storage(in_place2, constexpr_move(v))
   {}
 
-  BOOST_CONSTEXPR trivial_expected_base(unexpected_type<error_type> const& e)
+  BOOST_EXPECTED_CONSTEXPR trivial_expected_base(unexpected_type<error_type> const& e)
   : has_value(false), storage(e)
   {}
 
-  BOOST_CONSTEXPR trivial_expected_base(unexpected_type<error_type> && e)
+  BOOST_EXPECTED_CONSTEXPR trivial_expected_base(unexpected_type<error_type> && e)
   : has_value(false), storage(constexpr_forward<unexpected_type<error_type>>(e))
   {}
 
   template <class Err>
-  BOOST_CONSTEXPR trivial_expected_base(unexpected_type<Err> const& e)
+  BOOST_EXPECTED_CONSTEXPR trivial_expected_base(unexpected_type<Err> const& e)
   : has_value(false), storage(e)
   {}
   template <class Err>
-  BOOST_CONSTEXPR trivial_expected_base(unexpected_type<Err> && e)
+  BOOST_EXPECTED_CONSTEXPR trivial_expected_base(unexpected_type<Err> && e)
   : has_value(false), storage(constexpr_forward<unexpected_type<Err>>(e))
   {}
 
 
 
   template <class... Args>
-  explicit BOOST_CONSTEXPR
+  explicit BOOST_EXPECTED_CONSTEXPR
   trivial_expected_base(in_place_t, BOOST_FWD_REF(Args)... args)
   : has_value(true), storage(in_place2, constexpr_forward<Args>(args)...)
   {}
 
   template <class U, class... Args>
-  explicit BOOST_CONSTEXPR
+  explicit BOOST_EXPECTED_CONSTEXPR
   trivial_expected_base(in_place_t, std::initializer_list<U> il, BOOST_FWD_REF(Args)... args)
   : has_value(true), storage(in_place2, il, constexpr_forward<Args>(args)...)
   {}
@@ -357,27 +357,27 @@ struct trivial_expected_base<void, E>
   bool has_value;
   trivial_expected_storage<void, E> storage;
 
-  BOOST_CONSTEXPR trivial_expected_base()
+  BOOST_EXPECTED_CONSTEXPR trivial_expected_base()
   : has_value(false), storage() {}
 
-  BOOST_CONSTEXPR trivial_expected_base(only_set_valid_t, bool has_value)
+  BOOST_EXPECTED_CONSTEXPR trivial_expected_base(only_set_valid_t, bool has_value)
   : has_value(has_value) {}
 
-  BOOST_CONSTEXPR trivial_expected_base(unexpected_type<error_type> const& e)
+  BOOST_EXPECTED_CONSTEXPR trivial_expected_base(unexpected_type<error_type> const& e)
   : has_value(false), storage(e)
   {}
-  BOOST_CONSTEXPR trivial_expected_base(unexpected_type<error_type> && e)
+  BOOST_EXPECTED_CONSTEXPR trivial_expected_base(unexpected_type<error_type> && e)
   : has_value(false), storage(constexpr_forward<unexpected_type<error_type>>(e))
   {}
   template <class Err>
-  BOOST_CONSTEXPR trivial_expected_base(unexpected_type<Err> const& e)
+  BOOST_EXPECTED_CONSTEXPR trivial_expected_base(unexpected_type<Err> const& e)
   : has_value(false), storage(e)
   {}
   template <class Err>
-  BOOST_CONSTEXPR trivial_expected_base(unexpected_type<Err> && e)
+  BOOST_EXPECTED_CONSTEXPR trivial_expected_base(unexpected_type<Err> && e)
   : has_value(false), storage(constexpr_forward<unexpected_type<Err>>(e))
   {}
-  BOOST_CONSTEXPR trivial_expected_base(in_place_t)
+  BOOST_EXPECTED_CONSTEXPR trivial_expected_base(in_place_t)
   : has_value(true), storage(in_place2)
   {}
 
@@ -393,48 +393,48 @@ struct no_trivial_expected_base
   bool has_value;
   no_trivial_expected_storage<T, E> storage;
 
-  BOOST_CONSTEXPR no_trivial_expected_base()
+  BOOST_EXPECTED_CONSTEXPR no_trivial_expected_base()
     //BOOST_NOEXCEPT_IF(has_nothrow_default_constructor<value_type>::value)
   : has_value(false), storage()
   {}
 
-  BOOST_CONSTEXPR no_trivial_expected_base(only_set_valid_t, bool has_value)
+  BOOST_EXPECTED_CONSTEXPR no_trivial_expected_base(only_set_valid_t, bool has_value)
   : has_value(has_value)
   {}
 
-  BOOST_CONSTEXPR no_trivial_expected_base(const value_type& v)
+  BOOST_EXPECTED_CONSTEXPR no_trivial_expected_base(const value_type& v)
   : has_value(true), storage(in_place2, v)
   {}
 
-  BOOST_CONSTEXPR no_trivial_expected_base(BOOST_FWD_REF(value_type) v)
+  BOOST_EXPECTED_CONSTEXPR no_trivial_expected_base(BOOST_FWD_REF(value_type) v)
   : has_value(true), storage(in_place2, constexpr_move(v))
   {}
 
-  BOOST_CONSTEXPR no_trivial_expected_base(unexpected_type<error_type> const& e)
+  BOOST_EXPECTED_CONSTEXPR no_trivial_expected_base(unexpected_type<error_type> const& e)
   : has_value(false), storage(e)
   {}
 
-  BOOST_CONSTEXPR no_trivial_expected_base(unexpected_type<error_type> && e)
+  BOOST_EXPECTED_CONSTEXPR no_trivial_expected_base(unexpected_type<error_type> && e)
   : has_value(false), storage(constexpr_forward<unexpected_type<error_type>>(e))
   {}
 
   template <class Err>
-  BOOST_CONSTEXPR no_trivial_expected_base(unexpected_type<Err> const& e)
+  BOOST_EXPECTED_CONSTEXPR no_trivial_expected_base(unexpected_type<Err> const& e)
   : has_value(false), storage(e)
   {}
   template <class Err>
-  BOOST_CONSTEXPR no_trivial_expected_base(unexpected_type<Err> && e)
+  BOOST_EXPECTED_CONSTEXPR no_trivial_expected_base(unexpected_type<Err> && e)
   : has_value(false), storage(constexpr_forward<unexpected_type<Err>>(e))
   {}
 
   template <class... Args>
-  explicit BOOST_CONSTEXPR
+  explicit BOOST_EXPECTED_CONSTEXPR
   no_trivial_expected_base(in_place_t, BOOST_FWD_REF(Args)... args)
   : has_value(true), storage(in_place2, constexpr_forward<Args>(args)...)
   {}
 
   template <class U, class... Args>
-  explicit BOOST_CONSTEXPR
+  explicit BOOST_EXPECTED_CONSTEXPR
   no_trivial_expected_base(in_place_t, std::initializer_list<U> il, BOOST_FWD_REF(Args)... args)
   : has_value(true), storage(in_place2, il, constexpr_forward<Args>(args)...)
   {}
@@ -454,30 +454,30 @@ struct no_trivial_expected_base<void, E> {
   bool has_value;
   no_trivial_expected_storage<void, E> storage;
 
-  BOOST_CONSTEXPR no_trivial_expected_base()
+  BOOST_EXPECTED_CONSTEXPR no_trivial_expected_base()
   : has_value(false), storage() {}
 
-  BOOST_CONSTEXPR no_trivial_expected_base(only_set_valid_t, bool has_value)
+  BOOST_EXPECTED_CONSTEXPR no_trivial_expected_base(only_set_valid_t, bool has_value)
   : has_value(has_value) {}
 
 
-  BOOST_CONSTEXPR no_trivial_expected_base(unexpected_type<error_type> const& e)
+  BOOST_EXPECTED_CONSTEXPR no_trivial_expected_base(unexpected_type<error_type> const& e)
   : has_value(false), storage(e)
   {}
-  BOOST_CONSTEXPR no_trivial_expected_base(unexpected_type<error_type> && e)
+  BOOST_EXPECTED_CONSTEXPR no_trivial_expected_base(unexpected_type<error_type> && e)
   : has_value(false), storage(constexpr_forward<unexpected_type<error_type>>(e))
   {}
 
   template <class Err>
-  BOOST_CONSTEXPR no_trivial_expected_base(unexpected_type<Err> const& e)
+  BOOST_EXPECTED_CONSTEXPR no_trivial_expected_base(unexpected_type<Err> const& e)
   : has_value(false), storage(e)
   {}
   template <class Err>
-  BOOST_CONSTEXPR no_trivial_expected_base(unexpected_type<Err> && e)
+  BOOST_EXPECTED_CONSTEXPR no_trivial_expected_base(unexpected_type<Err> && e)
   : has_value(false), storage(constexpr_forward<unexpected_type<Err>>(e))
   {}
 
-  BOOST_CONSTEXPR no_trivial_expected_base(in_place_t)
+  BOOST_EXPECTED_CONSTEXPR no_trivial_expected_base(in_place_t)
   : has_value(true), storage(in_place2)
   {}
 
@@ -558,35 +558,35 @@ private:
   BOOST_STATIC_ASSERT_MSG( !is_same_error_expect_t::value, "bad ErrorType" );
 
   value_type* dataptr() { return std::addressof(base_type::storage.val); }
-  BOOST_CONSTEXPR const value_type* dataptr() const { return static_addressof(base_type::storage.val); }
+  BOOST_EXPECTED_CONSTEXPR const value_type* dataptr() const { return static_addressof(base_type::storage.val); }
   error_type* errorptr() { return std::addressof(base_type::storage.err); }
-  BOOST_CONSTEXPR const error_type* errorptr() const { return static_addressof(base_type::storage.err); }
+  BOOST_EXPECTED_CONSTEXPR const error_type* errorptr() const { return static_addressof(base_type::storage.err); }
 
 #if ! defined BOOST_EXPECTED_NO_CXX11_RVALUE_REFERENCE_FOR_THIS
-  BOOST_CONSTEXPR const bool& contained_has_value() const& { return base_type::has_value; }
+  BOOST_EXPECTED_CONSTEXPR const bool& contained_has_value() const& { return base_type::has_value; }
   BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS
   bool& contained_has_value() & { return base_type::has_value; }
   BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS
   bool&& contained_has_value() && { return std::move(base_type::has_value); }
 
-  BOOST_CONSTEXPR const value_type& contained_val() const& { return base_type::storage.val; }
+  BOOST_EXPECTED_CONSTEXPR const value_type& contained_val() const& { return base_type::storage.val; }
   BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS
   value_type& contained_val() & { return base_type::storage.val; }
   BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS
   value_type&& contained_val() && { return std::move(base_type::storage.val); }
 
-  BOOST_CONSTEXPR const error_type& contained_err() const& { return base_type::storage.err; }
+  BOOST_EXPECTED_CONSTEXPR const error_type& contained_err() const& { return base_type::storage.err; }
   BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS
   error_type& contained_err() & { return base_type::storage.err; }
   BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS
   error_type&& contained_err() && { return std::move(base_type::storage.err); }
 
 #else
-  BOOST_CONSTEXPR const bool& contained_has_value() const BOOST_NOEXCEPT { return base_type::has_value; }
+  BOOST_EXPECTED_CONSTEXPR const bool& contained_has_value() const BOOST_NOEXCEPT { return base_type::has_value; }
   bool& contained_has_value() BOOST_NOEXCEPT { return base_type::has_value; }
-  BOOST_CONSTEXPR const value_type& contained_val() const { return base_type::storage.val; }
+  BOOST_EXPECTED_CONSTEXPR const value_type& contained_val() const { return base_type::storage.val; }
   value_type& contained_val() { return base_type::storage.val; }
-  BOOST_CONSTEXPR const error_type& contained_err() const { return base_type::storage.err; }
+  BOOST_EXPECTED_CONSTEXPR const error_type& contained_err() const { return base_type::storage.err; }
   error_type& contained_err() { return base_type::storage.err; }
 #endif
 
@@ -613,7 +613,7 @@ public:
 
   // Constructors/Destructors/Assignments
 
-  BOOST_CONSTEXPR expected(
+  BOOST_EXPECTED_CONSTEXPR expected(
      //REQUIRES(std::is_default_constructible<error_type>::value)
   ) BOOST_NOEXCEPT_IF(
   has_nothrow_default_constructor<error_type>::value
@@ -621,14 +621,14 @@ public:
   : base_type()
   {}
 
-  BOOST_CONSTEXPR expected(const value_type& v
+  BOOST_EXPECTED_CONSTEXPR expected(const value_type& v
     //, REQUIRES(std::is_copy_constructible<value_type>::value)
   )
   BOOST_NOEXCEPT_IF(has_nothrow_copy_constructor<value_type>::value)
   : base_type(v)
   {}
 
-  BOOST_CONSTEXPR expected(BOOST_RV_REF(value_type) v
+  BOOST_EXPECTED_CONSTEXPR expected(BOOST_RV_REF(value_type) v
     //, REQUIRES(std::is_move_constructible<value_type>::value)
   )
   BOOST_NOEXCEPT_IF(
@@ -733,7 +733,7 @@ public:
     //, T_REQUIRES(std::is_constructible<value_type, decay_t<Args>...>::value)
 #endif
     >
-  BOOST_CONSTEXPR explicit expected(in_place_t, BOOST_FWD_REF(Args)... args)
+  BOOST_EXPECTED_CONSTEXPR explicit expected(in_place_t, BOOST_FWD_REF(Args)... args)
   : base_type(in_place_t{}, boost::constexpr_forward<Args>(args)...)
   {}
 
@@ -742,7 +742,7 @@ public:
     , T_REQUIRES(std::is_constructible<value_type, std::initializer_list<U> >::value)
 #endif
     >
-  BOOST_CONSTEXPR explicit expected(in_place_t, std::initializer_list<U> il, BOOST_FWD_REF(Args)... args)
+  BOOST_EXPECTED_CONSTEXPR explicit expected(in_place_t, std::initializer_list<U> il, BOOST_FWD_REF(Args)... args)
   : base_type(in_place_t{}, il, constexpr_forward<Args>(args)...)
   {}
 
@@ -751,7 +751,7 @@ public:
     , T_REQUIRES(std::is_constructible<value_type, Args&...>::value)
 #endif
     >
-  BOOST_CONSTEXPR explicit expected(expect_t, BOOST_FWD_REF(Args)... args)
+  BOOST_EXPECTED_CONSTEXPR explicit expected(expect_t, BOOST_FWD_REF(Args)... args)
   : base_type(in_place_t{}, constexpr_forward<Args>(args)...)
   {}
 
@@ -760,7 +760,7 @@ public:
     , T_REQUIRES(std::is_constructible<value_type, std::initializer_list<U> >::value)
 #endif
     >
-  BOOST_CONSTEXPR explicit expected(expect_t, std::initializer_list<U> il, BOOST_FWD_REF(Args)... args)
+    BOOST_EXPECTED_CONSTEXPR explicit expected(expect_t, std::initializer_list<U> il, BOOST_FWD_REF(Args)... args)
   : base_type(in_place_t{}, il, constexpr_forward<Args>(args)...)
   {}
 
@@ -844,20 +844,20 @@ public:
   }
 
   // Observers
-  BOOST_CONSTEXPR bool valid() const BOOST_NOEXCEPT
+  BOOST_EXPECTED_CONSTEXPR bool valid() const BOOST_NOEXCEPT
   {
     return contained_has_value();
   }
 
 #if ! defined(BOOST_NO_CXX11_EXPLICIT_CONVERSION_OPERATORS)
-  BOOST_CONSTEXPR explicit operator bool() const BOOST_NOEXCEPT
+  BOOST_EXPECTED_CONSTEXPR explicit operator bool() const BOOST_NOEXCEPT
   {
     return valid();
   }
 #endif
 
 #if ! defined BOOST_EXPECTED_NO_CXX11_MOVE_ACCESSORS
-  BOOST_CONSTEXPR value_type const& value() const&
+  BOOST_EXPECTED_CONSTEXPR value_type const& value() const&
   {
     return valid()
       ? contained_val()
@@ -867,12 +867,12 @@ public:
         )
       ;
   }
-  BOOST_CONSTEXPR value_type& value() &
+  BOOST_EXPECTED_CONSTEXPR value_type& value() &
   {
     if (!valid()) error::rethrow<error_type>(contained_err());
     return contained_val();
   }
-  BOOST_CONSTEXPR value_type&& value() &&
+  BOOST_EXPECTED_CONSTEXPR value_type&& value() &&
   {
     if (!valid()) error::rethrow<error_type>(contained_err());
     return std::move(contained_val());
@@ -885,7 +885,7 @@ public:
     return contained_val();
   }
 
-  BOOST_CONSTEXPR value_type const& value() const
+  BOOST_EXPECTED_CONSTEXPR value_type const& value() const
   {
     return valid()
       ? contained_val()
@@ -897,21 +897,21 @@ public:
   }
 #endif
 #if ! defined BOOST_EXPECTED_NO_CXX11_MOVE_ACCESSORS
-  BOOST_CONSTEXPR value_type const& operator*() const& BOOST_NOEXCEPT
+  BOOST_EXPECTED_CONSTEXPR value_type const& operator*() const& BOOST_NOEXCEPT
   {
     return contained_val();
   }
 
-  BOOST_CONSTEXPR value_type& operator*() & BOOST_NOEXCEPT
+  BOOST_EXPECTED_CONSTEXPR value_type& operator*() & BOOST_NOEXCEPT
   {
     return contained_val();
   }
-  BOOST_CONSTEXPR value_type&& operator*() && BOOST_NOEXCEPT
+  BOOST_EXPECTED_CONSTEXPR value_type&& operator*() && BOOST_NOEXCEPT
   {
     return static_cast<value_type&&>(constexpr_move(contained_val()));
   }
 #else
-  BOOST_CONSTEXPR value_type const& operator*() const BOOST_NOEXCEPT
+  BOOST_EXPECTED_CONSTEXPR value_type const& operator*() const BOOST_NOEXCEPT
   {
     return contained_val();
   }
@@ -922,7 +922,7 @@ public:
   }
 #endif
 
-  BOOST_CONSTEXPR value_type const* operator->() const BOOST_NOEXCEPT
+  BOOST_EXPECTED_CONSTEXPR value_type const* operator->() const BOOST_NOEXCEPT
   {
     return dataptr();
   }
@@ -934,20 +934,20 @@ public:
   }
 
 #if ! defined BOOST_EXPECTED_NO_CXX11_MOVE_ACCESSORS
-  BOOST_CONSTEXPR error_type const& error() const& BOOST_NOEXCEPT
+  BOOST_EXPECTED_CONSTEXPR error_type const& error() const& BOOST_NOEXCEPT
   {
     return contained_err();
   }
-  BOOST_CONSTEXPR error_type& error() & BOOST_NOEXCEPT
+  BOOST_EXPECTED_CONSTEXPR error_type& error() & BOOST_NOEXCEPT
   {
     return contained_err();
   }
-  BOOST_CONSTEXPR error_type&& error() && BOOST_NOEXCEPT
+  BOOST_EXPECTED_CONSTEXPR error_type&& error() && BOOST_NOEXCEPT
   {
     return constexpr_move(contained_err());
   }
 #else
-  BOOST_CONSTEXPR error_type const& error() const BOOST_NOEXCEPT
+  BOOST_EXPECTED_CONSTEXPR error_type const& error() const BOOST_NOEXCEPT
   {
     return contained_err();
   }
@@ -959,17 +959,17 @@ public:
 
 
 #if ! defined BOOST_EXPECTED_NO_CXX11_MOVE_ACCESSORS
-  BOOST_CONSTEXPR unexpected_type<error_type> get_unexpected() const& BOOST_NOEXCEPT
+  BOOST_EXPECTED_CONSTEXPR unexpected_type<error_type> get_unexpected() const& BOOST_NOEXCEPT
   {
     return unexpected_type<error_type>(contained_err());
   }
 
-  BOOST_CONSTEXPR unexpected_type<error_type> get_unexpected() && BOOST_NOEXCEPT
+  BOOST_EXPECTED_CONSTEXPR unexpected_type<error_type> get_unexpected() && BOOST_NOEXCEPT
   {
     return unexpected_type<error_type>(constexpr_move(contained_err()));
   }
 #else
-  BOOST_CONSTEXPR unexpected_type<error_type> get_unexpected() const BOOST_NOEXCEPT
+  BOOST_EXPECTED_CONSTEXPR unexpected_type<error_type> get_unexpected() const BOOST_NOEXCEPT
   {
     return unexpected_type<error_type>(contained_err());
   }
@@ -980,7 +980,7 @@ public:
 #if ! defined BOOST_EXPECTED_NO_CXX11_RVALUE_REFERENCE_FOR_THIS
 
   template <class V>
-  BOOST_CONSTEXPR value_type value_or(BOOST_FWD_REF(V) v) const&
+  BOOST_EXPECTED_CONSTEXPR value_type value_or(BOOST_FWD_REF(V) v) const&
   {
     return *this
       ? **this
@@ -996,7 +996,7 @@ public:
   }
 
   template <class Exception>
-  BOOST_CONSTEXPR value_type value_or_throw() const&
+  BOOST_EXPECTED_CONSTEXPR value_type value_or_throw() const&
   {
     return *this
       ? **this
@@ -1014,14 +1014,14 @@ public:
 # else
 
   template <class V>
-  BOOST_CONSTEXPR value_type value_or(BOOST_FWD_REF(V) v) const {
+  BOOST_EXPECTED_CONSTEXPR value_type value_or(BOOST_FWD_REF(V) v) const {
     return *this
       ? **this
       : static_cast<value_type>(constexpr_forward<V>(v));
   }
 
   template <class Exception>
-  BOOST_CONSTEXPR value_type value_or_throw() const {
+  BOOST_EXPECTED_CONSTEXPR value_type value_or_throw() const {
     return *this
       ? **this
       : throw Exception(contained_err());
@@ -1031,10 +1031,10 @@ public:
 
 
 #if ! defined BOOST_EXPECTED_NO_CXX11_RVALUE_REFERENCE_FOR_THIS
-  inline BOOST_CONSTEXPR expected_detail::unwrap_result_type_t<expected> unwrap() const&;
+  inline BOOST_EXPECTED_CONSTEXPR expected_detail::unwrap_result_type_t<expected> unwrap() const&;
   inline BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS expected_detail::unwrap_result_type_t<expected> unwrap() &&;
 #else
-  inline BOOST_CONSTEXPR expected_detail::unwrap_result_type_t<expected> unwrap() const;
+  inline BOOST_EXPECTED_CONSTEXPR expected_detail::unwrap_result_type_t<expected> unwrap() const;
 #endif
 
   template <typename F>
@@ -1394,25 +1394,25 @@ private:
   BOOST_STATIC_ASSERT_MSG( !is_same_error_expect_t::value, "bad ErrorType" );
 
   error_type* errorptr() { return std::addressof(base_type::storage.err); }
-  BOOST_CONSTEXPR const error_type* errorptr() const { return static_addressof(base_type::storage.err); }
+  BOOST_EXPECTED_CONSTEXPR const error_type* errorptr() const { return static_addressof(base_type::storage.err); }
 
 #if ! defined BOOST_EXPECTED_NO_CXX11_RVALUE_REFERENCE_FOR_THIS
-  BOOST_CONSTEXPR const bool& contained_has_value() const& { return base_type::has_value; }
+  BOOST_EXPECTED_CONSTEXPR const bool& contained_has_value() const& { return base_type::has_value; }
   BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS
   bool& contained_has_value() & { return base_type::has_value; }
   BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS
   bool&& contained_has_value() && { return std::move(base_type::has_value); }
 
-  BOOST_CONSTEXPR const error_type& contained_err() const& { return base_type::storage.err; }
+  BOOST_EXPECTED_CONSTEXPR const error_type& contained_err() const& { return base_type::storage.err; }
   BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS
   error_type& contained_err() & { return base_type::storage.err; }
   BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS
   error_type&& contained_err() && { return std::move(base_type::storage.err); }
 
 #else
-  BOOST_CONSTEXPR const bool& contained_has_value() const BOOST_NOEXCEPT { return base_type::has_value; }
+  BOOST_EXPECTED_CONSTEXPR const bool& contained_has_value() const BOOST_NOEXCEPT { return base_type::has_value; }
   bool& contained_has_value() BOOST_NOEXCEPT { return base_type::has_value; }
-  BOOST_CONSTEXPR const error_type& contained_err() const { return base_type::storage.err; }
+  BOOST_EXPECTED_CONSTEXPR const error_type& contained_err() const { return base_type::storage.err; }
   error_type& contained_err() { return base_type::storage.err; }
 #endif
 
@@ -1466,14 +1466,14 @@ public:
     }
   }
 
-  BOOST_CONSTEXPR explicit expected(in_place_t) BOOST_NOEXCEPT
+  BOOST_EXPECTED_CONSTEXPR explicit expected(in_place_t) BOOST_NOEXCEPT
   : base_type(in_place2)
   {}
-  BOOST_CONSTEXPR explicit expected(expect_t) BOOST_NOEXCEPT
+  BOOST_EXPECTED_CONSTEXPR explicit expected(expect_t) BOOST_NOEXCEPT
   : base_type(in_place2)
   {}
 
-  BOOST_CONSTEXPR expected(
+  BOOST_EXPECTED_CONSTEXPR expected(
      REQUIRES(std::is_default_constructible<error_type>::value)
   ) BOOST_NOEXCEPT_IF(
     has_nothrow_default_constructor<error_type>::value
@@ -1578,13 +1578,13 @@ public:
   }
 
   // Observers
-  BOOST_CONSTEXPR bool valid() const BOOST_NOEXCEPT
+  BOOST_EXPECTED_CONSTEXPR bool valid() const BOOST_NOEXCEPT
   {
     return contained_has_value();
   }
 
 #if ! defined(BOOST_NO_CXX11_EXPLICIT_CONVERSION_OPERATORS)
-  BOOST_CONSTEXPR explicit operator bool() const BOOST_NOEXCEPT
+  BOOST_EXPECTED_CONSTEXPR explicit operator bool() const BOOST_NOEXCEPT
   {
     return valid();
   }
@@ -1599,20 +1599,20 @@ public:
   }
 
 #if ! defined BOOST_EXPECTED_NO_CXX11_MOVE_ACCESSORS
-  BOOST_CONSTEXPR error_type const& error() const& BOOST_NOEXCEPT
+  BOOST_EXPECTED_CONSTEXPR error_type const& error() const& BOOST_NOEXCEPT
   {
     return contained_err();
   }
-  BOOST_CONSTEXPR error_type& error() & BOOST_NOEXCEPT
+  BOOST_EXPECTED_CONSTEXPR error_type& error() & BOOST_NOEXCEPT
   {
     return contained_err();
   }
-  BOOST_CONSTEXPR error_type&& error() && BOOST_NOEXCEPT
+  BOOST_EXPECTED_CONSTEXPR error_type&& error() && BOOST_NOEXCEPT
   {
     return constexpr_move(contained_err());
   }
 #else
-  BOOST_CONSTEXPR error_type const& error() const BOOST_NOEXCEPT
+  BOOST_EXPECTED_CONSTEXPR error_type const& error() const BOOST_NOEXCEPT
   {
     return contained_err();
   }
@@ -1623,27 +1623,27 @@ public:
 #endif
 
 #if ! defined BOOST_EXPECTED_NO_CXX11_MOVE_ACCESSORS
-  BOOST_CONSTEXPR unexpected_type<error_type> get_unexpected() const& BOOST_NOEXCEPT
+  BOOST_EXPECTED_CONSTEXPR unexpected_type<error_type> get_unexpected() const& BOOST_NOEXCEPT
   {
     return unexpected_type<error_type>(contained_err());
   }
 
-  BOOST_CONSTEXPR unexpected_type<error_type> get_unexpected() && BOOST_NOEXCEPT
+  BOOST_EXPECTED_CONSTEXPR unexpected_type<error_type> get_unexpected() && BOOST_NOEXCEPT
   {
     return unexpected_type<error_type>(constexpr_move(contained_err()));
   }
 #else
-  BOOST_CONSTEXPR unexpected_type<error_type> get_unexpected() const BOOST_NOEXCEPT
+  BOOST_EXPECTED_CONSTEXPR unexpected_type<error_type> get_unexpected() const BOOST_NOEXCEPT
   {
     return unexpected_type<error_type>(contained_err());
   }
 #endif
 
 #if ! defined BOOST_EXPECTED_NO_CXX11_RVALUE_REFERENCE_FOR_THIS
-  inline BOOST_CONSTEXPR expected_detail::unwrap_result_type_t<expected> unwrap() const&;
+  inline BOOST_EXPECTED_CONSTEXPR expected_detail::unwrap_result_type_t<expected> unwrap() const&;
   inline BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS expected_detail::unwrap_result_type_t<expected> unwrap() &&;
 #else
-  inline BOOST_CONSTEXPR expected_detail::unwrap_result_type_t<expected> unwrap() const;
+  inline BOOST_EXPECTED_CONSTEXPR expected_detail::unwrap_result_type_t<expected> unwrap() const;
 #endif
 
   template <typename F>
@@ -1718,7 +1718,7 @@ public:
   // bind factory
 
   template <typename F>
-  BOOST_CONSTEXPR rebind<void> bind(BOOST_RV_REF(F) f,
+  BOOST_EXPECTED_CONSTEXPR rebind<void> bind(BOOST_RV_REF(F) f,
     REQUIRES(boost::is_same<typename result_of<F()>::type, void>::value)) const
   {
     typedef rebind<void> result_type;
@@ -1890,7 +1890,7 @@ public:
 
 // Relational operators
 template <class T, class E>
-BOOST_CONSTEXPR bool operator==(const expected<T,E>& x, const expected<T,E>& y)
+BOOST_EXPECTED_CONSTEXPR bool operator==(const expected<T, E>& x, const expected<T, E>& y)
 {
   return (x && y)
     ? *x == *y
@@ -1900,7 +1900,7 @@ BOOST_CONSTEXPR bool operator==(const expected<T,E>& x, const expected<T,E>& y)
 }
 
 template <class E>
-BOOST_CONSTEXPR bool operator==(const expected<E, void>& x, const expected<E, void>& y)
+BOOST_EXPECTED_CONSTEXPR bool operator==(const expected<E, void>& x, const expected<E, void>& y)
 {
   return (x && y)
     ? true
@@ -1910,13 +1910,13 @@ BOOST_CONSTEXPR bool operator==(const expected<E, void>& x, const expected<E, vo
 }
 
 template <class T, class E>
-BOOST_CONSTEXPR bool operator!=(const expected<T,E>& x, const expected<T,E>& y)
+BOOST_EXPECTED_CONSTEXPR bool operator!=(const expected<T, E>& x, const expected<T, E>& y)
 {
   return !(x == y);
 }
 
 template <class T, class E>
-BOOST_CONSTEXPR bool operator<(const expected<T,E>& x, const expected<T,E>& y)
+BOOST_EXPECTED_CONSTEXPR bool operator<(const expected<T, E>& x, const expected<T, E>& y)
 {
   return (x)
     ? (y) ? *x < *y : false
@@ -1924,7 +1924,7 @@ BOOST_CONSTEXPR bool operator<(const expected<T,E>& x, const expected<T,E>& y)
 }
 
 template <class E>
-BOOST_CONSTEXPR bool operator<(const expected<E, void>& x, const expected<E, void>& y)
+BOOST_EXPECTED_CONSTEXPR bool operator<(const expected<E, void>& x, const expected<E, void>& y)
 {
   return (x)
     ? (y) ? false : false
@@ -1932,152 +1932,152 @@ BOOST_CONSTEXPR bool operator<(const expected<E, void>& x, const expected<E, voi
 }
 
 template <class T, class E>
-BOOST_CONSTEXPR bool operator>(const expected<T,E>& x, const expected<T,E>& y)
+BOOST_EXPECTED_CONSTEXPR bool operator>(const expected<T, E>& x, const expected<T, E>& y)
 {
   return (y < x);
 }
 
 template <class T, class E>
-BOOST_CONSTEXPR bool operator<=(const expected<T,E>& x, const expected<T,E>& y)
+BOOST_EXPECTED_CONSTEXPR bool operator<=(const expected<T, E>& x, const expected<T, E>& y)
 {
   return !(y < x);
 }
 
 template <class T, class E>
-BOOST_CONSTEXPR bool operator>=(const expected<T,E>& x, const expected<T,E>& y)
+BOOST_EXPECTED_CONSTEXPR bool operator>=(const expected<T, E>& x, const expected<T, E>& y)
 {
   return !(x < y);
 }
 
 // Relational operators with T
 template <class T, class E>
-BOOST_CONSTEXPR bool operator==(const expected<T,E>& x, const T& v)
+BOOST_EXPECTED_CONSTEXPR bool operator==(const expected<T, E>& x, const T& v)
 {
   return (x) ? *x == v :  false;
 }
 template <class E>
-BOOST_CONSTEXPR bool operator==(const E& v, const expected<E, void>& x)
+BOOST_EXPECTED_CONSTEXPR bool operator==(const E& v, const expected<E, void>& x)
 {
   return x == v;
 }
 
 template <class T, class E>
-BOOST_CONSTEXPR bool operator!=(const expected<T,E>& x, const T& v)
+BOOST_EXPECTED_CONSTEXPR bool operator!=(const expected<T, E>& x, const T& v)
 {
   return ! (x == v);
 }
 template <class T, class E>
-BOOST_CONSTEXPR bool operator!=(const T& v, const expected<T,E>& x)
+BOOST_EXPECTED_CONSTEXPR bool operator!=(const T& v, const expected<T, E>& x)
 {
   return x != v;
 }
 
 template <class T, class E>
-BOOST_CONSTEXPR bool operator<(const expected<T,E>& x, const T& v)
+BOOST_EXPECTED_CONSTEXPR bool operator<(const expected<T, E>& x, const T& v)
 {
   return (x) ? (*x < v) : true ;
 }
 template <class T, class E>
-BOOST_CONSTEXPR bool operator<(const T& v, const expected<T,E>& x)
+BOOST_EXPECTED_CONSTEXPR bool operator<(const T& v, const expected<T, E>& x)
 {
   return (x) ? (v < x) : false ;
 }
 
 template <class T, class E>
-BOOST_CONSTEXPR bool operator>(const expected<T,E>& x, const T& v)
+BOOST_EXPECTED_CONSTEXPR bool operator>(const expected<T, E>& x, const T& v)
 {
   return v < x;
 }
 template <class T, class E>
-BOOST_CONSTEXPR bool operator>(const T& v, const expected<T,E>& x)
+BOOST_EXPECTED_CONSTEXPR bool operator>(const T& v, const expected<T, E>& x)
 {
   return x < v;
 }
 
 template <class T, class E>
-BOOST_CONSTEXPR bool operator<=(const expected<T,E>& x, const T& v)
+BOOST_EXPECTED_CONSTEXPR bool operator<=(const expected<T, E>& x, const T& v)
 {
   return ! (v < x);
 }
 template <class T, class E>
-BOOST_CONSTEXPR bool operator<=(const T& v, const expected<T,E>& x)
+BOOST_EXPECTED_CONSTEXPR bool operator<=(const T& v, const expected<T, E>& x)
 {
   return ! (x < v);
 }
 
 template <class T, class E>
-BOOST_CONSTEXPR bool operator>=(const expected<T,E>& x, const T& v)
+BOOST_EXPECTED_CONSTEXPR bool operator>=(const expected<T, E>& x, const T& v)
 {
   return ! (x < v);
 }
 template <class T, class E>
-BOOST_CONSTEXPR bool operator>=(const T& v, const expected<T,E>& x)
+BOOST_EXPECTED_CONSTEXPR bool operator>=(const T& v, const expected<T, E>& x)
 {
   return ! (v < x);
 }
 
 // Relational operators with unexpected_type<E>
 template <class T, class E>
-BOOST_CONSTEXPR bool operator==(const expected<T,E>& x, const unexpected_type<E>& e)
+BOOST_EXPECTED_CONSTEXPR bool operator==(const expected<T, E>& x, const unexpected_type<E>& e)
 {
   return (!x) ? x.get_unexpected() == e :  false;
 }
 template <class T, class E>
-BOOST_CONSTEXPR bool operator==(const unexpected_type<E>& e, const expected<T,E>& x)
+BOOST_EXPECTED_CONSTEXPR bool operator==(const unexpected_type<E>& e, const expected<T, E>& x)
 {
   return (x == e);
 }
 template <class T, class E>
-BOOST_CONSTEXPR bool operator!=(const expected<T,E>& x, const unexpected_type<E>& e)
+BOOST_EXPECTED_CONSTEXPR bool operator!=(const expected<T, E>& x, const unexpected_type<E>& e)
 {
   return ! (x == e);
 }
 template <class T, class E>
-BOOST_CONSTEXPR bool operator!=(const unexpected_type<E>& e , const expected<T,E>& x)
+BOOST_EXPECTED_CONSTEXPR bool operator!=(const unexpected_type<E>& e, const expected<T, E>& x)
 {
   return ! (x == e);
 }
 
 template <class T, class E>
-BOOST_CONSTEXPR bool operator<(const expected<T,E>& x, const unexpected_type<E>& e)
+BOOST_EXPECTED_CONSTEXPR bool operator<(const expected<T, E>& x, const unexpected_type<E>& e)
 {
   return (!x) ? (x.get_unexpected() < e) : false ;
 }
 template <class T, class E>
-BOOST_CONSTEXPR bool operator<(const unexpected_type<E>& e, const expected<T,E>& x)
+BOOST_EXPECTED_CONSTEXPR bool operator<(const unexpected_type<E>& e, const expected<T, E>& x)
 {
   return (!x) ? (e < x.get_unexpected()) : true ;
 }
 
 template <class T, class E>
-BOOST_CONSTEXPR bool operator>(const expected<T,E>& x, const unexpected_type<E>& e)
+BOOST_EXPECTED_CONSTEXPR bool operator>(const expected<T, E>& x, const unexpected_type<E>& e)
 {
   return (e <  x);
 }
 template <class T, class E>
-BOOST_CONSTEXPR bool operator>(const unexpected_type<E>& e, const expected<T,E>& x)
+BOOST_EXPECTED_CONSTEXPR bool operator>(const unexpected_type<E>& e, const expected<T, E>& x)
 {
   return (x <  e);
 }
 
 template <class T, class E>
-BOOST_CONSTEXPR bool operator<=(const expected<T,E>& x, const unexpected_type<E>& e)
+BOOST_EXPECTED_CONSTEXPR bool operator<=(const expected<T, E>& x, const unexpected_type<E>& e)
 {
   return ! (e < x);
 }
 template <class T, class E>
-BOOST_CONSTEXPR bool operator<=(const unexpected_type<E>& e, const expected<T,E>& x)
+BOOST_EXPECTED_CONSTEXPR bool operator<=(const unexpected_type<E>& e, const expected<T, E>& x)
 {
   return ! (x < e);
 }
 
 template <class T, class E>
-BOOST_CONSTEXPR bool operator>=(const expected<T,E>& x, const unexpected_type<E>& e)
+BOOST_EXPECTED_CONSTEXPR bool operator>=(const expected<T, E>& x, const unexpected_type<E>& e)
 {
   return ! (e > x);
 }
 template <class T, class E>
-BOOST_CONSTEXPR bool operator>=(const unexpected_type<E>& e, const expected<T,E>& x)
+BOOST_EXPECTED_CONSTEXPR bool operator>=(const unexpected_type<E>& e, const expected<T, E>& x)
 {
   return ! (x > e);
 }
@@ -2092,7 +2092,7 @@ void swap(expected<T,E>& x, expected<T,E>& y) BOOST_NOEXCEPT_IF(BOOST_NOEXCEPT_E
 // Factories
 
 template<typename T>
-BOOST_CONSTEXPR expected<decay_t<T>, std::exception_ptr> make_expected(BOOST_FWD_REF(T) v )
+BOOST_EXPECTED_CONSTEXPR expected<decay_t<T>, std::exception_ptr> make_expected(BOOST_FWD_REF(T) v)
 {
   return expected<decay_t<T>, std::exception_ptr>(constexpr_forward<T>(v));
 }
@@ -2127,7 +2127,7 @@ BOOST_FORCEINLINE expected<T, std::exception_ptr> make_expected_from_exception(E
 }
 
 template <class T, class E>
-BOOST_FORCEINLINE BOOST_CONSTEXPR
+BOOST_FORCEINLINE BOOST_EXPECTED_CONSTEXPR
 expected<T, decay_t<E> > make_expected_from_error(E e) BOOST_NOEXCEPT
 {
   return expected<T, decay_t<E> >(make_unexpected(e));
@@ -2167,7 +2167,7 @@ make_expected_from_call(F funct
 }
 
 template <class T, class E>
-BOOST_FORCEINLINE BOOST_CONSTEXPR unexpected_type<E> make_unexpected(expected<T,E>& ex)
+BOOST_FORCEINLINE BOOST_EXPECTED_CONSTEXPR unexpected_type<E> make_unexpected(expected<T, E>& ex)
 {
   return unexpected_type<E>(ex.error());
 }
@@ -2178,22 +2178,22 @@ namespace expected_detail
   // Factories
 
   template <class T, class E>
-  inline BOOST_CONSTEXPR expected<T,E> unwrap(expected<expected<T,E>, E > const& ee)
+  inline BOOST_EXPECTED_CONSTEXPR expected<T, E> unwrap(expected<expected<T, E>, E > const& ee)
   {
      return (ee) ? *ee : ee.get_unexpected();
   }
   template <class T, class E>
-  inline BOOST_CONSTEXPR expected<T,E> unwrap(expected<expected<T,E>, E >&& ee)
+  inline BOOST_EXPECTED_CONSTEXPR expected<T, E> unwrap(expected<expected<T, E>, E >&& ee)
   {
     return (ee) ? std::move(*ee) : ee.get_unexpected();
   }
   template <class T, class E>
-  inline BOOST_CONSTEXPR expected<T,E> unwrap(expected<T,E> const& e)
+  inline BOOST_EXPECTED_CONSTEXPR expected<T, E> unwrap(expected<T, E> const& e)
   {
     return e;
   }
   template <class T, class E>
-  inline BOOST_CONSTEXPR expected<T,E> unwrap(expected<T,E> && e)
+  inline BOOST_EXPECTED_CONSTEXPR expected<T, E> unwrap(expected<T, E> && e)
   {
     return std::move(e);
   }
@@ -2202,7 +2202,7 @@ namespace expected_detail
 
 #if ! defined BOOST_EXPECTED_NO_CXX11_RVALUE_REFERENCE_FOR_THIS
   template <class T, class E>
-  inline BOOST_CONSTEXPR expected_detail::unwrap_result_type_t<expected<T,E>>
+  inline BOOST_EXPECTED_CONSTEXPR expected_detail::unwrap_result_type_t<expected<T, E>>
   expected<T,E>::unwrap() const&
   {
     return expected_detail::unwrap(*this);
@@ -2215,7 +2215,7 @@ namespace expected_detail
   }
 #else
   template <class T, class E>
-  inline BOOST_CONSTEXPR expected_detail::unwrap_result_type_t<expected<T,E>>
+  inline BOOST_EXPECTED_CONSTEXPR expected_detail::unwrap_result_type_t<expected<T,E>>
   expected<T,E>::unwrap() const
   {
     return expected_detail::unwrap(*this);

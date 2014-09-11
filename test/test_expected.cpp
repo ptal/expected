@@ -360,14 +360,14 @@ BOOST_AUTO_TEST_CASE(except_valid_constexpr)
 {
   // From value constructor.
   BOOST_EXPECTED_CONSTEXPR expected<int,int> e;
-  BOOST_EXPECTED_RELAXED_CONSTEXPR bool b = e.valid();
+  BOOST_EXPECTED_CONSTEXPR bool b = e.valid();
   BOOST_CHECK(!b);
 }
 BOOST_AUTO_TEST_CASE(except_value_constexpr)
 {
   // From value constructor.
-  BOOST_EXPECTED_CONSTEXPR expected<int,int> e(1);
-  BOOST_EXPECTED_RELAXED_CONSTEXPR int x = e.value();
+  BOOST_EXPECTED_CONSTEXPR expected<int, int> e(1);
+  BOOST_EXPECTED_CONSTEXPR int x = e.value();
   BOOST_CHECK_EQUAL(x, 1);
 }
 

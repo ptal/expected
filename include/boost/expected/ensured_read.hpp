@@ -15,9 +15,9 @@ namespace boost {
 
   template <class T>
   struct ensured_read {
-    BOOST_EXPECTED_RELAXED_CONSTEXPR ensured_read() : value_(), read_(false) {}
-    BOOST_EXPECTED_RELAXED_CONSTEXPR ensured_read(T const& v) : value_(v), read_(false) {}
-    BOOST_EXPECTED_RELAXED_CONSTEXPR ensured_read(T&& v) : value_(std::move(v)), read_(false) {}
+    BOOST_EXPECTED_CONSTEXPR ensured_read() : value_(), read_(false) {}
+    BOOST_EXPECTED_CONSTEXPR ensured_read(T const& v) : value_(v), read_(false) {}
+    BOOST_EXPECTED_CONSTEXPR ensured_read(T&& v) : value_(std::move(v)), read_(false) {}
       ensured_read(ensured_read const&x) = delete;
       ensured_read& operator=(ensured_read const&x) = delete;
       ensured_read(ensured_read && x)
@@ -53,12 +53,12 @@ namespace boost {
     return ensured_read<decay_t<T>>(std::forward<T>(v));
   }
   template <class E>
-  BOOST_EXPECTED_RELAXED_CONSTEXPR bool operator==(const ensured_read<E>& x, const ensured_read<E>& y)
+  BOOST_EXPECTED_CONSTEXPR bool operator==(const ensured_read<E>& x, const ensured_read<E>& y)
   {
     return x.value() == y.value();
   }
   template <class E>
-  BOOST_EXPECTED_RELAXED_CONSTEXPR bool operator==(const ensured_read<E>& x, const E& y)
+  BOOST_EXPECTED_CONSTEXPR bool operator==(const ensured_read<E>& x, const E& y)
   {
     return x.value() == y;
   }

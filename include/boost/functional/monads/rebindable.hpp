@@ -54,8 +54,17 @@ namespace rebindable
 
 template <>
 struct rebindable_traits<category::default_>  : std::true_type {
+#ifdef BOOST_MSVC
+  // Work around ICE in VS2013 and VS14 CTP 3
+  template <class M, class U>
+  struct rebind
+    : public apply<rebindable::type_constructor<M>, U>
+  {
+  };
+#else
   template <class M, class U>
   using rebind = apply<rebindable::type_constructor<M>,U>;
+#endif
 
 };
 template <>

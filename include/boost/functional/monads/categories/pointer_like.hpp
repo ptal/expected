@@ -34,10 +34,10 @@ namespace functional
   struct valued_traits<category::pointer_like> : valued_traits<category::default_>
   {
     template <class M>
-    static BOOST_EXPECTED_RELAXED_CONSTEXPR bool has_value(M&& m) { return bool(m); }
+    static BOOST_EXPECTED_CONSTEXPR bool has_value(M&& m) { return bool(m); }
 
     template <class M>
-    static BOOST_EXPECTED_RELAXED_CONSTEXPR auto deref(M&& m) -> decltype(*m) { return *m; }
+    static BOOST_EXPECTED_CONSTEXPR auto deref(M&& m) -> decltype(*m) { return *m; }
 
   };
 

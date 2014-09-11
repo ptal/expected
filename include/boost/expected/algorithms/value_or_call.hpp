@@ -36,7 +36,7 @@ namespace expected_alg
   }
 
   template <class T, class E, class F>
-  BOOST_EXPECTED_RELAXED_CONSTEXPR T value_or_call(expected<T, E> const& e, BOOST_FWD_REF(F) f)
+  BOOST_EXPECTED_CONSTEXPR T value_or_call(expected<T, E> const& e, BOOST_FWD_REF(F) f)
   {
     // We are sure that e.catch_error(just(std::forward<T>(v))) will be valid or a exception will be thrown
     // so the derefference is safe
@@ -44,7 +44,7 @@ namespace expected_alg
   }
 
   template <class T, class E, class F>
-  BOOST_EXPECTED_RELAXED_CONSTEXPR T value_or_call(expected<T, E> && e, BOOST_FWD_REF(F) f)
+  BOOST_EXPECTED_CONSTEXPR T value_or_call(expected<T, E> && e, BOOST_FWD_REF(F) f)
   {
     // We are sure that e.catch_error(just(std::forward<T>(v))) will be valid or a exception will be thrown
     // so the derefference is safe
