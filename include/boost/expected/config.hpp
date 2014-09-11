@@ -35,7 +35,11 @@
 #  if (__clang_major__ < 3) || (__clang_major__ == 3) && (__clang_minor__ < 5)
 #   define BOOST_EXPECTED_NO_CXX11_MOVE_ACCESSORS
 #  endif
-# elif defined BOOST_NO_CXX11_REF_QUALIFIERS
+# elif defined __GNUC__
+#  if (__GNUC__*10000 + __GNUC_MINOR__*100 + __GNUC_PATCHLEVEL__ < 50000)
+#   define BOOST_EXPECTED_NO_CXX11_MOVE_ACCESSORS
+#  endif
+# elif ! defined _MSC_VER  // Only works on MSVC because constexpr is disabled
 #  define BOOST_EXPECTED_NO_CXX11_MOVE_ACCESSORS
 # endif
 
