@@ -986,7 +986,7 @@ public:
   BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS value_type value_or(BOOST_FWD_REF(V) v) &&
   {
     return *this
-      ? constexpr_move(const_cast<rebind<value_type>&>(*this).contained_val())
+      ? constexpr_move(const_cast<typename rebind<value_type>::type&>(*this).contained_val())
       : static_cast<value_type>(constexpr_forward<V>(v));
   }
 
@@ -1002,7 +1002,7 @@ public:
   BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS value_type value_or_throw() &&
   {
     return *this
-      ? constexpr_move(const_cast<rebind<value_type>&>(*this).contained_val())
+      ? constexpr_move(const_cast<typename rebind<value_type>::type&>(*this).contained_val())
       : throw Exception(contained_err());
   }
 
@@ -1033,10 +1033,10 @@ public:
 #endif
 
   template <typename F>
-  rebind<void>
+  typename rebind<void>::type
   catch_all_type_void(BOOST_RV_REF(F) f)
   {
-    typedef rebind<void> result_type;
+    typedef typename rebind<void>::type result_type;
     try {
       f(std::move(**this));
     } catch (...) {
@@ -1057,10 +1057,10 @@ public:
     }
   }
   template <typename F>
-  rebind<typename result_of<F(value_type)>::type>
+  typename rebind<typename result_of<F(value_type)>::type>::type
   catch_all_type_etype(BOOST_RV_REF(F) f)
   {
-    typedef rebind<typename result_of<F(value_type)>::type> result_type;
+    typedef typename rebind<typename result_of<F(value_type)>::type>::type result_type;
     try {
       return f(std::move(**this));
     } catch (...) {
@@ -1068,10 +1068,10 @@ public:
     }
   }
   template <typename F>
-  rebind<void>
+  typename rebind<void>::type
   catch_all_etype_void(BOOST_RV_REF(F) f)
   {
-    typedef rebind<void> result_type;
+    typedef typename rebind<void>::type result_type;
     try {
       f(std::move(*this));
     } catch (...) {
@@ -1092,10 +1092,10 @@ public:
     }
   }
   template <typename F>
-  rebind<typename result_of<F(expected)>::type>
+  typename rebind<typename result_of<F(expected)>::type>::type
   catch_all_etype_etype(BOOST_RV_REF(F) f)
   {
-    typedef rebind<typename result_of<F(expected)>::type> result_type;
+    typedef typename rebind<typename result_of<F(expected)>::type>::type result_type;
     try {
       return f(std::move(*this));
     } catch (...) {
@@ -1105,11 +1105,11 @@ public:
 
 
   template <typename F>
-  rebind<void>
+  typename rebind<void>::type
   map(BOOST_RV_REF(F) f,
     REQUIRES(boost::is_same<typename result_of<F(value_type)>::type, void>::value))
   {
-    typedef rebind<void> result_type;
+    typedef typename rebind<void>::type result_type;
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
     if(valid())
     {
@@ -1125,11 +1125,11 @@ public:
   }
 
   template <typename F>
-  rebind<typename result_of<F(value_type)>::type>
+  typename rebind<typename result_of<F(value_type)>::type>::type
   map(BOOST_RV_REF(F) f,
     REQUIRES(!boost::is_same<typename result_of<F(value_type)>::type, void>::value))
   {
-    typedef rebind<typename result_of<F(value_type)>::type> result_type;
+    typedef typename rebind<typename result_of<F(value_type)>::type>::type result_type;
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
     if(valid())
     {
@@ -1145,11 +1145,11 @@ public:
   }
 
   template <typename F>
-  rebind<void>
+  typename rebind<void>::type
   bind(BOOST_RV_REF(F) f,
     REQUIRES(boost::is_same<typename result_of<F(value_type)>::type, void>::value))
   {
-    typedef rebind<void> result_type;
+    typedef typename rebind<void>::type result_type;
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
     if(valid())
     {
@@ -1165,13 +1165,13 @@ public:
   }
 
   template <typename F>
-  rebind<typename result_of<F(value_type)>::type>
+  typename rebind<typename result_of<F(value_type)>::type>::type
   bind(BOOST_RV_REF(F) f,
     REQUIRES(!boost::is_same<typename result_of<F(value_type)>::type, void>::value
         && !boost::is_expected<typename result_of<F(value_type)>::type>::value
         ))
   {
-    typedef rebind<typename result_of<F(value_type)>::type> result_type;
+    typedef typename rebind<typename result_of<F(value_type)>::type>::type result_type;
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
     if(valid())
     {
@@ -1208,23 +1208,23 @@ public:
   }
 
   template <typename F>
-  rebind<void>
+  typename rebind<void>::type
   then(BOOST_RV_REF(F) f,
     REQUIRES(boost::is_same<typename result_of<F(expected)>::type, void>::value))
   {
-    typedef rebind<void> result_type;
+    typedef typename rebind<void>::type result_type;
     return catch_all_etype_void(std::forward<F>(f));
   }
 
   template <typename F>
-  rebind<typename result_of<F(expected)>::type>
+  typename rebind<typename result_of<F(expected)>::type>::type
   then(BOOST_RV_REF(F) f,
     REQUIRES(!boost::is_same<typename result_of<F(expected)>::type, void>::value
         && !boost::is_expected<typename result_of<F(expected)>::type>::value
         ))
   {
     return catch_all_etype_etype(std::forward<F>(f));
-    //typedef rebind<typename result_of<F(value_type)>::type> result_type;
+    //typedef typename rebind<typename result_of<F(value_type)>::type>::type result_type;
     //return result_type(f(boost::move(*this)));
   }
 
@@ -1637,10 +1637,10 @@ public:
 #endif
 
   template <typename F>
-  rebind<void>
+  typename rebind<void>::type
   catch_all_void_void(BOOST_RV_REF(F) f)
   {
-    typedef rebind<void> result_type;
+    typedef typename rebind<void>::type result_type;
     try {
       f();
     } catch (...) {
@@ -1660,10 +1660,10 @@ public:
     }
   }
   template <typename F>
-  rebind<typename result_of<F()>::type>
+  typename rebind<typename result_of<F()>::type>::type
   catch_all_void_etype(BOOST_RV_REF(F) f)
   {
-    typedef rebind<typename result_of<F()>::type> result_type;
+    typedef typename rebind<typename result_of<F()>::type>::type result_type;
     try {
       return f();
     } catch (...) {
@@ -1671,10 +1671,10 @@ public:
     }
   }
   template <typename F>
-  rebind<void>
+  typename rebind<void>::type
   catch_all_evoid_void(BOOST_RV_REF(F) f)
   {
-    typedef rebind<void> result_type;
+    typedef typename rebind<void>::type result_type;
     try {
       f(std::move(*this));
     } catch (...) {
@@ -1694,10 +1694,10 @@ public:
     }
   }
   template <typename F>
-  rebind<typename result_of<F(expected)>::type>
+  typename rebind<typename result_of<F(expected)>::type>::type
   catch_all_evoid_etype(BOOST_RV_REF(F) f)
   {
-    typedef rebind<typename result_of<F(expected)>::type> result_type;
+    typedef typename rebind<typename result_of<F(expected)>::type>::type result_type;
     try {
       return f(std::move(*this));
     } catch (...) {
@@ -1708,10 +1708,10 @@ public:
   // bind factory
 
   template <typename F>
-  BOOST_EXPECTED_CONSTEXPR rebind<void> bind(BOOST_RV_REF(F) f,
+  BOOST_EXPECTED_CONSTEXPR typename rebind<void>::type bind(BOOST_RV_REF(F) f,
     REQUIRES(boost::is_same<typename result_of<F()>::type, void>::value)) const
   {
-    typedef rebind<void> result_type;
+    typedef typename rebind<void>::type result_type;
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
     if(valid())
     {
@@ -1728,11 +1728,11 @@ public:
   }
 
   template <typename F>
-  rebind<typename result_of<F()>::type>
+  typename rebind<typename result_of<F()>::type>::type
   bind(BOOST_RV_REF(F) f,
     REQUIRES( ! boost::is_same<typename result_of<F()>::type, void>::value) )
   {
-    typedef rebind<typename result_of<F()>::type> result_type;
+    typedef typename rebind<typename result_of<F()>::type>::type result_type;
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
     if(valid())
     {
@@ -1748,11 +1748,11 @@ public:
   }
 
   template <typename F>
-  rebind<void>
+  typename rebind<void>::type
   then(BOOST_RV_REF(F) f,
     REQUIRES(boost::is_same<typename result_of<F(expected)>::type, void>::value))
   {
-    typedef rebind<void> result_type;
+    typedef typename rebind<void>::type result_type;
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
     f(boost::move(*this));
     return result_type(in_place_t{});
@@ -1763,12 +1763,12 @@ public:
 
   // then factory
   template <typename F>
-  rebind<typename result_of<F(expected)>::type>
+  typename rebind<typename result_of<F(expected)>::type>::type
   then(BOOST_RV_REF(F) f,
     REQUIRES(!boost::is_expected<typename result_of<F(expected)>::type>::value
         ))
   {
-    typedef rebind<typename result_of<F(expected)>::type> result_type;
+    typedef typename rebind<typename result_of<F(expected)>::type>::type result_type;
     return result_type(f(boost::move(*this)));
   }
 

@@ -56,7 +56,7 @@ namespace detail
     }
 
     typedef rebindable::value_type<E> value_type;
-    typedef rebindable::rebind<E, typename std::result_of<F(value_type)>::type> result_type;
+    typedef typename rebindable::rebind<E, typename std::result_of<F(value_type)>::type>::type result_type;
 
     result_type operator()(E e)
     {
@@ -83,7 +83,7 @@ namespace detail
     }
 
     typedef void value_type;
-    typedef rebindable::rebind<E, R> result_type;
+    typedef typename rebindable::rebind<E, R>::type result_type;
 
     result_type operator()(E e)
     {
@@ -110,7 +110,7 @@ namespace detail
     }
 
     typedef void value_type;
-    typedef rebindable::rebind<E, void> result_type;
+    typedef typename rebindable::rebind<E, void>::type result_type;
 
     result_type operator()(E e)
     {
