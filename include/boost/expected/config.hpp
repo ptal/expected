@@ -40,9 +40,9 @@
 # endif
 
 # if defined BOOST_EXPECTED_NO_CXX11_MOVE_ACCESSORS
-#define BOOST_CONSTEXPR_IF_MOVE_ACCESSORS
+#define BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS
 #else
-#define BOOST_CONSTEXPR_IF_MOVE_ACCESSORS BOOST_CONSTEXPR
+#define BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS BOOST_CONSTEXPR
 #endif
 
 // ../../../boost/expected/expected.hpp: In instantiation of ‘class boost::expected<int>’:

@@ -564,21 +564,21 @@ private:
 
 #if ! defined BOOST_EXPECTED_NO_CXX11_RVALUE_REFERENCE_FOR_THIS
   BOOST_CONSTEXPR const bool& contained_has_value() const& { return base_type::has_value; }
-  BOOST_CONSTEXPR_IF_MOVE_ACCESSORS
+  BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS
   bool& contained_has_value() & { return base_type::has_value; }
-  BOOST_CONSTEXPR_IF_MOVE_ACCESSORS
+  BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS
   bool&& contained_has_value() && { return std::move(base_type::has_value); }
 
   BOOST_CONSTEXPR const value_type& contained_val() const& { return base_type::storage.val; }
-  BOOST_CONSTEXPR_IF_MOVE_ACCESSORS
+  BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS
   value_type& contained_val() & { return base_type::storage.val; }
-  BOOST_CONSTEXPR_IF_MOVE_ACCESSORS
+  BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS
   value_type&& contained_val() && { return std::move(base_type::storage.val); }
 
   BOOST_CONSTEXPR const error_type& contained_err() const& { return base_type::storage.err; }
-  BOOST_CONSTEXPR_IF_MOVE_ACCESSORS
+  BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS
   error_type& contained_err() & { return base_type::storage.err; }
-  BOOST_CONSTEXPR_IF_MOVE_ACCESSORS
+  BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS
   error_type&& contained_err() && { return std::move(base_type::storage.err); }
 
 #else
@@ -922,7 +922,7 @@ public:
     return dataptr();
   }
 
-  BOOST_CONSTEXPR_IF_MOVE_ACCESSORS
+  BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS
   value_type* operator->() BOOST_NOEXCEPT
   {
     return dataptr();
@@ -983,7 +983,7 @@ public:
   }
 
   template <class V>
-  BOOST_CONSTEXPR_IF_MOVE_ACCESSORS value_type value_or(BOOST_FWD_REF(V) v) &&
+  BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS value_type value_or(BOOST_FWD_REF(V) v) &&
   {
     return *this
       ? constexpr_move(const_cast<typename rebind<value_type>::type&>(*this).contained_val())
@@ -999,7 +999,7 @@ public:
   }
 
   template <class Exception>
-  BOOST_CONSTEXPR_IF_MOVE_ACCESSORS value_type value_or_throw() &&
+  BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS value_type value_or_throw() &&
   {
     return *this
       ? constexpr_move(const_cast<typename rebind<value_type>::type&>(*this).contained_val())
@@ -1027,7 +1027,7 @@ public:
 
 #if ! defined BOOST_EXPECTED_NO_CXX11_RVALUE_REFERENCE_FOR_THIS
   inline BOOST_CONSTEXPR expected_detail::unwrap_result_type_t<expected> unwrap() const&;
-  inline BOOST_CONSTEXPR_IF_MOVE_ACCESSORS expected_detail::unwrap_result_type_t<expected> unwrap() &&;
+  inline BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS expected_detail::unwrap_result_type_t<expected> unwrap() &&;
 #else
   inline BOOST_CONSTEXPR expected_detail::unwrap_result_type_t<expected> unwrap() const;
 #endif
@@ -1393,15 +1393,15 @@ private:
 
 #if ! defined BOOST_EXPECTED_NO_CXX11_RVALUE_REFERENCE_FOR_THIS
   BOOST_CONSTEXPR const bool& contained_has_value() const& { return base_type::has_value; }
-  BOOST_CONSTEXPR_IF_MOVE_ACCESSORS
+  BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS
   bool& contained_has_value() & { return base_type::has_value; }
-  BOOST_CONSTEXPR_IF_MOVE_ACCESSORS
+  BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS
   bool&& contained_has_value() && { return std::move(base_type::has_value); }
 
   BOOST_CONSTEXPR const error_type& contained_err() const& { return base_type::storage.err; }
-  BOOST_CONSTEXPR_IF_MOVE_ACCESSORS
+  BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS
   error_type& contained_err() & { return base_type::storage.err; }
-  BOOST_CONSTEXPR_IF_MOVE_ACCESSORS
+  BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS
   error_type&& contained_err() && { return std::move(base_type::storage.err); }
 
 #else
@@ -1631,7 +1631,7 @@ public:
 
 #if ! defined BOOST_EXPECTED_NO_CXX11_RVALUE_REFERENCE_FOR_THIS
   inline BOOST_CONSTEXPR expected_detail::unwrap_result_type_t<expected> unwrap() const&;
-  inline BOOST_CONSTEXPR_IF_MOVE_ACCESSORS expected_detail::unwrap_result_type_t<expected> unwrap() &&;
+  inline BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS expected_detail::unwrap_result_type_t<expected> unwrap() &&;
 #else
   inline BOOST_CONSTEXPR expected_detail::unwrap_result_type_t<expected> unwrap() const;
 #endif
@@ -2198,7 +2198,7 @@ namespace expected_detail
     return expected_detail::unwrap(*this);
   }
   template <class T, class E>
-  inline BOOST_CONSTEXPR_IF_MOVE_ACCESSORS expected_detail::unwrap_result_type_t<expected<T,E>>
+  inline BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS expected_detail::unwrap_result_type_t<expected<T,E>>
   expected<T,E>::unwrap() &&
   {
     return expected_detail::unwrap(*this);
