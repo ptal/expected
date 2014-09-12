@@ -162,7 +162,6 @@ template<class T, class E>
 struct unrestricted_union_emulation_storage
 {
   char _bytes[sizeof(T)>sizeof(E) ? sizeof(T) : sizeof(E)];
-  template<class... Args> void unrestricted_union_emulation(Args&& ...args) { new(&err()) error_type(std::forward<Args>(args)...); }
 };
 template<class E>
 struct unrestricted_union_emulation_storage<void, E>
