@@ -78,7 +78,7 @@
 #   define BOOST_EXPECTED_NO_CXX11_UNRESTRICTED_UNIONS
 #  endif
 # elif defined __GNUC__
-#  if (__GNUC__*10000 + __GNUC_MINOR__*100 + __GNUC_PATCHLEVEL__ < 46000)
+#  if (__GNUC__*10000 + __GNUC_MINOR__*100 + __GNUC_PATCHLEVEL__ < 40600)
 #   define BOOST_EXPECTED_NO_CXX11_UNRESTRICTED_UNIONS
 #  endif
 # elif defined _MSC_VER
