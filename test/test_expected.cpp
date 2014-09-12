@@ -982,6 +982,7 @@ BOOST_AUTO_TEST_CASE(make_unexpected_fact)
     opt2 = {unexpect, 1};
   }
 }
+#if !defined BOOST_MSVC || BOOST_MSVC >= 1900 // VS2013 doesn't match operator==(boost::error_exception<std::error_code,std::system_error>, std::error_code)
 BOOST_AUTO_TEST_CASE(error_exception_ts)
 {
   using namespace std;
@@ -1010,6 +1011,7 @@ BOOST_AUTO_TEST_CASE(error_exception_ts)
 
   }
 }
+#endif
 BOOST_AUTO_TEST_CASE(ensured_read_ts)
 {
   using namespace std;
