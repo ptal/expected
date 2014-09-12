@@ -232,9 +232,9 @@ union trivial_expected_storage
   error_type _err;
   value_type _val;
   BOOST_CONSTEXPR const error_type &err() const { return _err; }
-  BOOST_CONSTEXPR error_type &err() { return _err; }
+  error_type &err() { return _err; }
   BOOST_CONSTEXPR const value_type &val() const { return _val; }
-  BOOST_CONSTEXPR value_type &val() { return _val; }
+  value_type &val() { return _val; }
 #endif
 
   BOOST_CONSTEXPR trivial_expected_storage()
@@ -284,7 +284,7 @@ union trivial_expected_storage<void, E>
 #else
   error_type _err;
   BOOST_CONSTEXPR const error_type &err() const { return _err; }
-  BOOST_CONSTEXPR error_type &err() { return _err; }
+  error_type &err() { return _err; }
 #endif
   unsigned char dummy;
 
@@ -330,9 +330,9 @@ union no_trivial_expected_storage
   error_type _err;
   value_type _val;
   BOOST_CONSTEXPR const error_type &err() const { return _err; }
-  BOOST_CONSTEXPR error_type &err() { return _err; }
+  error_type &err() { return _err; }
   BOOST_CONSTEXPR const value_type &val() const { return _val; }
-  BOOST_CONSTEXPR value_type &val() { return _val; }
+  value_type &val() { return _val; }
 #endif
 
   BOOST_CONSTEXPR no_trivial_expected_storage()
@@ -380,7 +380,7 @@ union no_trivial_expected_storage<void, E>
 #else
   error_type _err;
   BOOST_CONSTEXPR const error_type &err() const { return _err; }
-  BOOST_CONSTEXPR error_type &err() { return _err; }
+  error_type &err() { return _err; }
 #endif
   unsigned char dummy;
 
