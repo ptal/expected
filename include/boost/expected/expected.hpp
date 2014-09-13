@@ -157,63 +157,150 @@ BOOST_CONSTEXPR_OR_CONST unexpect_t unexpect = {};
 
 namespace detail {
 
+#ifdef BOOST_EXPECTED_NO_CXX11_UNRESTRICTED_UNIONS
+template<class T, class E>
+struct unrestricted_union_emulation_storage
+{
+  char _bytes[sizeof(T)>sizeof(E) ? sizeof(T) : sizeof(E)];
+};
+template<class E>
+struct unrestricted_union_emulation_storage<void, E>
+{
+  char _bytes[sizeof(E)];
+};
+template<class T>
+struct unrestricted_union_emulation_storage<T, void>
+{
+  char _bytes[sizeof(T)];
+};
+struct boost_expected_unrestricted_union_emulation_default_tag { };
+template<class Base, class value_type, class error_type>
+struct unrestricted_union_emulation_val_tag
+{
+  char *_bytes() { return static_cast<unrestricted_union_emulation_storage<value_type, error_type> *>(static_cast<Base *>(this))->_bytes; }
+  const char *_bytes() const { return static_cast<const unrestricted_union_emulation_storage<value_type, error_type> *>(static_cast<const Base *>(this))->_bytes; }
+  const value_type &val() const { return *reinterpret_cast<const value_type *>(_bytes()); }
+  value_type &val() { return *reinterpret_cast<value_type *>(_bytes()); }
+  unrestricted_union_emulation_val_tag() {}
+  unrestricted_union_emulation_val_tag(boost_expected_unrestricted_union_emulation_default_tag)
+  {
+    new(&val()) value_type();
+  }
+  template<class Arg, class... Args> explicit unrestricted_union_emulation_val_tag(Arg&& arg, Args&&... args)
+  {
+    new(&val()) value_type(std::forward<Arg>(arg), std::forward<Args>(args)...);
+  }
+};
+template<class Base, class value_type, class error_type>
+struct unrestricted_union_emulation_err_tag
+{
+  char *_bytes() { return static_cast<unrestricted_union_emulation_storage<value_type, error_type> *>(static_cast<Base *>(this))->_bytes; }
+  const char *_bytes() const { return static_cast<const unrestricted_union_emulation_storage<value_type, error_type> *>(static_cast<const Base *>(this))->_bytes; }
+  const error_type &err() const { return *reinterpret_cast<const error_type *>(_bytes()); }
+  error_type &err() { return *reinterpret_cast<error_type *>(_bytes()); }
+  unrestricted_union_emulation_err_tag() {}
+  unrestricted_union_emulation_err_tag(boost_expected_unrestricted_union_emulation_default_tag)
+  {
+    new(&err()) error_type();
+  }
+  template<class Arg, class... Args> explicit unrestricted_union_emulation_err_tag(Arg&& arg, Args&&... args)
+  {
+    new(&err()) error_type(std::forward<Arg>(arg), std::forward<Args>(args)...);
+  }
+};
+#else
+#define boost_expected_unrestricted_union_emulation_default_tag(...) // chances of collision are low
+#endif // BOOST_EXPECTED_NO_CXX11_UNRESTRICTED_UNIONS
+
 template <class T, class E>
+#ifdef BOOST_EXPECTED_NO_CXX11_UNRESTRICTED_UNIONS
+struct trivial_expected_storage
+  : unrestricted_union_emulation_storage<T, E>,
+  unrestricted_union_emulation_val_tag<trivial_expected_storage<T, E>, T, E>,
+  unrestricted_union_emulation_err_tag<trivial_expected_storage<T, E>, T, E>
+#else
 union trivial_expected_storage
+#endif
 {
   typedef T value_type;
   typedef E error_type;
 
-  error_type err;
-  value_type val;
+#ifdef BOOST_EXPECTED_NO_CXX11_UNRESTRICTED_UNIONS
+  typedef unrestricted_union_emulation_err_tag<trivial_expected_storage<T, E>, T, E> _err;
+  typedef unrestricted_union_emulation_val_tag<trivial_expected_storage<T, E>, T, E> _val;
+#else
+  error_type _err;
+  value_type _val;
+  BOOST_CONSTEXPR const error_type &err() const { return _err; }
+  error_type &err() { return _err; }
+  BOOST_CONSTEXPR const value_type &val() const { return _val; }
+  value_type &val() { return _val; }
+#endif
 
   BOOST_CONSTEXPR trivial_expected_storage()
     BOOST_NOEXCEPT_IF(has_nothrow_default_constructor<value_type>::value)
-  : err()
+  : _err(boost_expected_unrestricted_union_emulation_default_tag())
   {}
 
   BOOST_CONSTEXPR trivial_expected_storage(unexpected_type<error_type> const& e)
-  : err(e.value())
+  : _err(e.value())
   {}
 
   BOOST_CONSTEXPR trivial_expected_storage(unexpected_type<error_type> && e)
-  : err(std::move(e.value()))
+  : _err(std::move(e.value()))
   {}
 
   template <class Err>
   BOOST_CONSTEXPR trivial_expected_storage(unexpected_type<Err> const& e)
-  : err(error::make_error<error_type>(e.value()))
+  : _err(error::make_error<error_type>(e.value()))
+  {}
+
+  BOOST_CONSTEXPR trivial_expected_storage(in_place_t)
+  : _val(boost_expected_unrestricted_union_emulation_default_tag())
   {}
 
   template <class... Args>
   BOOST_CONSTEXPR trivial_expected_storage(in_place_t, BOOST_FWD_REF(Args)... args)
-  : val(constexpr_forward<Args>(args)...)
+  : _val(constexpr_forward<Args>(args)...)
   {}
 
   ~trivial_expected_storage() = default;
 };
 
 template <typename E>
+#ifdef BOOST_EXPECTED_NO_CXX11_UNRESTRICTED_UNIONS
+struct trivial_expected_storage<void, E>
+  : unrestricted_union_emulation_storage<void, E>,
+  unrestricted_union_emulation_err_tag<trivial_expected_storage<void, E>, void, E>
+#else
 union trivial_expected_storage<void, E>
+#endif
 {
   typedef E error_type;
 
-  error_type err;
+#ifdef BOOST_EXPECTED_NO_CXX11_UNRESTRICTED_UNIONS
+  typedef unrestricted_union_emulation_err_tag<trivial_expected_storage<void, E>, void, E> _err;
+#else
+  error_type _err;
+  BOOST_CONSTEXPR const error_type &err() const { return _err; }
+  error_type &err() { return _err; }
+#endif
   unsigned char dummy;
 
   BOOST_CONSTEXPR trivial_expected_storage()
-  : err()
+  : _err(boost_expected_unrestricted_union_emulation_default_tag())
   {}
 
   BOOST_CONSTEXPR trivial_expected_storage(unexpected_type<error_type> const& e)
-  : err(e.value())
+  : _err(e.value())
   {}
   BOOST_CONSTEXPR trivial_expected_storage(unexpected_type<error_type> && e)
-  : err(std::move(e.value()))
+  : _err(std::move(e.value()))
   {}
 
   template <class Err>
   BOOST_CONSTEXPR trivial_expected_storage(unexpected_type<Err> const& e)
-  : err(error::make_error<error_type>(e.value()))
+  : _err(error::make_error<error_type>(e.value()))
   {}
 
   BOOST_CONSTEXPR trivial_expected_storage(in_place_t)
@@ -223,60 +310,92 @@ union trivial_expected_storage<void, E>
 };
 
 template <typename T, typename E >
+#ifdef BOOST_EXPECTED_NO_CXX11_UNRESTRICTED_UNIONS
+struct no_trivial_expected_storage
+  : unrestricted_union_emulation_storage<T, E>,
+  unrestricted_union_emulation_val_tag<no_trivial_expected_storage<T, E>, T, E>,
+  unrestricted_union_emulation_err_tag<no_trivial_expected_storage<T, E>, T, E>
+#else
 union no_trivial_expected_storage
+#endif
 {
   typedef T value_type;
   typedef E error_type;
 
-  error_type err;
-  value_type val;
+#ifdef BOOST_EXPECTED_NO_CXX11_UNRESTRICTED_UNIONS
+  typedef unrestricted_union_emulation_err_tag<no_trivial_expected_storage<T, E>, T, E> _err;
+  typedef unrestricted_union_emulation_val_tag<no_trivial_expected_storage<T, E>, T, E> _val;
+#else
+  error_type _err;
+  value_type _val;
+  BOOST_CONSTEXPR const error_type &err() const { return _err; }
+  error_type &err() { return _err; }
+  BOOST_CONSTEXPR const value_type &val() const { return _val; }
+  value_type &val() { return _val; }
+#endif
 
   BOOST_CONSTEXPR no_trivial_expected_storage()
-  : err()
+  : _err(boost_expected_unrestricted_union_emulation_default_tag())
   {}
 
   BOOST_CONSTEXPR no_trivial_expected_storage(unexpected_type<error_type> const& e)
-  : err(e.value())
+  : _err(e.value())
   {}
   BOOST_CONSTEXPR no_trivial_expected_storage(unexpected_type<error_type> && e)
-  : err(std::move(e.value()))
+  : _err(std::move(e.value()))
   {}
 
   template <class Err>
   BOOST_CONSTEXPR no_trivial_expected_storage(unexpected_type<Err> const& e)
-  : err(error::make_error<error_type>(e.value()))
+  : _err(error::make_error<error_type>(e.value()))
+  {}
+
+  BOOST_CONSTEXPR no_trivial_expected_storage(in_place_t) //BOOST_NOEXCEPT_IF()
+  : _val(boost_expected_unrestricted_union_emulation_default_tag())
   {}
 
   template <class... Args>
   BOOST_CONSTEXPR no_trivial_expected_storage(in_place_t, BOOST_FWD_REF(Args)... args) //BOOST_NOEXCEPT_IF()
-  : val(constexpr_forward<Args>(args)...)
+  : _val(constexpr_forward<Args>(args)...)
   {}
 
   ~no_trivial_expected_storage() {};
 };
 
 template <typename E>
+#ifdef BOOST_EXPECTED_NO_CXX11_UNRESTRICTED_UNIONS
+struct no_trivial_expected_storage<void, E>
+  : unrestricted_union_emulation_storage<void, E>,
+  unrestricted_union_emulation_err_tag<no_trivial_expected_storage<void, E>, void, E>
+#else
 union no_trivial_expected_storage<void, E>
+#endif
 {
   typedef E error_type;
 
-  error_type err;
+#ifdef BOOST_EXPECTED_NO_CXX11_UNRESTRICTED_UNIONS
+  typedef unrestricted_union_emulation_err_tag<no_trivial_expected_storage<void, E>, void, E> _err;
+#else
+  error_type _err;
+  BOOST_CONSTEXPR const error_type &err() const { return _err; }
+  error_type &err() { return _err; }
+#endif
   unsigned char dummy;
 
   BOOST_CONSTEXPR no_trivial_expected_storage()
-  : err()
+  : _err(boost_expected_unrestricted_union_emulation_default_tag())
   {}
 
   BOOST_CONSTEXPR no_trivial_expected_storage(unexpected_type<error_type> const& e)
-  : err(e.value())
+  : _err(e.value())
   {}
   BOOST_CONSTEXPR no_trivial_expected_storage(unexpected_type<error_type> && e)
-  : err(boost::move(e.value()))
+  : _err(boost::move(e.value()))
   {}
 
   template <class Err>
   BOOST_CONSTEXPR no_trivial_expected_storage(unexpected_type<Err> const& e)
-  : err(error::make_error<error_type>(e.value()))
+  : _err(error::make_error<error_type>(e.value()))
   {}
 
   BOOST_CONSTEXPR no_trivial_expected_storage(in_place_t)
@@ -441,8 +560,8 @@ struct no_trivial_expected_base
 
   ~no_trivial_expected_base()
   {
-    if (has_value) storage.val.~value_type();
-    else storage.err.~error_type();
+    if (has_value) storage.val().~value_type();
+    else storage.err().~error_type();
   }
 };
 
@@ -483,7 +602,7 @@ struct no_trivial_expected_base<void, E> {
 
   ~no_trivial_expected_base() {
     if (! has_value)
-      storage.err.~error_type();
+      storage.err().~error_type();
   }
 };
 
@@ -557,10 +676,10 @@ private:
   typedef boost::is_same<error_type, expect_t> is_same_error_expect_t;
   BOOST_STATIC_ASSERT_MSG( !is_same_error_expect_t::value, "bad ErrorType" );
 
-  value_type* dataptr() { return std::addressof(base_type::storage.val); }
-  BOOST_CONSTEXPR const value_type* dataptr() const { return static_addressof(base_type::storage.val); }
-  error_type* errorptr() { return std::addressof(base_type::storage.err); }
-  BOOST_CONSTEXPR const error_type* errorptr() const { return static_addressof(base_type::storage.err); }
+  value_type* dataptr() { return std::addressof(base_type::storage.val()); }
+  BOOST_CONSTEXPR const value_type* dataptr() const { return static_addressof(base_type::storage.val()); }
+  error_type* errorptr() { return std::addressof(base_type::storage.err()); }
+  BOOST_CONSTEXPR const error_type* errorptr() const { return static_addressof(base_type::storage.err()); }
 
 #if ! defined BOOST_EXPECTED_NO_CXX11_RVALUE_REFERENCE_FOR_THIS
   BOOST_CONSTEXPR const bool& contained_has_value() const& { return base_type::has_value; }
@@ -569,25 +688,25 @@ private:
   BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS
   bool&& contained_has_value() && { return std::move(base_type::has_value); }
 
-  BOOST_CONSTEXPR const value_type& contained_val() const& { return base_type::storage.val; }
+  BOOST_CONSTEXPR const value_type& contained_val() const& { return base_type::storage.val(); }
   BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS
-  value_type& contained_val() & { return base_type::storage.val; }
+  value_type& contained_val() & { return base_type::storage.val(); }
   BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS
-  value_type&& contained_val() && { return std::move(base_type::storage.val); }
+  value_type&& contained_val() && { return std::move(base_type::storage.val()); }
 
-  BOOST_CONSTEXPR const error_type& contained_err() const& { return base_type::storage.err; }
+  BOOST_CONSTEXPR const error_type& contained_err() const& { return base_type::storage.err(); }
   BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS
-  error_type& contained_err() & { return base_type::storage.err; }
+  error_type& contained_err() & { return base_type::storage.err(); }
   BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS
-  error_type&& contained_err() && { return std::move(base_type::storage.err); }
+  error_type&& contained_err() && { return std::move(base_type::storage.err()); }
 
 #else
   BOOST_CONSTEXPR const bool& contained_has_value() const BOOST_NOEXCEPT { return base_type::has_value; }
   bool& contained_has_value() BOOST_NOEXCEPT { return base_type::has_value; }
-  BOOST_CONSTEXPR const value_type& contained_val() const { return base_type::storage.val; }
-  value_type& contained_val() { return base_type::storage.val; }
-  BOOST_CONSTEXPR const error_type& contained_err() const { return base_type::storage.err; }
-  error_type& contained_err() { return base_type::storage.err; }
+  BOOST_CONSTEXPR const value_type& contained_val() const { return base_type::storage.val(); }
+  value_type& contained_val() { return base_type::storage.val(); }
+  BOOST_CONSTEXPR const error_type& contained_err() const { return base_type::storage.err(); }
+  error_type& contained_err() { return base_type::storage.err(); }
 #endif
 
   // C++03 movable support
@@ -1388,8 +1507,8 @@ private:
   typedef boost::is_same<error_type, expect_t> is_same_error_expect_t;
   BOOST_STATIC_ASSERT_MSG( !is_same_error_expect_t::value, "bad ErrorType" );
 
-  error_type* errorptr() { return std::addressof(base_type::storage.err); }
-  BOOST_CONSTEXPR const error_type* errorptr() const { return static_addressof(base_type::storage.err); }
+  error_type* errorptr() { return std::addressof(base_type::storage.err()); }
+  BOOST_CONSTEXPR const error_type* errorptr() const { return static_addressof(base_type::storage.err()); }
 
 #if ! defined BOOST_EXPECTED_NO_CXX11_RVALUE_REFERENCE_FOR_THIS
   BOOST_CONSTEXPR const bool& contained_has_value() const& { return base_type::has_value; }
@@ -1398,17 +1517,17 @@ private:
   BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS
   bool&& contained_has_value() && { return std::move(base_type::has_value); }
 
-  BOOST_CONSTEXPR const error_type& contained_err() const& { return base_type::storage.err; }
+  BOOST_CONSTEXPR const error_type& contained_err() const& { return base_type::storage.err(); }
   BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS
-  error_type& contained_err() & { return base_type::storage.err; }
+  error_type& contained_err() & { return base_type::storage.err(); }
   BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS
-  error_type&& contained_err() && { return std::move(base_type::storage.err); }
+  error_type&& contained_err() && { return std::move(base_type::storage.err()); }
 
 #else
   BOOST_CONSTEXPR const bool& contained_has_value() const BOOST_NOEXCEPT { return base_type::has_value; }
   bool& contained_has_value() BOOST_NOEXCEPT { return base_type::has_value; }
-  BOOST_CONSTEXPR const error_type& contained_err() const { return base_type::storage.err; }
-  error_type& contained_err() { return base_type::storage.err; }
+  BOOST_CONSTEXPR const error_type& contained_err() const { return base_type::storage.err(); }
+  error_type& contained_err() { return base_type::storage.err(); }
 #endif
 
   // C++03 movable support

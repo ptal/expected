@@ -73,5 +73,21 @@
 # endif
 #endif
 
+# if defined __clang__
+#  if (__clang_major__ < 3) || (__clang_major__ == 3) && (__clang_minor__ < 0)
+#   define BOOST_EXPECTED_NO_CXX11_UNRESTRICTED_UNIONS
+#  endif
+# elif defined __GNUC__
+#  if (__GNUC__*10000 + __GNUC_MINOR__*100 + __GNUC_PATCHLEVEL__ < 40600)
+#   define BOOST_EXPECTED_NO_CXX11_UNRESTRICTED_UNIONS
+#  endif
+# elif defined _MSC_VER
+#  if _MSC_VER < 1900 // VS14
+#   define BOOST_EXPECTED_NO_CXX11_UNRESTRICTED_UNIONS
+#  endif
+# else
+#  define BOOST_EXPECTED_NO_CXX11_UNRESTRICTED_UNIONS
+# endif
+
 
 #endif // BOOST_EXPECTED_CONFIG_HPP
