@@ -238,7 +238,6 @@ namespace expected_based
       });
   }
 
-#if !defined BOOST_MSVC || BOOST_MSVC >= 1900 // VS2013 can't specialise functor::map()
   expected<int> then_f23(int i, int j, int k)
   {
     using namespace ::boost::functional::functor;
@@ -246,7 +245,6 @@ namespace expected_based
         { return q1+q2;},
         safe_divide(i, k), safe_divide(j, k));
   }
-#endif
 
   expected<int> then_f2(int i, int j, int k)
   {
@@ -259,13 +257,11 @@ namespace expected_based
           };
     };
   }
-#if !defined BOOST_MSVC || BOOST_MSVC >= 1900 // VS2013 can't find operator^
   expected<int> then_f4(int i, int j, int k)
   {
     using namespace ::boost::functional::monad;
-    return  safe_divide(i, k) & [=](int q1) { return [=](int q2) { return q1+q2; } ^ safe_divide(j,k) ;}  ;
+    return  safe_divide(i, k) & [=](int q1) { return [=](int q2) { return q1+q2; } ^ safe_divide(j, k); };
   }
-#endif
 }
 
 namespace optional_based
@@ -284,7 +280,6 @@ namespace optional_based
       });
   }
 
-#if !defined BOOST_MSVC || BOOST_MSVC >= 1900 // VS2013 can't specialise functor::map()
   optional<int> then_f23(int i, int j, int k)
   {
     using namespace boost::functional::monad_error;
@@ -292,7 +287,6 @@ namespace optional_based
         { return q1+q2;},
         safe_divide(i, k), safe_divide(j, k));
   }
-#endif
 
   optional<int> then_f2(int i, int j, int k)
   {
@@ -324,7 +318,6 @@ namespace generic_based
       });
   }
 
-#if !defined BOOST_MSVC || BOOST_MSVC >= 1900 // VS2013 can't specialise functor::map()
   template <class M>
   apply<M, int> then_f23(int i, int j, int k)
   {
@@ -333,7 +326,6 @@ namespace generic_based
         { return q1+q2;},
         safe_divide<M>(i, k), safe_divide<M>(j, k));
   }
-#endif
 
   template <class M>
   apply<M, int> then_f2(int i, int j, int k)
@@ -624,16 +616,12 @@ void expected_test()
   auto mr2 = mex_f2(1, 2, 0);
   auto tr22 = then_f22(1, 2, 1);
   std::cout << *tr22 << std::endl;
-#if !defined BOOST_MSVC || BOOST_MSVC >= 1900 // VS2013 can't specialise functor::map()
   auto tr23 = then_f23(1, 2, 1);
   std::cout << *tr23 << std::endl;
-#endif
   auto tr2 = then_f2(1, 2, 1);
   std::cout << *tr2 << std::endl;
-#if !defined BOOST_MSVC || BOOST_MSVC >= 1900 // VS2013 can't find operator^
   auto tr4 = then_f4(1, 2, 1);
   std::cout << *tr4 << std::endl;
-#endif
   auto r3 = cex_f2(1, 2, 0);
   auto a0 = divide0(1, 0);
   auto a1 = divide1(1, 0);
@@ -652,10 +640,8 @@ void generic_test()
   auto mr2 = mex_f2<M>(1, 2, 0);
   auto tr22 = then_f22<M>(1, 2, 1);
   std::cout << *tr22 << std::endl;
-#if !defined BOOST_MSVC || BOOST_MSVC >= 1900 // VS2013 can't specialise functor::map()
   auto tr23 = then_f23<M>(1, 2, 1);
   std::cout << *tr23 << std::endl;
-#endif
   auto tr2 = then_f2<M>(1, 2, 1);
   std::cout << *tr2 << std::endl;
 
@@ -680,10 +666,8 @@ void optional_test()
   auto mr2 = mex_f2(1, 2, 0);
   auto tr22 = then_f22(1, 2, 1);
   std::cout << *tr22 << std::endl;
-#if !defined BOOST_MSVC || BOOST_MSVC >= 1900 // VS2013 can't specialise functor::map()
   auto tr23 = then_f23(1, 2, 1);
   std::cout << *tr23 << std::endl;
-#endif
   auto tr2 = then_f2(1, 2, 1);
   std::cout << *tr2 << std::endl;
   auto r3 = cex_f2(1, 2, 0);
