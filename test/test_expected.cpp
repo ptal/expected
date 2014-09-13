@@ -982,14 +982,18 @@ BOOST_AUTO_TEST_CASE(make_unexpected_fact)
     opt2 = {unexpect, 1};
   }
 }
-#if !defined BOOST_MSVC || BOOST_MSVC >= 1900 // VS2013 doesn't match operator==(boost::error_exception<std::error_code,std::system_error>, std::error_code)
 BOOST_AUTO_TEST_CASE(error_exception_ts)
 {
   using namespace std;
   {
     expected<int, error_exception<std::error_code, std::system_error> > e =
         make_unexpected(make_error_code(errc::invalid_argument));
+#if !defined BOOST_MSVC || BOOST_MSVC >= 1900
     BOOST_CHECK(e.error()==make_error_code(errc::invalid_argument));
+#else
+    // VS2013 doesn't match operator==(boost::error_exception<std::error_code,std::system_error>, std::error_code)
+    BOOST_CHECK(e.error()==(error_exception<std::error_code, std::system_error>(make_error_code(errc::invalid_argument))));
+#endif
     try {
       e.value();
       BOOST_CHECK (false);
@@ -999,7 +1003,12 @@ BOOST_AUTO_TEST_CASE(error_exception_ts)
       BOOST_CHECK (false);
     }
     expected<int, error_exception<std::error_code, std::system_error> > e2 = e.get_unexpected();
+#if !defined BOOST_MSVC || BOOST_MSVC >= 1900
     BOOST_CHECK(e2.error()==make_error_code(errc::invalid_argument));
+#else
+    // VS2013 doesn't match operator==(boost::error_exception<std::error_code,std::system_error>, std::error_code)
+    BOOST_CHECK(e2.error()==(error_exception<std::error_code, std::system_error>(make_error_code(errc::invalid_argument))));
+#endif
     try {
       e2.value();
       BOOST_CHECK (false);
@@ -1011,7 +1020,6 @@ BOOST_AUTO_TEST_CASE(error_exception_ts)
 
   }
 }
-#endif
 BOOST_AUTO_TEST_CASE(ensured_read_ts)
 {
   using namespace std;

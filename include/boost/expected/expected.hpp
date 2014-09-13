@@ -255,7 +255,6 @@ union trivial_expected_storage
   : _err(error::make_error<error_type>(e.value()))
   {}
 
-  template <class... Args>
   BOOST_CONSTEXPR trivial_expected_storage(in_place_t)
   : _val(boost_expected_unrestricted_union_emulation_default_tag())
   {}
@@ -351,7 +350,6 @@ union no_trivial_expected_storage
   : _err(error::make_error<error_type>(e.value()))
   {}
 
-  template <class... Args>
   BOOST_CONSTEXPR no_trivial_expected_storage(in_place_t) //BOOST_NOEXCEPT_IF()
   : _val(boost_expected_unrestricted_union_emulation_default_tag())
   {}
