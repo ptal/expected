@@ -260,7 +260,7 @@ namespace expected_based
   expected<int> then_f4(int i, int j, int k)
   {
     using namespace ::boost::functional::monad;
-    return  safe_divide(i, k) & [=](int q1) { return [=](int q2) { return q1+q2; } ^ safe_divide(j, k); };
+    return  safe_divide(i, k) & [=](int q1) { return [=](int q2) { return q1+q2; } ^ safe_divide(j,k); };
   }
 }
 
