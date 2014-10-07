@@ -128,11 +128,11 @@ namespace detail
   };
 
   template <class E, class F>
-  struct if_valued0<E, F, void> : if_valued2<E, F, typename result_of<F()>::type>
+  struct if_valued0<E, F, void> : if_valued2<E, F, typename std::result_of<F()>::type>
   {
 
     explicit if_valued0(F f) :
-      if_valued2<E, F, typename result_of<F()>::type> (f)
+      if_valued2<E, F, typename std::result_of<F()>::type> (f)
     {
     }
 
@@ -170,7 +170,7 @@ namespace detail
     {
     }
 
-    typedef typename result_of<F()>::type result_type;
+    typedef typename std::result_of<F()>::type result_type;
 
     template <class G>
     result_type operator()(G e)

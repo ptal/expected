@@ -22,7 +22,7 @@ namespace functional
 //{
 
   template <class Mo>
-  struct monad_traits : std::false_type {};
+  struct monad_traits : std:: std::false_type {};
 
   template <class M>
   struct is_monad : std::integral_constant<bool, is_functor<M>::value &&

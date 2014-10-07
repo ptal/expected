@@ -20,7 +20,7 @@ namespace functional
 {
 
   template <class Mo>
-  struct functor_traits : std::false_type {};
+  struct functor_traits : std:: std::false_type {};
 
   template <>
   struct functor_traits<category::default_> : std::true_type {};

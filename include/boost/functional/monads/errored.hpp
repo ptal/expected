@@ -19,7 +19,7 @@ namespace functional
 {
 
   template <class T>
-  struct errored_traits  : std::false_type {};
+  struct errored_traits  : std:: std::false_type {};
 
   template <>
   struct errored_traits<category::default_>  : std::true_type {};
