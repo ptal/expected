@@ -23,7 +23,7 @@ namespace category
 }
 
   template <class T>
-  struct rebindable_traits : std:: std::false_type {};
+  struct rebindable_traits : std::false_type {};
 
   template <class M>
   struct is_rebindable : rebindable_traits<M> {};

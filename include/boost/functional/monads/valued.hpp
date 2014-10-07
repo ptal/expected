@@ -25,7 +25,7 @@ namespace functional
   }
 
   template <class T>
-  struct valued_traits  : std:: std::false_type {};
+  struct valued_traits  : std::false_type {};
 
   template <class M>
   struct is_valued : std::integral_constant<bool, is_rebindable<M>::value &&

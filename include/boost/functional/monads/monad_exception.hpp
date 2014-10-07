@@ -22,7 +22,7 @@ namespace functional
 {
 
   template <class Mo>
-  struct monad_exception_traits : std:: std::false_type {};
+  struct monad_exception_traits : std::false_type {};
   template <>
   struct monad_exception_traits<category::default_> : std::true_type {};
   template <>
