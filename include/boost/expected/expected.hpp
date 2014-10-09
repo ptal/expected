@@ -91,11 +91,11 @@ exception_ptr make_error(Error e, exception_ptr)
 {
   return copy_exception(e);
 }
-void rethrow(exception_ptr e)
+inline void rethrow(exception_ptr e)
 {
   return rethrow_exception(e);
 }
-exception_ptr make_error_from_current_exception(exception_ptr)
+inline exception_ptr make_error_from_current_exception(exception_ptr)
 {
   return current_exception();
 }
@@ -109,11 +109,11 @@ exception_ptr make_error(Error e, exception_ptr)
 {
   return make_exception_ptr(e);
 }
-void rethrow(exception_ptr e)
+inline void rethrow(exception_ptr e)
 {
   return rethrow_exception(e);
 }
-exception_ptr make_error_from_current_exception(exception_ptr)
+inline exception_ptr make_error_from_current_exception(exception_ptr)
 {
   return current_exception();
 }
