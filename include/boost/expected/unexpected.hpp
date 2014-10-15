@@ -10,9 +10,10 @@
 #include <boost/expected/detail/constexpr_utility.hpp>
 #include <boost/functional/type_traits_t.hpp>
 
-
+#ifdef BOOST_CONFIG_HPP
 #include <boost/exception_ptr.hpp>
 #include <boost/type_traits.hpp>
+#endif
 
 #include <exception>
 #include <utility>
@@ -70,6 +71,7 @@ namespace boost
     return unexpected_type<decay_t<E>> (std::forward<E>(ex));
   }
 
+#ifdef BOOST_CONFIG_HPP
   template <>
   struct unexpected_type<boost::exception_ptr>
   {
@@ -97,6 +99,7 @@ namespace boost
       return error_;
     }
   };
+#endif
 
   template <>
   struct unexpected_type<std::exception_ptr>
@@ -178,6 +181,7 @@ namespace boost
     return x==y;
   }
 
+#ifdef BOOST_CONFIG_HPP
   inline BOOST_CONSTEXPR bool operator<(const unexpected_type<boost::exception_ptr>& x, const unexpected_type<boost::exception_ptr>& y)
   {
     return false;
@@ -194,11 +198,12 @@ namespace boost
   {
     return x==y;
   }
+#endif
 
   template <typename E>
-  struct is_unexpected : false_type {};
+  struct is_unexpected : std::false_type {};
   template <typename E>
-  struct is_unexpected<unexpected_type<E> > : true_type {};
+  struct is_unexpected<unexpected_type<E> > : std::true_type {};
 
   BOOST_FORCEINLINE unexpected_type<std::exception_ptr> make_unexpected_from_current_exception()
   {

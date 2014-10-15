@@ -12,6 +12,7 @@
 #include <boost/expected/detail/static_addressof.hpp>
 #include <boost/expected/detail/constexpr_utility.hpp>
 
+#ifdef BOOST_CONFIG_HPP
 #include <boost/exception_ptr.hpp>
 #include <boost/move/move.hpp>
 #include <boost/throw_exception.hpp>
@@ -19,14 +20,15 @@
 #include <boost/utility/enable_if.hpp>
 #include <boost/utility/result_of.hpp>
 #include <boost/utility/swap.hpp>
+#endif
 
 #include <stdexcept>
 #include <utility>
 #include <initializer_list>
 #include <type_traits>
 
-# define REQUIRES(...) typename ::boost::enable_if_c<__VA_ARGS__, void*>::type = 0
-# define T_REQUIRES(...) typename = typename ::boost::enable_if_c<(__VA_ARGS__)>::type
+# define REQUIRES(...) typename ::std::enable_if<__VA_ARGS__, void*>::type = 0
+# define T_REQUIRES(...) typename = typename ::std::enable_if<(__VA_ARGS__)>::type
 
 namespace boost {
 
@@ -67,7 +69,7 @@ namespace no_adl {
         T value;
     };
     template <class T>
-    wrapper<decay_t<T>> wrap(T&& v) { return wrapper<decay_t<T>>(forward<T>(v)); }
+    wrapper<decay_t<T>> wrap(T&& v) { return wrapper<decay_t<T>>(std::forward<T>(v)); }
 }
 
 template <class Error, class E>
@@ -86,6 +88,7 @@ E make_error_from_current_exception(E)
   return E();
 }
 
+#ifdef BOOST_CONFIG_HPP
 template <class Error>
 exception_ptr make_error(Error e, exception_ptr)
 {
@@ -99,7 +102,7 @@ inline exception_ptr make_error_from_current_exception(exception_ptr)
 {
   return current_exception();
 }
-
+#endif
 
 }
 
@@ -126,7 +129,9 @@ namespace error {
   template <class E, class Error>
   E make_error(Error e)
   {
+#ifdef BOOST_CONFIG_HPP
     using boost::make_error;
+#endif
     using std::make_error;
     return make_error(e, E());
   }
@@ -238,7 +243,7 @@ union trivial_expected_storage
 #endif
 
   BOOST_CONSTEXPR trivial_expected_storage()
-    BOOST_NOEXCEPT_IF(has_nothrow_default_constructor<value_type>::value)
+    BOOST_NOEXCEPT_IF(std::is_nothrow_default_constructible<value_type>::value)
   : _err(boost_expected_unrestricted_union_emulation_default_tag())
   {}
 
@@ -390,7 +395,7 @@ union no_trivial_expected_storage<void, E>
   : _err(e.value())
   {}
   BOOST_CONSTEXPR no_trivial_expected_storage(unexpected_type<error_type> && e)
-  : _err(boost::move(e.value()))
+  : _err(std::move(e.value()))
   {}
 
   template <class Err>
@@ -417,7 +422,7 @@ struct trivial_expected_base
   trivial_expected_storage<T, E> storage;
 
   BOOST_CONSTEXPR trivial_expected_base()
-    //BOOST_NOEXCEPT_IF(has_nothrow_default_constructor<value_type>::value)
+    //BOOST_NOEXCEPT_IF(std::is_nothrow_default_constructible<value_type>::value)
   : has_value(false), storage()
   {}
 
@@ -513,7 +518,7 @@ struct no_trivial_expected_base
   no_trivial_expected_storage<T, E> storage;
 
   BOOST_CONSTEXPR no_trivial_expected_base()
-    //BOOST_NOEXCEPT_IF(has_nothrow_default_constructor<value_type>::value)
+    //BOOST_NOEXCEPT_IF(std::is_nothrow_default_constructible<value_type>::value)
   : has_value(false), storage()
   {}
 
@@ -608,7 +613,7 @@ struct no_trivial_expected_base<void, E> {
 
 template <typename T, typename E >
   using expected_base = typename std::conditional<
-    has_trivial_destructor<T>::value && has_trivial_destructor<E>::value,
+    std::is_trivially_destructible<T>::value && std::is_trivially_destructible<E>::value,
     trivial_expected_base<T,E>,
     no_trivial_expected_base<T,E>
   >::type;
@@ -641,9 +646,9 @@ namespace expected_detail
 }
 
 template <typename T>
-struct is_expected : false_type {};
+struct is_expected :  std::false_type {};
 template <class T, class E>
-struct is_expected<expected<T,E> > : true_type {};
+struct is_expected<expected<T,E> > : std::true_type {};
 
 template <typename ValueType, typename ErrorType>
 class expected
@@ -661,19 +666,19 @@ private:
   // Static asserts.
   typedef boost::is_unexpected<value_type> is_unexpected_value_t;
   BOOST_STATIC_ASSERT_MSG( !is_unexpected_value_t::value, "bad ValueType" );
-  typedef boost::is_same<value_type, in_place_t> is_same_value_in_place_t;
+  typedef std::is_same<value_type, in_place_t> is_same_value_in_place_t;
   BOOST_STATIC_ASSERT_MSG( !is_same_value_in_place_t::value, "bad ValueType" );
-  typedef boost::is_same<value_type, unexpect_t> is_same_value_unexpect_t;
+  typedef std::is_same<value_type, unexpect_t> is_same_value_unexpect_t;
   BOOST_STATIC_ASSERT_MSG( !is_same_value_unexpect_t::value, "bad ValueType" );
-  typedef boost::is_same<value_type, expect_t> is_same_value_expect_t;
+  typedef std::is_same<value_type, expect_t> is_same_value_expect_t;
   BOOST_STATIC_ASSERT_MSG( !is_same_value_expect_t::value, "bad ValueType" );
   typedef boost::is_unexpected<error_type> is_unexpected_error_t;
   BOOST_STATIC_ASSERT_MSG( !is_unexpected_error_t::value, "bad ErrorType" );
-  typedef boost::is_same<error_type, in_place_t> is_same_error_in_place_t;
+  typedef std::is_same<error_type, in_place_t> is_same_error_in_place_t;
   BOOST_STATIC_ASSERT_MSG( !is_same_error_in_place_t::value, "bad ErrorType" );
-  typedef boost::is_same<error_type, unexpect_t> is_same_error_unexpect_t;
+  typedef std::is_same<error_type, unexpect_t> is_same_error_unexpect_t;
   BOOST_STATIC_ASSERT_MSG( !is_same_error_unexpect_t::value, "bad ErrorType" );
-  typedef boost::is_same<error_type, expect_t> is_same_error_expect_t;
+  typedef std::is_same<error_type, expect_t> is_same_error_expect_t;
   BOOST_STATIC_ASSERT_MSG( !is_same_error_expect_t::value, "bad ErrorType" );
 
   value_type* dataptr() { return std::addressof(base_type::storage.val()); }
@@ -709,8 +714,10 @@ private:
   error_type& contained_err() { return base_type::storage.err(); }
 #endif
 
+#ifdef BOOST_CONFIG_HPP
   // C++03 movable support
   BOOST_COPYABLE_AND_MOVABLE(this_type)
+#endif
 
 public:
 
@@ -730,7 +737,7 @@ public:
   BOOST_CONSTEXPR expected(
      //REQUIRES(std::is_default_constructible<error_type>::value)
   ) BOOST_NOEXCEPT_IF(
-  has_nothrow_default_constructor<error_type>::value
+  std::is_nothrow_default_constructible<error_type>::value
   )
   : base_type()
   {}
@@ -738,7 +745,7 @@ public:
   BOOST_CONSTEXPR expected(const value_type& v
     //, REQUIRES(std::is_copy_constructible<value_type>::value)
   )
-  BOOST_NOEXCEPT_IF(has_nothrow_copy_constructor<value_type>::value)
+  BOOST_NOEXCEPT_IF(std::is_nothrow_copy_constructible<value_type>::value)
   : base_type(v)
   {}
 
@@ -756,8 +763,8 @@ public:
       //         && std::is_copy_constructible<error_type>::value)
   )
   BOOST_NOEXCEPT_IF(
-    has_nothrow_copy_constructor<value_type>::value &&
-    has_nothrow_copy_constructor<error_type>::value
+    std::is_nothrow_copy_constructible<value_type>::value &&
+    std::is_nothrow_copy_constructible<error_type>::value
   )
   : base_type(detail::only_set_valid, rhs.valid())
   {
@@ -783,11 +790,11 @@ public:
   {
     if (rhs.valid())
     {
-      ::new (dataptr()) value_type(boost::move(rhs.contained_val()));
+      ::new (dataptr()) value_type(std::move(rhs.contained_val()));
     }
     else
     {
-      ::new (errorptr()) error_type(boost::move(rhs.contained_err()));
+      ::new (errorptr()) error_type(std::move(rhs.contained_err()));
     }
   }
 
@@ -795,7 +802,7 @@ public:
     //, REQUIRES(std::is_copy_constructible<error_type>::value)
   )
   BOOST_NOEXCEPT_IF(
-    has_nothrow_copy_constructor<error_type>::value
+    std::is_nothrow_copy_constructible<error_type>::value
   )
   : base_type(e)
   {}
@@ -813,7 +820,7 @@ public:
 //    , REQUIRES(std::is_copy_constructible<error_type>::value)
   )
   //BOOST_NOEXCEPT_IF(
-    //has_nothrow_copy_constructor<error_type>::value
+    //std::is_nothrow_copy_constructible<error_type>::value
     //std::is_nothrow_copy_constructible<error_type>::value
   //)
   : base_type(e)
@@ -836,7 +843,7 @@ public:
   expected(unexpect_t, BOOST_FWD_REF(Args)... args
   )
   BOOST_NOEXCEPT_IF(
-    has_nothrow_copy_constructor<error_type>::value
+    std::is_nothrow_copy_constructible<error_type>::value
   )
   : base_type(unexpected_type<error_type>(error_type(std::forward<Args>(args)...)))
   {}
@@ -889,21 +896,21 @@ public:
 
   expected& operator=(BOOST_RV_REF(expected) e)
   {
-    this_type(boost::move(e)).swap(*this);
+    this_type(std::move(e)).swap(*this);
     return *this;
   }
 
-  template <class U, T_REQUIRES(is_same<decay_t<U>, value_type>::value)>
+  template <class U, T_REQUIRES(std::is_same<decay_t<U>, value_type>::value)>
   expected& operator=(BOOST_COPY_ASSIGN_REF(U) value)
   {
     this_type(value).swap(*this);
     return *this;
   }
 
-  template <class U, T_REQUIRES(is_same<decay_t<U>, value_type>::value)>
+  template <class U, T_REQUIRES(std::is_same<decay_t<U>, value_type>::value)>
   expected& operator=(BOOST_RV_REF(U) value)
   {
-    this_type(boost::move(value)).swap(*this);
+    this_type(std::move(value)).swap(*this);
     return *this;
   }
 
@@ -934,12 +941,12 @@ public:
     {
       if (rhs.valid())
       {
-        boost::swap(contained_val(), rhs.contained_val());
+        std::swap(contained_val(), rhs.contained_val());
       }
       else
       {
-        error_type t = boost::move(rhs.contained_err());
-        new (rhs.dataptr()) value_type(boost::move(contained_val()));
+        error_type t = std::move(rhs.contained_err());
+        new (rhs.dataptr()) value_type(std::move(contained_val()));
         new (errorptr()) error_type(t);
         std::swap(contained_has_value(), rhs.contained_has_value());
       }
@@ -952,7 +959,7 @@ public:
       }
       else
       {
-        boost::swap(contained_err(), rhs.contained_err());
+        std::swap(contained_err(), rhs.contained_err());
       }
     }
   }
@@ -1165,10 +1172,10 @@ public:
   }
 
   template <typename F>
-  typename result_of<F(value_type)>::type
+  typename std::result_of<F(value_type)>::type
   catch_all_type_type(BOOST_RV_REF(F) f)
   {
-    typedef typename result_of<F(value_type)>::type result_type;
+    typedef typename std::result_of<F(value_type)>::type result_type;
     try {
       return f(std::move(**this));
     } catch (...) {
@@ -1176,10 +1183,10 @@ public:
     }
   }
   template <typename F>
-  typename rebind<typename result_of<F(value_type)>::type>::type
+  typename rebind<typename std::result_of<F(value_type)>::type>::type
   catch_all_type_etype(BOOST_RV_REF(F) f)
   {
-    typedef typename rebind<typename result_of<F(value_type)>::type>::type result_type;
+    typedef typename rebind<typename std::result_of<F(value_type)>::type>::type result_type;
     try {
       return f(std::move(**this));
     } catch (...) {
@@ -1200,10 +1207,10 @@ public:
   }
 
   template <typename F>
-  typename result_of<F(expected)>::type
+  typename std::result_of<F(expected)>::type
   catch_all_etype_type(BOOST_RV_REF(F) f)
   {
-    typedef typename result_of<F(expected)>::type result_type;
+    typedef typename std::result_of<F(expected)>::type result_type;
     try {
       return f(std::move(*this));
     } catch (...) {
@@ -1211,10 +1218,10 @@ public:
     }
   }
   template <typename F>
-  typename rebind<typename result_of<F(expected)>::type>::type
+  typename rebind<typename std::result_of<F(expected)>::type>::type
   catch_all_etype_etype(BOOST_RV_REF(F) f)
   {
-    typedef typename rebind<typename result_of<F(expected)>::type>::type result_type;
+    typedef typename rebind<typename std::result_of<F(expected)>::type>::type result_type;
     try {
       return f(std::move(*this));
     } catch (...) {
@@ -1226,7 +1233,7 @@ public:
   template <typename F>
   typename rebind<void>::type
   map(BOOST_RV_REF(F) f,
-    REQUIRES(boost::is_same<typename result_of<F(value_type)>::type, void>::value))
+    REQUIRES(std::is_same<typename std::result_of<F(value_type)>::type, void>::value))
   {
     typedef typename rebind<void>::type result_type;
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
@@ -1244,11 +1251,11 @@ public:
   }
 
   template <typename F>
-  typename rebind<typename result_of<F(value_type)>::type>::type
+  typename rebind<typename std::result_of<F(value_type)>::type>::type
   map(BOOST_RV_REF(F) f,
-    REQUIRES(!boost::is_same<typename result_of<F(value_type)>::type, void>::value))
+    REQUIRES(!std::is_same<typename std::result_of<F(value_type)>::type, void>::value))
   {
-    typedef typename rebind<typename result_of<F(value_type)>::type>::type result_type;
+    typedef typename rebind<typename std::result_of<F(value_type)>::type>::type result_type;
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
     if(valid())
     {
@@ -1266,7 +1273,7 @@ public:
   template <typename F>
   typename rebind<void>::type
   bind(BOOST_RV_REF(F) f,
-    REQUIRES(boost::is_same<typename result_of<F(value_type)>::type, void>::value))
+    REQUIRES(std::is_same<typename std::result_of<F(value_type)>::type, void>::value))
   {
     typedef typename rebind<void>::type result_type;
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
@@ -1284,13 +1291,13 @@ public:
   }
 
   template <typename F>
-  typename rebind<typename result_of<F(value_type)>::type>::type
+  typename rebind<typename std::result_of<F(value_type)>::type>::type
   bind(BOOST_RV_REF(F) f,
-    REQUIRES(!boost::is_same<typename result_of<F(value_type)>::type, void>::value
-        && !boost::is_expected<typename result_of<F(value_type)>::type>::value
+    REQUIRES(!std::is_same<typename std::result_of<F(value_type)>::type, void>::value
+        && !boost::is_expected<typename std::result_of<F(value_type)>::type>::value
         ))
   {
-    typedef typename rebind<typename result_of<F(value_type)>::type>::type result_type;
+    typedef typename rebind<typename std::result_of<F(value_type)>::type>::type result_type;
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
     if(valid())
     {
@@ -1306,10 +1313,10 @@ public:
   }
 
   template <typename F>
-  typename result_of<F(value_type)>::type
+  typename std::result_of<F(value_type)>::type
   bind(BOOST_RV_REF(F) f,
-    REQUIRES(!boost::is_same<typename result_of<F(value_type)>::type, void>::value
-        && boost::is_expected<typename result_of<F(value_type)>::type>::value
+    REQUIRES(!std::is_same<typename std::result_of<F(value_type)>::type, void>::value
+        && boost::is_expected<typename std::result_of<F(value_type)>::type>::value
         )
     )
   {
@@ -1322,45 +1329,45 @@ public:
 #else
      return valid()
          ? f(value())
-         : typename result_of<F(value_type)>::type(get_unexpected());
+         : typename std::result_of<F(value_type)>::type(get_unexpected());
 #endif
   }
 
   template <typename F>
   typename rebind<void>::type
   then(BOOST_RV_REF(F) f,
-    REQUIRES(boost::is_same<typename result_of<F(expected)>::type, void>::value))
+    REQUIRES(std::is_same<typename std::result_of<F(expected)>::type, void>::value))
   {
     typedef typename rebind<void>::type result_type;
     return catch_all_etype_void(std::forward<F>(f));
   }
 
   template <typename F>
-  typename rebind<typename result_of<F(expected)>::type>::type
+  typename rebind<typename std::result_of<F(expected)>::type>::type
   then(BOOST_RV_REF(F) f,
-    REQUIRES(!boost::is_same<typename result_of<F(expected)>::type, void>::value
-        && !boost::is_expected<typename result_of<F(expected)>::type>::value
+    REQUIRES(!std::is_same<typename std::result_of<F(expected)>::type, void>::value
+        && !boost::is_expected<typename std::result_of<F(expected)>::type>::value
         ))
   {
     return catch_all_etype_etype(std::forward<F>(f));
-    //typedef typename rebind<typename result_of<F(value_type)>::type>::type result_type;
-    //return result_type(f(boost::move(*this)));
+    //typedef typename rebind<typename std::result_of<F(value_type)>::type>::type result_type;
+    //return result_type(f(std::move(*this)));
   }
 
   template <typename F>
-  typename result_of<F(expected)>::type
+  typename std::result_of<F(expected)>::type
   then(BOOST_RV_REF(F) f,
-    REQUIRES(boost::is_expected<typename result_of<F(expected)>::type>::value)
+    REQUIRES(boost::is_expected<typename std::result_of<F(expected)>::type>::value)
     )
   {
     return catch_all_etype_type(std::forward<F>(f));
-    //return f(boost::move(*this));
+    //return f(std::move(*this));
   }
 
   template <typename F>
   this_type
   catch_error(BOOST_RV_REF(F) f,
-    REQUIRES(boost::is_same<typename result_of<F(error_type)>::type, value_type>::value))
+    REQUIRES(std::is_same<typename std::result_of<F(error_type)>::type, value_type>::value))
   {
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
     if(!valid())
@@ -1378,7 +1385,7 @@ public:
 
   template <typename F>
   this_type catch_error(BOOST_RV_REF(F) f,
-    REQUIRES(boost::is_same<typename result_of<F(error_type)>::type, this_type>::value))
+    REQUIRES(std::is_same<typename std::result_of<F(error_type)>::type, this_type>::value))
   {
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
     if(!valid())
@@ -1396,7 +1403,7 @@ public:
 
   template <typename F>
   this_type catch_error(BOOST_RV_REF(F) f,
-    REQUIRES(boost::is_same<typename result_of<F(error_type)>::type, unexpected_type<error_type> >::value))
+    REQUIRES(std::is_same<typename std::result_of<F(error_type)>::type, unexpected_type<error_type> >::value))
   {
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
     if(!valid())
@@ -1415,7 +1422,7 @@ public:
   template <typename Ex, typename F>
   this_type catch_exception(BOOST_RV_REF(F) f,
     REQUIRES(
-        boost::is_same<typename std::result_of<F(Ex &)>::type, this_type>::value
+        std::is_same<typename std::result_of<F(Ex &)>::type, this_type>::value
         )) const
   {
     try {
@@ -1435,7 +1442,7 @@ public:
   template <typename Ex, typename F>
   this_type catch_exception(BOOST_RV_REF(F) f,
     REQUIRES(
-        boost::is_same<typename std::result_of<F(Ex &)>::type, value_type>::value
+        std::is_same<typename std::result_of<F(Ex &)>::type, value_type>::value
         )) const
   {
     try {
@@ -1500,11 +1507,11 @@ private:
   // Static asserts.
   typedef boost::is_unexpected<error_type> is_unexpected_error_t;
   BOOST_STATIC_ASSERT_MSG( !is_unexpected_error_t::value, "bad ErrorType" );
-  typedef boost::is_same<error_type, in_place_t> is_same_error_in_place_t;
+  typedef std::is_same<error_type, in_place_t> is_same_error_in_place_t;
   BOOST_STATIC_ASSERT_MSG( !is_same_error_in_place_t::value, "bad ErrorType" );
-  typedef boost::is_same<error_type, unexpect_t> is_same_error_unexpect_t;
+  typedef std::is_same<error_type, unexpect_t> is_same_error_unexpect_t;
   BOOST_STATIC_ASSERT_MSG( !is_same_error_unexpect_t::value, "bad ErrorType" );
-  typedef boost::is_same<error_type, expect_t> is_same_error_expect_t;
+  typedef std::is_same<error_type, expect_t> is_same_error_expect_t;
   BOOST_STATIC_ASSERT_MSG( !is_same_error_expect_t::value, "bad ErrorType" );
 
   error_type* errorptr() { return std::addressof(base_type::storage.err()); }
@@ -1530,8 +1537,10 @@ private:
   error_type& contained_err() { return base_type::storage.err(); }
 #endif
 
+#ifdef BOOST_CONFIG_HPP
   // C++03 movable support
   BOOST_COPYABLE_AND_MOVABLE(this_type)
+#endif
 
 public:
 
@@ -1551,7 +1560,7 @@ public:
     , REQUIRES( std::is_copy_constructible<error_type>::value)
   )
   BOOST_NOEXCEPT_IF(
-    has_nothrow_copy_constructor<error_type>::value
+    std::is_nothrow_copy_constructible<error_type>::value
   )
   : base_type(detail::only_set_valid, rhs.valid())
   {
@@ -1571,7 +1580,7 @@ public:
   {
     if (! rhs.valid())
     {
-      ::new (errorptr()) error_type(boost::move(rhs.contained_err()));
+      ::new (errorptr()) error_type(std::move(rhs.contained_err()));
     }
   }
 
@@ -1585,7 +1594,7 @@ public:
   BOOST_CONSTEXPR expected(
      REQUIRES(std::is_default_constructible<error_type>::value)
   ) BOOST_NOEXCEPT_IF(
-    has_nothrow_default_constructor<error_type>::value
+    std::is_nothrow_default_constructible<error_type>::value
   )
   : base_type()
   {}
@@ -1595,7 +1604,7 @@ public:
     , REQUIRES(std::is_copy_constructible<error_type>::value)
   )
   BOOST_NOEXCEPT_IF(
-    has_nothrow_copy_constructor<error_type>::value
+    std::is_nothrow_copy_constructible<error_type>::value
   )
   : base_type(e)
   {}
@@ -1603,7 +1612,7 @@ public:
     , REQUIRES(std::is_move_constructible<error_type>::value)
   )
   //BOOST_NOEXCEPT_IF(
-  //  has_nothrow_copy_constructor<error_type>::value
+  //  std::is_nothrow_copy_constructible<error_type>::value
   //)
   : base_type(std::forward<unexpected_type<error_type>>(e))
   {}
@@ -1613,7 +1622,7 @@ public:
 //    , REQUIRES(std::is_copy_constructible<error_type>::value)
   )
 //  BOOST_NOEXCEPT_IF(
-//    has_nothrow_copy_constructor<error_type>::value
+//    std::is_nothrow_copy_constructible<error_type>::value
 //  )
   : base_type(e)
   {}
@@ -1622,7 +1631,7 @@ public:
 //    , REQUIRES(std::is_copy_constructible<error_type>::value)
   )
 //  BOOST_NOEXCEPT_IF(
-//    has_nothrow_copy_constructor<error_type>::value
+//    std::is_nothrow_copy_constructible<error_type>::value
 //  )
   : base_type(std::forward<unexpected_type<Err>>(e))
   {}
@@ -1635,7 +1644,7 @@ public:
   expected(unexpect_t, BOOST_FWD_REF(Args)... args
   )
   BOOST_NOEXCEPT_IF(
-    has_nothrow_copy_constructor<error_type>::value
+    std::is_nothrow_copy_constructible<error_type>::value
   )
   : base_type(unexpected_type<error_type>(error_type(std::forward<Args>(args)...)))
   {}
@@ -1651,7 +1660,7 @@ public:
 
   expected& operator=(BOOST_RV_REF(expected) e)
   {
-    this_type(boost::move(e)).swap(*this);
+    this_type(std::move(e)).swap(*this);
     return *this;
   }
 
@@ -1668,7 +1677,7 @@ public:
     {
       if (! rhs.valid())
       {
-        error_type t = boost::move(rhs.contained_err());
+        error_type t = std::move(rhs.contained_err());
         new (errorptr()) error_type(t);
         std::swap(contained_has_value(), rhs.contained_has_value());
       }
@@ -1681,7 +1690,7 @@ public:
       }
       else
       {
-        boost::swap(contained_err(), rhs.contained_err());
+        std::swap(contained_err(), rhs.contained_err());
       }
     }
   }
@@ -1768,10 +1777,10 @@ public:
     return result_type(in_place_t{});
   }
   template <typename F>
-  typename result_of<F()>::type
+  typename std::result_of<F()>::type
   catch_all_void_type(BOOST_RV_REF(F) f)
   {
-    typedef typename result_of<F()>::type result_type;
+    typedef typename std::result_of<F()>::type result_type;
     try {
       return f();
     } catch (...) {
@@ -1779,10 +1788,10 @@ public:
     }
   }
   template <typename F>
-  typename rebind<typename result_of<F()>::type>::type
+  typename rebind<typename std::result_of<F()>::type>::type
   catch_all_void_etype(BOOST_RV_REF(F) f)
   {
-    typedef typename rebind<typename result_of<F()>::type>::type result_type;
+    typedef typename rebind<typename std::result_of<F()>::type>::type result_type;
     try {
       return f();
     } catch (...) {
@@ -1802,10 +1811,10 @@ public:
     return result_type(in_place_t{});
   }
   template <typename F>
-  typename result_of<F(expected)>::type
+  typename std::result_of<F(expected)>::type
   catch_all_evoid_type(BOOST_RV_REF(F) f)
   {
-    typedef typename result_of<F(expected)>::type result_type;
+    typedef typename std::result_of<F(expected)>::type result_type;
     try {
       return f(std::move(*this));
     } catch (...) {
@@ -1813,10 +1822,10 @@ public:
     }
   }
   template <typename F>
-  typename rebind<typename result_of<F(expected)>::type>::type
+  typename rebind<typename std::result_of<F(expected)>::type>::type
   catch_all_evoid_etype(BOOST_RV_REF(F) f)
   {
-    typedef typename rebind<typename result_of<F(expected)>::type>::type result_type;
+    typedef typename rebind<typename std::result_of<F(expected)>::type>::type result_type;
     try {
       return f(std::move(*this));
     } catch (...) {
@@ -1828,7 +1837,7 @@ public:
 
   template <typename F>
   BOOST_CONSTEXPR typename rebind<void>::type bind(BOOST_RV_REF(F) f,
-    REQUIRES(boost::is_same<typename result_of<F()>::type, void>::value)) const
+    REQUIRES(std::is_same<typename std::result_of<F()>::type, void>::value)) const
   {
     typedef typename rebind<void>::type result_type;
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
@@ -1847,11 +1856,11 @@ public:
   }
 
   template <typename F>
-  typename rebind<typename result_of<F()>::type>::type
+  typename rebind<typename std::result_of<F()>::type>::type
   bind(BOOST_RV_REF(F) f,
-    REQUIRES( ! boost::is_same<typename result_of<F()>::type, void>::value) )
+    REQUIRES( ! std::is_same<typename std::result_of<F()>::type, void>::value) )
   {
-    typedef typename rebind<typename result_of<F()>::type>::type result_type;
+    typedef typename rebind<typename std::result_of<F()>::type>::type result_type;
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
     if(valid())
     {
@@ -1869,44 +1878,44 @@ public:
   template <typename F>
   typename rebind<void>::type
   then(BOOST_RV_REF(F) f,
-    REQUIRES(boost::is_same<typename result_of<F(expected)>::type, void>::value))
+    REQUIRES(std::is_same<typename std::result_of<F(expected)>::type, void>::value))
   {
     typedef typename rebind<void>::type result_type;
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
-    f(boost::move(*this));
+    f(std::move(*this));
     return result_type(in_place_t{});
 #else
-    return ( f(boost::move(*this)), result_type(in_place_t{}) );
+    return ( f(std::move(*this)), result_type(in_place_t{}) );
 #endif
   }
 
   // then factory
   template <typename F>
-  typename rebind<typename result_of<F(expected)>::type>::type
+  typename rebind<typename std::result_of<F(expected)>::type>::type
   then(BOOST_RV_REF(F) f,
-    REQUIRES(!boost::is_expected<typename result_of<F(expected)>::type>::value
+    REQUIRES(!boost::is_expected<typename std::result_of<F(expected)>::type>::value
         ))
   {
-    typedef typename rebind<typename result_of<F(expected)>::type>::type result_type;
-    return result_type(f(boost::move(*this)));
+    typedef typename rebind<typename std::result_of<F(expected)>::type>::type result_type;
+    return result_type(f(std::move(*this)));
   }
 
   template <typename F>
-  typename result_of<F(expected)>::type
+  typename std::result_of<F(expected)>::type
   then(BOOST_RV_REF(F) f,
-    REQUIRES(!boost::is_same<typename result_of<F(expected)>::type, void>::value
-        && boost::is_expected<typename result_of<F(expected)>::type>::value
+    REQUIRES(!std::is_same<typename std::result_of<F(expected)>::type, void>::value
+        && boost::is_expected<typename std::result_of<F(expected)>::type>::value
         )
     )
   {
-    return f(boost::move(*this));
+    return f(std::move(*this));
   }
 
   // catch_error factory
 
   template <typename F>
   this_type catch_error(BOOST_RV_REF(F) f,
-    REQUIRES(boost::is_same<typename result_of<F(error_type)>::type, value_type>::value))
+    REQUIRES(std::is_same<typename std::result_of<F(error_type)>::type, value_type>::value))
   {
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
     if(! valid())
@@ -1924,7 +1933,7 @@ public:
 
   template <typename F>
   this_type catch_error(BOOST_RV_REF(F) f,
-      REQUIRES(! boost::is_same<typename result_of<F(error_type)>::type, value_type>::value))
+      REQUIRES(! std::is_same<typename std::result_of<F(error_type)>::type, value_type>::value))
   {
 #if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
     if(!valid())
@@ -1943,7 +1952,7 @@ public:
   template <typename Ex, typename F>
   this_type catch_exception(BOOST_RV_REF(F) f,
     REQUIRES(
-        boost::is_same<typename std::result_of<F(Ex &)>::type, this_type>::value
+        std::is_same<typename std::result_of<F(Ex &)>::type, this_type>::value
         )) const
   {
     try {
@@ -1963,7 +1972,7 @@ public:
   template <typename Ex, typename F>
   this_type catch_exception(BOOST_RV_REF(F) f,
     REQUIRES(
-        boost::is_same<typename std::result_of<F(Ex &)>::type, value_type>::value
+        std::is_same<typename std::result_of<F(Ex &)>::type, value_type>::value
         )) const
   {
     try {
@@ -2243,9 +2252,9 @@ expected<T, decay_t<E> > make_expected_from_error(E e) BOOST_NOEXCEPT
 }
 
 template <typename F>
-expected<typename boost::result_of<F()>::type, std::exception_ptr>
+expected<typename std::result_of<F()>::type, std::exception_ptr>
 BOOST_FORCEINLINE make_expected_from_call(F funct
-  , REQUIRES( ! boost::is_same<typename boost::result_of<F()>::type, void>::value)
+  , REQUIRES( ! std::is_same<typename std::result_of<F()>::type, void>::value)
 ) BOOST_NOEXCEPT
 {
   try
@@ -2261,7 +2270,7 @@ BOOST_FORCEINLINE make_expected_from_call(F funct
 template <typename F>
 inline expected<void, std::exception_ptr>
 make_expected_from_call(F funct
-  , REQUIRES( boost::is_same<typename boost::result_of<F()>::type, void>::value)
+  , REQUIRES( std::is_same<typename std::result_of<F()>::type, void>::value)
 ) BOOST_NOEXCEPT
 {
   try
