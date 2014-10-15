@@ -138,18 +138,14 @@ namespace error {
   template <class Error>
   void rethrow(Error e)
   {
-#ifdef BOOST_CONFIG_HPP
     using boost::rethrow;
-#endif
     using std::rethrow;
     return rethrow(e);
   }
   template <class E>
   E make_error_from_current_exception()
   {
-#ifdef BOOST_CONFIG_HPP
     using boost::make_error_from_current_exception;
-#endif
     using std::make_error_from_current_exception;
     return make_error_from_current_exception(E());
   }
