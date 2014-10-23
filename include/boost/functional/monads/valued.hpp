@@ -24,6 +24,16 @@ namespace functional
     struct pvalued {};
   }
 
+//  namespace type_class
+//  {
+//    struct valued {
+//      template <class T, class Void=void>
+//      struct instance : std::false_type {};
+//      struct requires : identity<tuple<rebindable> > {};
+//
+//    };
+//  }
+
   template <class T>
   struct valued_traits  : std::false_type {};
 

@@ -15,6 +15,7 @@
 #include <boost/functional/monads/monad_error.hpp>
 #include <utility>
 #include <type_traits>
+#include <functional>
 
 namespace boost
 {

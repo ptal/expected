@@ -14,6 +14,9 @@ namespace boost
   template <class M>
   using decay_t = typename std::decay<M>::type;
 
+  template <class S>
+  using result_of_t = typename std::result_of<S>::type;
+
 #if 0
     template< class... > using void_t = void;
 #else

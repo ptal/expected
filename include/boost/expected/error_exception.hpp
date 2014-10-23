@@ -16,6 +16,8 @@ struct error_exception {
     typedef Exception exception_type;
     error_exception() : value_(){}
     error_exception(Error e) : value_(e){}
+    error_exception& operator=(error_exception const&e) = default;
+    error_exception& operator=(Error e) { value_= e; return *this;}
     operator Error() const { return value_; }
     Error value() const { return value_; }
 private:

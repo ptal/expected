@@ -17,10 +17,46 @@ namespace boost
 {
 namespace functional
 {
-namespace category
-{
-  struct rebindable {};
-}
+  namespace category
+  {
+    struct rebindable {};
+  }
+
+//  template <bool condition>
+//  struct when;
+//  template <typename ...>
+//  constexpr bool is_valid = true;
+
+//  namespace core_detail {
+//      constexpr auto is_a_impl(std::true_type*)      { return std::true_type; }
+//      constexpr auto is_a_impl(std::false_type*) { return std::false_type; }
+//  }
+//
+//  template <typename TC, typename ...DT>
+//  constexpr auto _has_instance = core_detail::is_a_impl(
+//      (typename TC::template instance<DT...>*)0
+//  );
+
+//  template <class TC, class ...DT>
+//  struct has_instance :
+//
+//  template <class TC, class ...DT>
+//  struct is_a :
+//
+//
+//  namespace type_class
+//  {
+//    struct rebindable {
+//      template <class T, class Void=void>
+//      struct instance<T, when<true> >  {};
+//      template <class T, bool Cond>
+//      struct instance<T, when<Cond>> : std::false_type {};
+//
+//
+//    };
+//  }
+//  template <class DT>
+//  struct is_a<type_class::rebindable, DT> : has_instance<type_class::rebindable, DT> {};
 
   template <class T>
   struct rebindable_traits : std::false_type {};

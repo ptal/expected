@@ -23,7 +23,12 @@ namespace boost
       template<class... Args2>
       using type = F<Args..., Args2...>;
     };
-
+    template <template <class ...> class TC, class... Args>
+    struct reverse_lift
+    {
+      template<class... Args2>
+      using type = TC<Args2..., Args...>;
+    };
     // curry first N args of metafunction
 //    template<class F, class... ArgsN>
 //    struct curryl

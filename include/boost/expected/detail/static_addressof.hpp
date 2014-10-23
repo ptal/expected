@@ -8,16 +8,16 @@
 
 #include <boost/expected/config.hpp>
 
-#include <boost/move/move.hpp>
+#ifdef BOOST_EXPECTED_USE_BOOST_HPP
 #include <boost/type_traits.hpp>
 #include <boost/utility/enable_if.hpp>
-
-//#include <stdexcept>
+#endif
+#include <memory>
 #include <utility>
 
 
-# define REQUIRES(...) typename ::boost::enable_if_c<__VA_ARGS__, void*>::type = 0
-# define T_REQUIRES(...) typename = typename ::boost::enable_if_c<(__VA_ARGS__)>::type
+# define REQUIRES(...) typename std::enable_if<__VA_ARGS__, void*>::type = 0
+# define T_REQUIRES(...) typename = typename std::enable_if<(__VA_ARGS__)>::type
 
 namespace boost {
 namespace detail {
