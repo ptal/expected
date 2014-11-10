@@ -194,11 +194,11 @@ struct unrestricted_union_emulation_val_tag
   unrestricted_union_emulation_val_tag() {}
   unrestricted_union_emulation_val_tag(boost_expected_unrestricted_union_emulation_default_tag)
   {
-    new(&val()) value_type();
+    ::new(&val()) value_type();
   }
   template<class Arg, class... Args> explicit unrestricted_union_emulation_val_tag(Arg&& arg, Args&&... args)
   {
-    new(&val()) value_type(std::forward<Arg>(arg), std::forward<Args>(args)...);
+    ::new(&val()) value_type(std::forward<Arg>(arg), std::forward<Args>(args)...);
   }
 };
 template<class Base, class value_type, class error_type>
@@ -211,11 +211,11 @@ struct unrestricted_union_emulation_err_tag
   unrestricted_union_emulation_err_tag() {}
   unrestricted_union_emulation_err_tag(boost_expected_unrestricted_union_emulation_default_tag)
   {
-    new(&err()) error_type();
+    ::new(&err()) error_type();
   }
   template<class Arg, class... Args> explicit unrestricted_union_emulation_err_tag(Arg&& arg, Args&&... args)
   {
-    new(&err()) error_type(std::forward<Arg>(arg), std::forward<Args>(args)...);
+    ::new(&err()) error_type(std::forward<Arg>(arg), std::forward<Args>(args)...);
   }
 };
 #else
@@ -771,7 +771,7 @@ public:
     std::is_nothrow_copy_constructible<value_type>::value &&
     std::is_nothrow_copy_constructible<error_type>::value
   )
-  : base_type(detail::only_set_valid, rhs.valid())
+  : base_type()
   {
     if (rhs.valid())
     {
@@ -781,6 +781,7 @@ public:
     {
       ::new (errorptr()) error_type(rhs.contained_err());
     }
+    base_type::has_value = rhs.valid();
   }
 
   expected(expected&& rhs
@@ -791,7 +792,7 @@ public:
     std::is_nothrow_move_constructible<value_type>::value &&
     std::is_nothrow_move_constructible<error_type>::value
   )
-  : base_type(detail::only_set_valid, rhs.valid())
+  : base_type()
   {
     if (rhs.valid())
     {
@@ -801,6 +802,7 @@ public:
     {
       ::new (errorptr()) error_type(std::move(rhs.contained_err()));
     }
+    base_type::has_value = rhs.valid();
   }
 
   expected(unexpected_type<error_type> const& e
@@ -951,8 +953,8 @@ public:
       else
       {
         error_type t = std::move(rhs.contained_err());
-        new (rhs.dataptr()) value_type(std::move(contained_val()));
-        new (errorptr()) error_type(t);
+        ::new (rhs.dataptr()) value_type(std::move(contained_val()));
+        ::new (errorptr()) error_type(t);
         std::swap(contained_has_value(), rhs.contained_has_value());
       }
     }
@@ -1242,7 +1244,7 @@ public:
     REQUIRES(std::is_same<typename std::result_of<F(value_type)>::type, void>::value))
   {
     typedef typename rebind<void>::type result_type;
-#if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
+#if ! defined BOOST_NO_CXX14_CONSTEXPR
     if(valid())
     {
         return catch_all_type_void(std::forward<F>(f));
@@ -1262,7 +1264,7 @@ public:
     REQUIRES(!std::is_same<typename std::result_of<F(value_type)>::type, void>::value))
   {
     typedef typename rebind<typename std::result_of<F(value_type)>::type>::type result_type;
-#if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
+#if ! defined BOOST_NO_CXX14_CONSTEXPR
     if(valid())
     {
         return catch_all_type_etype(std::forward<F>(f));
@@ -1282,7 +1284,7 @@ public:
     REQUIRES(std::is_same<typename std::result_of<F(value_type)>::type, void>::value))
   {
     typedef typename rebind<void>::type result_type;
-#if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
+#if ! defined BOOST_NO_CXX14_CONSTEXPR
     if(valid())
     {
         return catch_all_type_void(std::forward<F>(f));
@@ -1304,7 +1306,7 @@ public:
         ))
   {
     typedef typename rebind<typename std::result_of<F(value_type)>::type>::type result_type;
-#if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
+#if ! defined BOOST_NO_CXX14_CONSTEXPR
     if(valid())
     {
         return catch_all_type_etype(std::forward<F>(f));
@@ -1326,7 +1328,7 @@ public:
         )
     )
   {
-#if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
+#if ! defined BOOST_NO_CXX14_CONSTEXPR
     if(valid())
     {
         return catch_all_type_type(std::forward<F>(f));
@@ -1375,7 +1377,7 @@ public:
   catch_error(F&& f,
     REQUIRES(std::is_same<typename std::result_of<F(error_type)>::type, value_type>::value))
   {
-#if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
+#if ! defined BOOST_NO_CXX14_CONSTEXPR
     if(!valid())
     {
         return this_type(f(contained_err()));
@@ -1393,7 +1395,7 @@ public:
   this_type catch_error(F&& f,
     REQUIRES(std::is_same<typename std::result_of<F(error_type)>::type, this_type>::value))
   {
-#if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
+#if ! defined BOOST_NO_CXX14_CONSTEXPR
     if(!valid())
     {
         return f(contained_err());
@@ -1411,7 +1413,7 @@ public:
   this_type catch_error(F&& f,
     REQUIRES(std::is_same<typename std::result_of<F(error_type)>::type, unexpected_type<error_type> >::value))
   {
-#if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
+#if ! defined BOOST_NO_CXX14_CONSTEXPR
     if(!valid())
     {
         return f(contained_err());
@@ -1568,12 +1570,14 @@ public:
   BOOST_NOEXCEPT_IF(
     std::is_nothrow_copy_constructible<error_type>::value
   )
-  : base_type(detail::only_set_valid, rhs.valid())
+  : base_type()
   {
     if (! rhs.valid())
     {
       ::new (errorptr()) error_type(rhs.contained_err());
     }
+    base_type::has_value = rhs.valid();
+
   }
 
   expected(expected&& rhs
@@ -1582,12 +1586,13 @@ public:
   BOOST_NOEXCEPT_IF(
     std::is_nothrow_move_constructible<error_type>::value
   )
-  : base_type(detail::only_set_valid, rhs.valid())
+  : base_type()
   {
     if (! rhs.valid())
     {
       ::new (errorptr()) error_type(std::move(rhs.contained_err()));
     }
+    base_type::has_value = rhs.valid();
   }
 
   BOOST_CONSTEXPR explicit expected(in_place_t) BOOST_NOEXCEPT
@@ -1684,7 +1689,7 @@ public:
       if (! rhs.valid())
       {
         error_type t = std::move(rhs.contained_err());
-        new (errorptr()) error_type(t);
+        ::new (errorptr()) error_type(t);
         std::swap(contained_has_value(), rhs.contained_has_value());
       }
     }
@@ -1847,7 +1852,7 @@ public:
     REQUIRES(std::is_same<typename std::result_of<F()>::type, void>::value)) const
   {
     typedef typename rebind<void>::type result_type;
-#if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
+#if ! defined BOOST_NO_CXX14_CONSTEXPR
     if(valid())
     {
         f();
@@ -1868,7 +1873,7 @@ public:
     REQUIRES( ! std::is_same<typename std::result_of<F()>::type, void>::value) )
   {
     typedef typename rebind<typename std::result_of<F()>::type>::type result_type;
-#if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
+#if ! defined BOOST_NO_CXX14_CONSTEXPR
     if(valid())
     {
         return result_type(f());
@@ -1888,7 +1893,7 @@ public:
     REQUIRES(std::is_same<typename std::result_of<F(expected)>::type, void>::value))
   {
     typedef typename rebind<void>::type result_type;
-#if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
+#if ! defined BOOST_NO_CXX14_CONSTEXPR
     f(std::move(*this));
     return result_type(in_place_t{});
 #else
@@ -1924,7 +1929,7 @@ public:
   this_type catch_error(F&& f,
     REQUIRES(std::is_same<typename std::result_of<F(error_type)>::type, value_type>::value))
   {
-#if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
+#if ! defined BOOST_NO_CXX14_CONSTEXPR
     if(! valid())
     {
         return this_type(f(contained_err()));
@@ -1942,7 +1947,7 @@ public:
   this_type catch_error(F&& f,
       REQUIRES(! std::is_same<typename std::result_of<F(error_type)>::type, value_type>::value))
   {
-#if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
+#if ! defined BOOST_NO_CXX14_CONSTEXPR
     if(!valid())
     {
       return f(contained_err());

@@ -17,16 +17,6 @@
 #include <boost/type_traits/is_same.hpp>
 #include <type_traits>
 
-#if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
-#if defined __clang__
-#if ! __has_feature(cxx_relaxed_constexpr)
-#define BOOST_NO_CXX14_RELAXED_CONSTEXPR
-#endif
-#else
-#define BOOST_NO_CXX14_RELAXED_CONSTEXPR
-#endif
-#endif
-
 #define REQUIRES(...) typename ::boost::enable_if_c<__VA_ARGS__, void*>::type = 0
 #define T_REQUIRES(...) typename = typename ::boost::enable_if_c<(__VA_ARGS__)>::type
 
@@ -73,7 +63,7 @@ namespace functional
     {
       using namespace errored;
       typedef typename rebind<decay_t<M>, FR>::type result_type;
-#if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
+#if ! defined BOOST_NO_CXX14_CONSTEXPR
       if(has_value(m))
       {
         f(deref(m));
@@ -97,7 +87,7 @@ namespace functional
     {
       using namespace errored;
       typedef typename rebind<decay_t<M>, FR>::type result_type;
-#if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
+#if ! defined BOOST_NO_CXX14_CONSTEXPR
       if(has_value(m))
       {
         return result_type(f(deref(m)));
@@ -118,7 +108,7 @@ namespace functional
     ) -> FR
     {
       using namespace errored;
-#if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
+#if ! defined BOOST_NO_CXX14_CONSTEXPR
       if(has_value(m))
       {
         return f(deref(m));

@@ -93,7 +93,7 @@ namespace boost
       {
         typedef typename std::result_of<F(value_type)>::type result_type;
         typedef typename result_type::second_type expected_type;
-#if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
+#if ! defined BOOST_NO_CXX14_CONSTEXPR
         if (valid(m))
         {
           return f(get(m));

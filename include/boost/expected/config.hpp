@@ -9,15 +9,6 @@
 
 #include <boost/config.hpp>
 
-#if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
-#if defined __clang__
-#if ! __has_feature(cxx_relaxed_constexpr)
-#define BOOST_NO_CXX14_RELAXED_CONSTEXPR
-#endif
-#else
-#define BOOST_NO_CXX14_RELAXED_CONSTEXPR
-#endif
-#endif
 
 # if defined __clang__
 #  if (__clang_major__ < 2) || (__clang_major__ == 2) && (__clang_minor__ < 9)

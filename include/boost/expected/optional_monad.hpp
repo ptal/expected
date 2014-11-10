@@ -92,7 +92,7 @@ namespace functional
       using namespace ::boost::functional::errored;
 
       typedef typename rebind<decay_t<M>, FR>::type result_type;
-#if ! defined BOOST_NO_CXX14_RELAXED_CONSTEXPR
+#if ! defined BOOST_NO_CXX14_CONSTEXPR
       if(! has_value(m))
       {
         result_type(f(none));
