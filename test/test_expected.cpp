@@ -122,6 +122,12 @@ struct MoveAware
   }
 };
 
+struct OverloadedAddressOf
+{
+  OverloadedAddressOf() {}
+  OverloadedAddressOf* operator&() const { return nullptr; }
+};
+
 using namespace boost;
 using namespace boost::functional;
 
@@ -1103,6 +1109,27 @@ BOOST_AUTO_TEST_CASE(relational_operators)
 
   }
 }
+BOOST_AUTO_TEST_CASE(dereference_operators)
+{
+  using namespace std;
+  {
+    const string s{"STR"};
+
+    expected<string> e0{s};
+    const expected<string> e1{s};
+    BOOST_CHECK(*e0.operator->() == s);
+    BOOST_CHECK(*e1.operator->() == s);
+
+    // Test with class which has operator&() overloaded
+    const OverloadedAddressOf o;
+    BOOST_CHECK(&o == nullptr);
+
+    expected<OverloadedAddressOf> e2{o};
+    const expected<OverloadedAddressOf> e3{o};
+    BOOST_CHECK(e2.operator->() != nullptr);
+    BOOST_CHECK(e3.operator->() != nullptr);
+  }
+}
 BOOST_AUTO_TEST_SUITE_END()
 
 BOOST_AUTO_TEST_SUITE(movesem)
@@ -1288,5 +1315,3 @@ BOOST_AUTO_TEST_CASE(ValueOr)
 
 //////////////////////////////////////////////////
 BOOST_AUTO_TEST_SUITE_END()
-
-
