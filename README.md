@@ -6,8 +6,8 @@ Expected has not been proposed yet to the C++ standard committee.
 
 Supported compilers
 -------------------
-* Clang 3.1
-* G++ 4.7.1 (and probably later)
+* Clang 3.2
+* G++ 4.8.0 (and probably later)
 * VS14 CTP 3. Note that this compiler cannot do enough constexpr for Expected (or Boost for that matter) to turn it on, but it appears that MSVC doesn't mind and all unit tests pass anyway. It is possible VS14 RTM will do enough constexpr that it can be turned on.
 * VS2013 which has the same limitations as VS14 (no constexpr). This uses an unrestricted union emulation which works well enough.
 
