@@ -9,7 +9,9 @@
 
 #include <boost/expected/config.hpp>
 #include <boost/expected/unexpected.hpp>
+#if ! defined BOOST_EXPECTED_USE_STD_ADDRESSOF
 #include <boost/expected/detail/static_addressof.hpp>
+#endif
 #include <boost/expected/detail/constexpr_utility.hpp>
 
 #ifdef BOOST_EXPECTED_USE_BOOST_HPP
@@ -27,9 +29,17 @@
 #include <utility>
 #include <initializer_list>
 #include <type_traits>
+#include <memory>
 
 # define REQUIRES(...) typename std::enable_if<__VA_ARGS__, void*>::type = 0
 # define T_REQUIRES(...) typename = typename std::enable_if<(__VA_ARGS__)>::type
+
+#if defined BOOST_EXPECTED_USE_STD_ADDRESSOF
+# define ADDRESSOF std::addressof
+#else
+# define ADDRESSOF detail::static_addressof
+#endif
+
 
 namespace boost {
 
@@ -687,9 +697,9 @@ private:
   BOOST_STATIC_ASSERT_MSG( !is_same_error_expect_t::value, "bad ErrorType" );
 
   value_type* dataptr() { return std::addressof(base_type::storage.val()); }
-  BOOST_CONSTEXPR const value_type* dataptr() const { return static_addressof(base_type::storage.val()); }
+  BOOST_CONSTEXPR const value_type* dataptr() const { return ADDRESSOF(base_type::storage.val()); }
   error_type* errorptr() { return std::addressof(base_type::storage.err()); }
-  BOOST_CONSTEXPR const error_type* errorptr() const { return static_addressof(base_type::storage.err()); }
+  BOOST_CONSTEXPR const error_type* errorptr() const { return ADDRESSOF(base_type::storage.err()); }
 
 #if ! defined BOOST_EXPECTED_NO_CXX11_RVALUE_REFERENCE_FOR_THIS
   BOOST_CONSTEXPR const bool& contained_has_value() const& { return base_type::has_value; }
@@ -1524,7 +1534,7 @@ private:
   BOOST_STATIC_ASSERT_MSG( !is_same_error_expect_t::value, "bad ErrorType" );
 
   error_type* errorptr() { return std::addressof(base_type::storage.err()); }
-  BOOST_CONSTEXPR const error_type* errorptr() const { return static_addressof(base_type::storage.err()); }
+  BOOST_CONSTEXPR const error_type* errorptr() const { return ADDRESSOF(base_type::storage.err()); }
 
 #if ! defined BOOST_EXPECTED_NO_CXX11_RVALUE_REFERENCE_FOR_THIS
   BOOST_CONSTEXPR const bool& contained_has_value() const& { return base_type::has_value; }
@@ -2356,6 +2366,7 @@ namespace expected_detail
 
 #undef REQUIRES
 #undef T_REQUIRES
+#undef ADDRESSOF
 
 
 #endif // BOOST_EXPECTED_EXPECTED_HPP
