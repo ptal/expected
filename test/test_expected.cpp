@@ -1121,7 +1121,7 @@ BOOST_AUTO_TEST_CASE(dereference_operators)
     BOOST_CHECK(*e1.operator->() == s);
 
     // Test with class which has operator&() overloaded
-    const OverloadedAddressOf o;
+    const OverloadedAddressOf o{};
     BOOST_CHECK(&o == nullptr);
 
     expected<OverloadedAddressOf> e2{o};
