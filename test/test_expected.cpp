@@ -1106,7 +1106,57 @@ BOOST_AUTO_TEST_CASE(relational_operators)
     BOOST_CHECK (!(e0 <= make_unexpected(1)));
     BOOST_CHECK (e0 > make_unexpected(1));
     BOOST_CHECK (e0 >= make_unexpected(1));
+  }
+  {
+    expected<void, int> e0{boost::expect};
+    expected<void, int> eN{unexpect, -1};
 
+    BOOST_CHECK (!(e0 < e0));
+    BOOST_CHECK (eN < e0);
+    BOOST_CHECK (!(e0 < eN));
+    BOOST_CHECK (!(eN < eN));
+    BOOST_CHECK (e0 <= e0);
+    BOOST_CHECK (eN <= e0);
+    BOOST_CHECK (!(e0 <= eN));
+    BOOST_CHECK (eN <= eN);
+
+    BOOST_CHECK (!(e0 > e0));
+    BOOST_CHECK (e0 > eN);
+    BOOST_CHECK (!(eN > e0));
+    BOOST_CHECK (!(eN > eN));
+    BOOST_CHECK (e0 >= e0);
+    BOOST_CHECK (e0 >= eN);
+    BOOST_CHECK (!(eN >= e0));
+    BOOST_CHECK (eN >= eN);
+
+    BOOST_CHECK (!(e0 != e0));
+    BOOST_CHECK (eN != e0);
+    BOOST_CHECK (e0 != eN);
+    BOOST_CHECK (!(eN != eN));
+    BOOST_CHECK (e0 == e0);
+    BOOST_CHECK (!(eN == e0));
+    BOOST_CHECK (!(e0 == eN));
+    BOOST_CHECK (eN == eN);
+
+    //////
+
+    BOOST_CHECK (eN == make_unexpected(-1));
+    BOOST_CHECK (e0 != make_unexpected(1));
+
+    BOOST_CHECK (make_unexpected(1) < e0);
+    BOOST_CHECK (make_unexpected(1) <= e0);
+    BOOST_CHECK (!(make_unexpected(1) > e0));
+    BOOST_CHECK (!(make_unexpected(1) >= e0));
+
+    BOOST_CHECK (!(make_unexpected(1) < eN));
+    BOOST_CHECK (!(make_unexpected(1) <= eN));
+    BOOST_CHECK (make_unexpected(1) > eN);
+    BOOST_CHECK (make_unexpected(1) >= eN);
+
+    BOOST_CHECK (!(eN < make_unexpected(-1)));
+    BOOST_CHECK (eN <= make_unexpected(-1));
+    BOOST_CHECK (!(eN > make_unexpected(-1)));
+    BOOST_CHECK (eN >= make_unexpected(-1));
   }
 }
 BOOST_AUTO_TEST_CASE(dereference_operators)
