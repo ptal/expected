@@ -1338,7 +1338,7 @@ public:
     return get_unexpected();
 #else
      return valid()
-         ? f(value())
+         ? catch_all_type_type(std::forward<F>(f))
          : typename std::result_of<F(value_type)>::type(get_unexpected());
 #endif
   }

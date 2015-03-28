@@ -1224,6 +1224,35 @@ BOOST_AUTO_TEST_CASE(moved_from_state)
   BOOST_CHECK (oj);
   BOOST_CHECK (oj->moved);
 }
+BOOST_AUTO_TEST_CASE(move_only_value)
+{
+  const auto make_int = []() {
+    std::unique_ptr<int> value{new int};
+    *value = 100;
+    return value;
+  };
+  const auto return_void = [](std::unique_ptr<int> value) {
+    BOOST_CHECK(value != nullptr);
+    BOOST_CHECK(*value == 100);
+  };
+  const auto return_expected = [](std::unique_ptr<int> value) {
+    BOOST_CHECK(value != nullptr);
+    BOOST_CHECK(*value == 100);
+    return expected<void>{boost::expect};
+  };
+  const auto return_int = [](std::unique_ptr<int> value) {
+    BOOST_CHECK(value != nullptr);
+    BOOST_CHECK(*value == 100);
+    return 200;
+  };
+
+  BOOST_CHECK(expected<std::unique_ptr<int>>{make_int()}.map(return_void));
+  BOOST_CHECK(expected<std::unique_ptr<int>>{make_int()}.map(return_expected));
+  BOOST_CHECK(expected<std::unique_ptr<int>>{make_int()}.map(return_int));
+  BOOST_CHECK(expected<std::unique_ptr<int>>{make_int()}.bind(return_void));
+  BOOST_CHECK(expected<std::unique_ptr<int>>{make_int()}.bind(return_expected));
+  BOOST_CHECK(expected<std::unique_ptr<int>>{make_int()}.bind(return_int));
+}
 BOOST_AUTO_TEST_CASE(copy_move_ctor_optional_int)
 {
   expected<int> oi;
