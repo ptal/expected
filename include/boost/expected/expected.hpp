@@ -1338,7 +1338,7 @@ public:
     return get_unexpected();
 #else
      return valid()
-         ? f(value())
+         ? catch_all_type_type(std::forward<F>(f))
          : typename std::result_of<F(value_type)>::type(get_unexpected());
 #endif
   }
@@ -2032,7 +2032,7 @@ BOOST_CONSTEXPR bool operator==(const expected<T,E>& x, const expected<T,E>& y)
 }
 
 template <class E>
-BOOST_CONSTEXPR bool operator==(const expected<E,void>& x, const expected<E,void>& y)
+BOOST_CONSTEXPR bool operator==(const expected<void, E>& x, const expected<void, E>& y)
 {
   return (x && y)
     ? true
@@ -2056,7 +2056,7 @@ BOOST_CONSTEXPR bool operator<(const expected<T,E>& x, const expected<T,E>& y)
 }
 
 template <class E>
-BOOST_CONSTEXPR bool operator<(const expected<E,void>& x, const expected<E,void>& y)
+BOOST_CONSTEXPR bool operator<(const expected<void, E>& x, const expected<void, E>& y)
 {
   return (x)
     ? (y) ? false : false
