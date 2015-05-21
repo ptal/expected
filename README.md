@@ -2,7 +2,7 @@ Expected
 ========
 
 
-Expected has been proposed to the C++ standard committee. The current document is N4109. Previous versions are: N4015.
+Expected has been proposed to the C++ standard committee. The current document is N4109 (http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n4109.pdf). 
 
 A library for expected objects for C++17. This is the reference implementation of proposal N4109 
 (see see https://github.com/ptal/std-expected-proposal). 
