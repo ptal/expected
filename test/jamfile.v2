@@ -65,6 +65,11 @@ test-suite expected
       [ run test_expected_constructor.cpp  boost_unit_test : --log_format=XML --log_sink=results_expected_constructor.xml --log_level=all --report_level=no ]
     ;
 
+test-suite unexpected
+    : 
+      [ run test_unexpected.cpp  :  ]
+    ;
+
 test-suite algorithms
     : 
       [ run algorithms/test_if_then_else.cpp  boost_unit_test : --log_format=XML --log_sink=results_if_then_else.xml --log_level=all --report_level=no ]
