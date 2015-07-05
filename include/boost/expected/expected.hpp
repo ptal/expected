@@ -416,7 +416,8 @@ union no_trivial_expected_storage<void, E>
   ~no_trivial_expected_storage() {};
 };
 
-BOOST_CONSTEXPR struct only_set_valid_t{} only_set_valid{};
+//BOOST_CONSTEXPR struct only_set_valid_t{} only_set_valid{};
+struct only_set_valid_t{};
 
 template <typename T, typename E >
 struct trivial_expected_base
