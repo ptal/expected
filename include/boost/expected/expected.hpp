@@ -29,8 +29,8 @@
 #include <type_traits>
 #include <memory>
 
-# define REQUIRES(...) typename std::enable_if<__VA_ARGS__, void*>::type = 0
-# define T_REQUIRES(...) typename = typename std::enable_if<(__VA_ARGS__)>::type
+# define BOOST_EXPECTED_REQUIRES(...) typename std::enable_if<__VA_ARGS__, void*>::type = 0
+# define BOOST_EXPECTED_T_REQUIRES(...) typename = typename std::enable_if<(__VA_ARGS__)>::type
 
 namespace boost {
 
@@ -742,7 +742,7 @@ public:
   // Constructors/Destructors/Assignments
 
   BOOST_CONSTEXPR expected(
-     //REQUIRES(std::is_default_constructible<error_type>::value)
+     //BOOST_EXPECTED_REQUIRES(std::is_default_constructible<error_type>::value)
   ) BOOST_NOEXCEPT_IF(
   std::is_nothrow_default_constructible<error_type>::value
   )
@@ -750,14 +750,14 @@ public:
   {}
 
   BOOST_CONSTEXPR expected(const value_type& v
-    //, REQUIRES(std::is_copy_constructible<value_type>::value)
+    //, BOOST_EXPECTED_REQUIRES(std::is_copy_constructible<value_type>::value)
   )
   BOOST_NOEXCEPT_IF(std::is_nothrow_copy_constructible<value_type>::value)
   : base_type(v)
   {}
 
   BOOST_CONSTEXPR expected(value_type&& v
-    //, REQUIRES(std::is_move_constructible<value_type>::value)
+    //, BOOST_EXPECTED_REQUIRES(std::is_move_constructible<value_type>::value)
   )
   BOOST_NOEXCEPT_IF(
         std::is_nothrow_move_constructible<value_type>::value
@@ -766,7 +766,7 @@ public:
   {}
 
   expected(const expected& rhs
-    //, REQUIRES( std::is_copy_constructible<value_type>::value
+    //, BOOST_EXPECTED_REQUIRES( std::is_copy_constructible<value_type>::value
       //         && std::is_copy_constructible<error_type>::value)
   )
   BOOST_NOEXCEPT_IF(
@@ -787,7 +787,7 @@ public:
   }
 
   expected(expected&& rhs
-    //, REQUIRES( std::is_move_constructible<value_type>::value
+    //, BOOST_EXPECTED_REQUIRES( std::is_move_constructible<value_type>::value
       //         && std::is_move_constructible<error_type>::value)
   )
   BOOST_NOEXCEPT_IF(
@@ -808,7 +808,7 @@ public:
   }
 
   expected(unexpected_type<error_type> const& e
-    //, REQUIRES(std::is_copy_constructible<error_type>::value)
+    //, BOOST_EXPECTED_REQUIRES(std::is_copy_constructible<error_type>::value)
   )
   BOOST_NOEXCEPT_IF(
     std::is_nothrow_copy_constructible<error_type>::value
@@ -816,7 +816,7 @@ public:
   : base_type(e)
   {}
   expected(unexpected_type<error_type> && e
-    //, REQUIRES(std::is_move_constructible<error_type>::value)
+    //, BOOST_EXPECTED_REQUIRES(std::is_move_constructible<error_type>::value)
   )
   //BOOST_NOEXCEPT_IF(
   //  has_nothrow_move_constructor<error_type>::value
@@ -826,7 +826,7 @@ public:
 
   template <class Err>
   expected(unexpected_type<Err> const& e
-//    , REQUIRES(std::is_copy_constructible<error_type>::value)
+//    , BOOST_EXPECTED_REQUIRES(std::is_copy_constructible<error_type>::value)
   )
   //BOOST_NOEXCEPT_IF(
     //std::is_nothrow_copy_constructible<error_type>::value
@@ -835,7 +835,7 @@ public:
   {}
   template <class Err>
   expected(unexpected_type<Err> && e
-//    , REQUIRES(std::is_constructible<error_type, Err&&>::value)
+//    , BOOST_EXPECTED_REQUIRES(std::is_constructible<error_type, Err&&>::value)
   )
   //BOOST_NOEXCEPT_IF(
     //std::is_nothrow_constructible<error_type, Err&&>::value
@@ -845,7 +845,7 @@ public:
 
   template <class... Args
 #if !defined BOOST_EXPECTED_NO_CXX11_FUNCTION_TEMPLATE_DEFAULT_ARGS
-  , T_REQUIRES(std::is_constructible<error_type, Args&...>::value)
+  , BOOST_EXPECTED_T_REQUIRES(std::is_constructible<error_type, Args&...>::value)
 #endif
   >
   expected(unexpect_t, Args&&... args
@@ -859,7 +859,7 @@ public:
 
   template <class... Args
 #if !defined BOOST_EXPECTED_NO_CXX11_FUNCTION_TEMPLATE_DEFAULT_ARGS
-    //, T_REQUIRES(std::is_constructible<value_type, decay_t<Args>...>::value)
+    //, BOOST_EXPECTED_T_REQUIRES(std::is_constructible<value_type, decay_t<Args>...>::value)
 #endif
     >
   BOOST_CONSTEXPR explicit expected(in_place_t, Args&&... args)
@@ -868,7 +868,7 @@ public:
 
   template <class U, class... Args
 #if !defined BOOST_EXPECTED_NO_CXX11_FUNCTION_TEMPLATE_DEFAULT_ARGS
-    , T_REQUIRES(std::is_constructible<value_type, std::initializer_list<U>>::value)
+    , BOOST_EXPECTED_T_REQUIRES(std::is_constructible<value_type, std::initializer_list<U>>::value)
 #endif
     >
   BOOST_CONSTEXPR explicit expected(in_place_t, std::initializer_list<U> il, Args&&... args)
@@ -877,7 +877,7 @@ public:
 
   template <class... Args
 #if !defined BOOST_EXPECTED_NO_CXX11_FUNCTION_TEMPLATE_DEFAULT_ARGS
-    , T_REQUIRES(std::is_constructible<value_type, Args&...>::value)
+    , BOOST_EXPECTED_T_REQUIRES(std::is_constructible<value_type, Args&...>::value)
 #endif
     >
   BOOST_CONSTEXPR explicit expected(expect_t, Args&&... args)
@@ -886,7 +886,7 @@ public:
 
   template <class U, class... Args
 #if !defined BOOST_EXPECTED_NO_CXX11_FUNCTION_TEMPLATE_DEFAULT_ARGS
-    , T_REQUIRES(std::is_constructible<value_type, std::initializer_list<U>>::value)
+    , BOOST_EXPECTED_T_REQUIRES(std::is_constructible<value_type, std::initializer_list<U>>::value)
 #endif
     >
   BOOST_CONSTEXPR explicit expected(expect_t, std::initializer_list<U> il, Args&&... args)
@@ -908,14 +908,14 @@ public:
     return *this;
   }
 
-  template <class U, T_REQUIRES(std::is_same<decay_t<U>, value_type>::value)>
+  template <class U, BOOST_EXPECTED_T_REQUIRES(std::is_same<decay_t<U>, value_type>::value)>
   expected& operator=(U const& value)
   {
     this_type(value).swap(*this);
     return *this;
   }
 
-  template <class U, T_REQUIRES(std::is_same<decay_t<U>, value_type>::value)>
+  template <class U, BOOST_EXPECTED_T_REQUIRES(std::is_same<decay_t<U>, value_type>::value)>
   expected& operator=(U&& value)
   {
     this_type(std::move(value)).swap(*this);
@@ -924,7 +924,7 @@ public:
 
   template <class... Args
 #if !defined BOOST_EXPECTED_NO_CXX11_FUNCTION_TEMPLATE_DEFAULT_ARGS
-    , T_REQUIRES(std::is_constructible<value_type, Args&...>::value)
+    , BOOST_EXPECTED_T_REQUIRES(std::is_constructible<value_type, Args&...>::value)
 #endif
     >
   void emplace(Args&&... args)
@@ -934,7 +934,7 @@ public:
 
     template <class U, class... Args
 #if !defined BOOST_EXPECTED_NO_CXX11_FUNCTION_TEMPLATE_DEFAULT_ARGS
-      //, T_REQUIRES(std::is_constructible<value_type, Args&...>::value)
+      //, BOOST_EXPECTED_T_REQUIRES(std::is_constructible<value_type, Args&...>::value)
 #endif
       >
     void emplace(std::initializer_list<U> il, Args&&... args)
@@ -1244,7 +1244,7 @@ public:
   template <typename F>
   typename rebind<void>::type
   map(F&& f,
-    REQUIRES(std::is_same<typename std::result_of<F(value_type)>::type, void>::value))
+    BOOST_EXPECTED_REQUIRES(std::is_same<typename std::result_of<F(value_type)>::type, void>::value))
   {
     typedef typename rebind<void>::type result_type;
 #if ! defined BOOST_NO_CXX14_CONSTEXPR
@@ -1264,7 +1264,7 @@ public:
   template <typename F>
   typename rebind<typename std::result_of<F(value_type)>::type>::type
   map(F&& f,
-    REQUIRES(!std::is_same<typename std::result_of<F(value_type)>::type, void>::value))
+    BOOST_EXPECTED_REQUIRES(!std::is_same<typename std::result_of<F(value_type)>::type, void>::value))
   {
     typedef typename rebind<typename std::result_of<F(value_type)>::type>::type result_type;
 #if ! defined BOOST_NO_CXX14_CONSTEXPR
@@ -1284,7 +1284,7 @@ public:
   template <typename F>
   typename rebind<void>::type
   bind(F&& f,
-    REQUIRES(std::is_same<typename std::result_of<F(value_type)>::type, void>::value))
+    BOOST_EXPECTED_REQUIRES(std::is_same<typename std::result_of<F(value_type)>::type, void>::value))
   {
     typedef typename rebind<void>::type result_type;
 #if ! defined BOOST_NO_CXX14_CONSTEXPR
@@ -1304,7 +1304,7 @@ public:
   template <typename F>
   typename rebind<typename std::result_of<F(value_type)>::type>::type
   bind(F&& f,
-    REQUIRES(!std::is_same<typename std::result_of<F(value_type)>::type, void>::value
+    BOOST_EXPECTED_REQUIRES(!std::is_same<typename std::result_of<F(value_type)>::type, void>::value
         && !boost::is_expected<typename std::result_of<F(value_type)>::type>::value
         ))
   {
@@ -1326,7 +1326,7 @@ public:
   template <typename F>
   typename std::result_of<F(value_type)>::type
   bind(F&& f,
-    REQUIRES(!std::is_same<typename std::result_of<F(value_type)>::type, void>::value
+    BOOST_EXPECTED_REQUIRES(!std::is_same<typename std::result_of<F(value_type)>::type, void>::value
         && boost::is_expected<typename std::result_of<F(value_type)>::type>::value
         )
     )
@@ -1347,7 +1347,7 @@ public:
   template <typename F>
   typename rebind<void>::type
   then(F&& f,
-    REQUIRES(std::is_same<typename std::result_of<F(expected)>::type, void>::value))
+    BOOST_EXPECTED_REQUIRES(std::is_same<typename std::result_of<F(expected)>::type, void>::value))
   {
     typedef typename rebind<void>::type result_type;
     return catch_all_etype_void(std::forward<F>(f));
@@ -1356,7 +1356,7 @@ public:
   template <typename F>
   typename rebind<typename std::result_of<F(expected)>::type>::type
   then(F&& f,
-    REQUIRES(!std::is_same<typename std::result_of<F(expected)>::type, void>::value
+    BOOST_EXPECTED_REQUIRES(!std::is_same<typename std::result_of<F(expected)>::type, void>::value
         && !boost::is_expected<typename std::result_of<F(expected)>::type>::value
         ))
   {
@@ -1368,7 +1368,7 @@ public:
   template <typename F>
   typename std::result_of<F(expected)>::type
   then(F&& f,
-    REQUIRES(boost::is_expected<typename std::result_of<F(expected)>::type>::value)
+    BOOST_EXPECTED_REQUIRES(boost::is_expected<typename std::result_of<F(expected)>::type>::value)
     )
   {
     return catch_all_etype_type(std::forward<F>(f));
@@ -1378,7 +1378,7 @@ public:
   template <typename F>
   this_type
   catch_error(F&& f,
-    REQUIRES(std::is_same<typename std::result_of<F(error_type)>::type, value_type>::value))
+    BOOST_EXPECTED_REQUIRES(std::is_same<typename std::result_of<F(error_type)>::type, value_type>::value))
   {
 #if ! defined BOOST_NO_CXX14_CONSTEXPR
     if(!valid())
@@ -1396,7 +1396,7 @@ public:
 
   template <typename F>
   this_type catch_error(F&& f,
-    REQUIRES(std::is_same<typename std::result_of<F(error_type)>::type, this_type>::value))
+    BOOST_EXPECTED_REQUIRES(std::is_same<typename std::result_of<F(error_type)>::type, this_type>::value))
   {
 #if ! defined BOOST_NO_CXX14_CONSTEXPR
     if(!valid())
@@ -1414,7 +1414,7 @@ public:
 
   template <typename F>
   this_type catch_error(F&& f,
-    REQUIRES(std::is_same<typename std::result_of<F(error_type)>::type, unexpected_type<error_type>>::value))
+    BOOST_EXPECTED_REQUIRES(std::is_same<typename std::result_of<F(error_type)>::type, unexpected_type<error_type>>::value))
   {
 #if ! defined BOOST_NO_CXX14_CONSTEXPR
     if(!valid())
@@ -1432,7 +1432,7 @@ public:
 
   template <typename Ex, typename F>
   this_type catch_exception(F&& f,
-    REQUIRES(
+    BOOST_EXPECTED_REQUIRES(
         std::is_same<typename std::result_of<F(Ex &)>::type, this_type>::value
         )) const
   {
@@ -1452,7 +1452,7 @@ public:
 
   template <typename Ex, typename F>
   this_type catch_exception(F&& f,
-    REQUIRES(
+    BOOST_EXPECTED_REQUIRES(
         std::is_same<typename std::result_of<F(Ex &)>::type, value_type>::value
         )) const
   {
@@ -1568,7 +1568,7 @@ public:
   // Constructors/Destructors/Assignments
 
   expected(const expected& rhs
-    , REQUIRES( std::is_copy_constructible<error_type>::value)
+    , BOOST_EXPECTED_REQUIRES( std::is_copy_constructible<error_type>::value)
   )
   BOOST_NOEXCEPT_IF(
     std::is_nothrow_copy_constructible<error_type>::value
@@ -1584,7 +1584,7 @@ public:
   }
 
   expected(expected&& rhs
-    , REQUIRES( std::is_move_constructible<error_type>::value)
+    , BOOST_EXPECTED_REQUIRES( std::is_move_constructible<error_type>::value)
   )
   BOOST_NOEXCEPT_IF(
     std::is_nothrow_move_constructible<error_type>::value
@@ -1606,7 +1606,7 @@ public:
   {}
 
   BOOST_CONSTEXPR expected(
-     REQUIRES(std::is_default_constructible<error_type>::value)
+     BOOST_EXPECTED_REQUIRES(std::is_default_constructible<error_type>::value)
   ) BOOST_NOEXCEPT_IF(
     std::is_nothrow_default_constructible<error_type>::value
   )
@@ -1615,7 +1615,7 @@ public:
 
 
   expected(unexpected_type<error_type> const& e
-    , REQUIRES(std::is_copy_constructible<error_type>::value)
+    , BOOST_EXPECTED_REQUIRES(std::is_copy_constructible<error_type>::value)
   )
   BOOST_NOEXCEPT_IF(
     std::is_nothrow_copy_constructible<error_type>::value
@@ -1623,7 +1623,7 @@ public:
   : base_type(e)
   {}
   expected(unexpected_type<error_type> && e
-    , REQUIRES(std::is_move_constructible<error_type>::value)
+    , BOOST_EXPECTED_REQUIRES(std::is_move_constructible<error_type>::value)
   )
   //BOOST_NOEXCEPT_IF(
   //  std::is_nothrow_copy_constructible<error_type>::value
@@ -1633,7 +1633,7 @@ public:
 
   template <class Err>
   expected(unexpected_type<Err> const& e
-//    , REQUIRES(std::is_copy_constructible<error_type>::value)
+//    , BOOST_EXPECTED_REQUIRES(std::is_copy_constructible<error_type>::value)
   )
 //  BOOST_NOEXCEPT_IF(
 //    std::is_nothrow_copy_constructible<error_type>::value
@@ -1642,7 +1642,7 @@ public:
   {}
   template <class Err>
   expected(unexpected_type<Err> && e
-//    , REQUIRES(std::is_copy_constructible<error_type>::value)
+//    , BOOST_EXPECTED_REQUIRES(std::is_copy_constructible<error_type>::value)
   )
 //  BOOST_NOEXCEPT_IF(
 //    std::is_nothrow_copy_constructible<error_type>::value
@@ -1652,7 +1652,7 @@ public:
 
   template <class... Args
 #if !defined BOOST_EXPECTED_NO_CXX11_FUNCTION_TEMPLATE_DEFAULT_ARGS
-  , T_REQUIRES(std::is_constructible<error_type, Args&...>::value)
+  , BOOST_EXPECTED_T_REQUIRES(std::is_constructible<error_type, Args&...>::value)
 #endif
   >
   expected(unexpect_t, Args&&... args
@@ -1852,7 +1852,7 @@ public:
 
   template <typename F>
   BOOST_CONSTEXPR typename rebind<void>::type bind(F&& f,
-    REQUIRES(std::is_same<typename std::result_of<F()>::type, void>::value)) const
+    BOOST_EXPECTED_REQUIRES(std::is_same<typename std::result_of<F()>::type, void>::value)) const
   {
     typedef typename rebind<void>::type result_type;
 #if ! defined BOOST_NO_CXX14_CONSTEXPR
@@ -1873,7 +1873,7 @@ public:
   template <typename F>
   typename rebind<typename std::result_of<F()>::type>::type
   bind(F&& f,
-    REQUIRES( ! std::is_same<typename std::result_of<F()>::type, void>::value) )
+    BOOST_EXPECTED_REQUIRES( ! std::is_same<typename std::result_of<F()>::type, void>::value) )
   {
     typedef typename rebind<typename std::result_of<F()>::type>::type result_type;
 #if ! defined BOOST_NO_CXX14_CONSTEXPR
@@ -1893,7 +1893,7 @@ public:
   template <typename F>
   typename rebind<void>::type
   then(F&& f,
-    REQUIRES(std::is_same<typename std::result_of<F(expected)>::type, void>::value))
+    BOOST_EXPECTED_REQUIRES(std::is_same<typename std::result_of<F(expected)>::type, void>::value))
   {
     typedef typename rebind<void>::type result_type;
 #if ! defined BOOST_NO_CXX14_CONSTEXPR
@@ -1908,7 +1908,7 @@ public:
   template <typename F>
   typename rebind<typename std::result_of<F(expected)>::type>::type
   then(F&& f,
-    REQUIRES(!boost::is_expected<typename std::result_of<F(expected)>::type>::value
+    BOOST_EXPECTED_REQUIRES(!boost::is_expected<typename std::result_of<F(expected)>::type>::value
         ))
   {
     typedef typename rebind<typename std::result_of<F(expected)>::type>::type result_type;
@@ -1918,7 +1918,7 @@ public:
   template <typename F>
   typename std::result_of<F(expected)>::type
   then(F&& f,
-    REQUIRES(!std::is_same<typename std::result_of<F(expected)>::type, void>::value
+    BOOST_EXPECTED_REQUIRES(!std::is_same<typename std::result_of<F(expected)>::type, void>::value
         && boost::is_expected<typename std::result_of<F(expected)>::type>::value
         )
     )
@@ -1930,7 +1930,7 @@ public:
 
   template <typename F>
   this_type catch_error(F&& f,
-    REQUIRES(std::is_same<typename std::result_of<F(error_type)>::type, value_type>::value))
+    BOOST_EXPECTED_REQUIRES(std::is_same<typename std::result_of<F(error_type)>::type, value_type>::value))
   {
 #if ! defined BOOST_NO_CXX14_CONSTEXPR
     if(! valid())
@@ -1948,7 +1948,7 @@ public:
 
   template <typename F>
   this_type catch_error(F&& f,
-      REQUIRES(! std::is_same<typename std::result_of<F(error_type)>::type, value_type>::value))
+      BOOST_EXPECTED_REQUIRES(! std::is_same<typename std::result_of<F(error_type)>::type, value_type>::value))
   {
 #if ! defined BOOST_NO_CXX14_CONSTEXPR
     if(!valid())
@@ -1966,7 +1966,7 @@ public:
 
   template <typename Ex, typename F>
   this_type catch_exception(F&& f,
-    REQUIRES(
+    BOOST_EXPECTED_REQUIRES(
         std::is_same<typename std::result_of<F(Ex &)>::type, this_type>::value
         )) const
   {
@@ -1986,7 +1986,7 @@ public:
 
   template <typename Ex, typename F>
   this_type catch_exception(F&& f,
-    REQUIRES(
+    BOOST_EXPECTED_REQUIRES(
         std::is_same<typename std::result_of<F(Ex &)>::type, value_type>::value
         )) const
   {
@@ -2269,7 +2269,7 @@ expected<T, decay_t<E>> make_expected_from_error(E e) BOOST_NOEXCEPT
 template <typename F>
 expected<typename std::result_of<F()>::type, std::exception_ptr>
 BOOST_FORCEINLINE make_expected_from_call(F funct
-  , REQUIRES( ! std::is_same<typename std::result_of<F()>::type, void>::value)
+  , BOOST_EXPECTED_REQUIRES( ! std::is_same<typename std::result_of<F()>::type, void>::value)
 ) BOOST_NOEXCEPT
 {
   try
@@ -2285,7 +2285,7 @@ BOOST_FORCEINLINE make_expected_from_call(F funct
 template <typename F>
 inline expected<void, std::exception_ptr>
 make_expected_from_call(F funct
-  , REQUIRES( std::is_same<typename std::result_of<F()>::type, void>::value)
+  , BOOST_EXPECTED_REQUIRES( std::is_same<typename std::result_of<F()>::type, void>::value)
 ) BOOST_NOEXCEPT
 {
   try
@@ -2356,8 +2356,8 @@ namespace expected_detail
 #endif
 } // namespace boost
 
-#undef REQUIRES
-#undef T_REQUIRES
+#undef BOOST_EXPECTED_REQUIRES
+#undef BOOST_EXPECTED_T_REQUIRES
 
 
 #endif // BOOST_EXPECTED_EXPECTED_HPP
