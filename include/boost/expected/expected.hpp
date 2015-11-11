@@ -11,6 +11,7 @@
 #include <boost/expected/unexpected.hpp>
 #include <boost/expected/detail/static_addressof.hpp>
 #include <boost/expected/detail/constexpr_utility.hpp>
+#include <boost/expected/detail/requires.hpp>
 
 #ifdef BOOST_EXPECTED_USE_BOOST_HPP
 #include <boost/exception_ptr.hpp>
@@ -29,8 +30,6 @@
 #include <type_traits>
 #include <memory>
 
-# define BOOST_EXPECTED_REQUIRES(...) typename std::enable_if<__VA_ARGS__, void*>::type = 0
-# define BOOST_EXPECTED_T_REQUIRES(...) typename = typename std::enable_if<(__VA_ARGS__)>::type
 
 namespace boost {
 
@@ -2355,9 +2354,6 @@ namespace expected_detail
   }
 #endif
 } // namespace boost
-
-#undef BOOST_EXPECTED_REQUIRES
-#undef BOOST_EXPECTED_T_REQUIRES
 
 
 #endif // BOOST_EXPECTED_EXPECTED_HPP

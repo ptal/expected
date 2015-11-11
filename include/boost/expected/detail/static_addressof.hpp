@@ -7,6 +7,7 @@
 #define BOOST_EXPECTED_DETAIL_STATIC_ADDRESSOF_HPP
 
 #include <boost/expected/config.hpp>
+#include <boost/expected/detail/requires.hpp>
 
 #ifdef BOOST_EXPECTED_USE_BOOST_HPP
 #include <boost/type_traits.hpp>
@@ -14,10 +15,6 @@
 #endif
 #include <memory>
 #include <utility>
-
-
-# define REQUIRES(...) typename std::enable_if<__VA_ARGS__, void*>::type = 0
-# define T_REQUIRES(...) typename = typename std::enable_if<(__VA_ARGS__)>::type
 
 namespace boost {
 namespace detail {
@@ -46,14 +43,14 @@ struct has_overloaded_addressof
 
 template <typename T>
 BOOST_CONSTEXPR T* static_addressof(T& ref,
-  REQUIRES(!has_overloaded_addressof<T>::value))
+    BOOST_EXPECTED_REQUIRES(!has_overloaded_addressof<T>::value))
 {
   return &ref;
 }
 
 template <typename T>
 BOOST_CONSTEXPR T* static_addressof(T& ref,
-  REQUIRES(has_overloaded_addressof<T>::value))
+    BOOST_EXPECTED_REQUIRES(has_overloaded_addressof<T>::value))
 {
   return std::addressof(ref);
 }
@@ -62,9 +59,5 @@ BOOST_CONSTEXPR T* static_addressof(T& ref,
 
 } // namespace detail
 } // namespace boost
-
-#undef REQUIRES
-#undef T_REQUIRES
-
 
 #endif // BOOST_EXPECTED_DETAIL_STATIC_ADDRESSOF_HPP

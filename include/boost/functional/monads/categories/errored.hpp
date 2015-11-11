@@ -7,6 +7,8 @@
 #define BOOST_EXPECTED_MONADS_CATEGORIES_VALUED_AND_ERRORED_HPP
 
 #include <boost/config.hpp>
+#include <boost/expected/detail/requires.hpp>
+
 #include <boost/functional/monads/errored.hpp>
 #include <boost/functional/monads/functor.hpp>
 #include <boost/functional/monads/monad.hpp>
@@ -16,9 +18,6 @@
 #include <boost/utility/enable_if.hpp>
 #include <boost/type_traits/is_same.hpp>
 #include <type_traits>
-
-#define REQUIRES(...) typename ::boost::enable_if_c<__VA_ARGS__, void*>::type = 0
-#define T_REQUIRES(...) typename = typename ::boost::enable_if_c<(__VA_ARGS__)>::type
 
 namespace boost
 {
@@ -58,7 +57,7 @@ namespace functional
     template <class M, class F, class FR = decltype( std::declval<F>()( errored::deref(std::declval<M>()) ) )>
     static BOOST_CONSTEXPR auto
     bind(M&& m, F&& f,
-        REQUIRES(std::is_same<FR, void>::value)
+        BOOST_EXPECTED_REQUIRES(std::is_same<FR, void>::value)
     ) -> typename errored::rebind<decay_t<M>, FR>::type
     {
       using namespace errored;
@@ -81,7 +80,7 @@ namespace functional
     template <class M, class F, class FR = decltype( std::declval<F>()( errored::deref(std::declval<M>()) ) )>
     static BOOST_CONSTEXPR auto
     bind(M&& m, F&& f,
-        REQUIRES((! std::is_same<FR, void>::value
+        BOOST_EXPECTED_REQUIRES((! std::is_same<FR, void>::value
                 && ! boost::functional::is_monad<FR>::value)
         )) -> typename errored::rebind<decay_t<M>, FR>::type
     {
@@ -104,7 +103,7 @@ namespace functional
     template <class M, class F, class FR = decltype( std::declval<F>()( errored::deref(std::declval<M>()) ) )>
     static BOOST_CONSTEXPR auto
     bind(M&& m, F&& f,
-        REQUIRES( boost::functional::is_monad<FR>::value )
+        BOOST_EXPECTED_REQUIRES( boost::functional::is_monad<FR>::value )
     ) -> FR
     {
       using namespace errored;
@@ -126,6 +125,4 @@ namespace functional
 }
 }
 
-#undef REQUIRES
-#undef T_REQUIRES
 #endif // BOOST_EXPECTED_MONADS_CATEGORIES_VALUED_AND_ERRORED_HPP
