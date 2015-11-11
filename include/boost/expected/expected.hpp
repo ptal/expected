@@ -12,6 +12,7 @@
 #include <boost/expected/detail/static_addressof.hpp>
 #include <boost/expected/detail/constexpr_utility.hpp>
 #include <boost/expected/detail/requires.hpp>
+#include <boost/type.hpp>
 
 #ifdef BOOST_EXPECTED_USE_BOOST_HPP
 #include <boost/exception_ptr.hpp>
@@ -73,13 +74,13 @@ namespace no_adl {
     wrapper<decay_t<T>> wrap(T&& v) { return wrapper<decay_t<T>>(std::forward<T>(v)); }
 }
 
-template <class Error, class E>
-E make_error(Error e, E)
+template <class E, class Error>
+E make_error(type<E>, Error e)
 {
   return e;
 }
 template <class E>
-void rethrow(E e)
+void rethrow(E const&e)
 {
   throw bad_expected_access<E>(e);
 }
@@ -91,15 +92,15 @@ E make_error_from_current_exception(E)
 
 #ifdef BOOST_EXPECTED_USE_BOOST_HPP
 template <class Error>
-exception_ptr make_error(Error e, exception_ptr)
+exception_ptr make_error(type<exception_ptr>, Error)
 {
   return copy_exception(e);
 }
-inline void rethrow(exception_ptr e)
+inline void rethrow(exception_ptr const&e)
 {
   return rethrow_exception(e);
 }
-inline exception_ptr make_error_from_current_exception(exception_ptr)
+inline exception_ptr make_error_from_current_exception(type<exception_ptr>)
 {
   return current_exception();
 }
@@ -109,15 +110,15 @@ inline exception_ptr make_error_from_current_exception(exception_ptr)
 
 namespace std {
 template <class Error>
-exception_ptr make_error(Error e, exception_ptr)
+exception_ptr make_error(boost::type<exception_ptr>, Error e)
 {
   return make_exception_ptr(e);
 }
-inline void rethrow(exception_ptr e)
+inline void rethrow(exception_ptr const&e)
 {
   return rethrow_exception(e);
 }
-inline exception_ptr make_error_from_current_exception(exception_ptr)
+inline exception_ptr make_error_from_current_exception(boost::type<exception_ptr>)
 {
   return current_exception();
 }
@@ -134,10 +135,10 @@ namespace error {
     using boost::make_error;
 //#endif
     using std::make_error;
-    return make_error(e, E());
+    return make_error(type<E>{}, e);
   }
   template <class Error>
-  void rethrow(Error e)
+  void rethrow(Error const&e)
   {
 //#ifdef BOOST_EXPECTED_USE_BOOST_HPP
     using boost::rethrow;

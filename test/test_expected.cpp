@@ -1038,6 +1038,18 @@ BOOST_AUTO_TEST_CASE(ensured_read_ts)
     unexpected_type<ensured_read<int>> ue1 = make_unexpected(std::move(e));
     BOOST_CHECK(ue1.value()==1);
   }
+//  {
+//    make_unexpected(make_ensured_read(1));
+//    // calls to terminate.
+//  }
+//  {
+//    expected<int, ensured_read<int> > e = make_unexpected(make_ensured_read(1));
+//    // calls to terminate.
+//  }
+  {
+    expected<int, ensured_read<int> > e{1};
+    BOOST_CHECK(e.value()==1);
+  }
   {
     expected<int, ensured_read<int> > e = make_unexpected(make_ensured_read(1));
     BOOST_CHECK(e.error()==1);

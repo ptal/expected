@@ -63,19 +63,24 @@ namespace boost {
     return x.value() == y;
   }
 
-  ensured_read<std::exception_ptr> make_error_from_current_exception(ensured_read<std::exception_ptr>)
+  ensured_read<std::exception_ptr> make_error_from_current_exception(type<ensured_read<std::exception_ptr>>)
   {
     return make_ensured_read(std::current_exception());
   }
 
-  template <class Error>
-  ensured_read<std::exception_ptr> make_error(Error e, ensured_read<std::exception_ptr>)
+  template <class Exception>
+  ensured_read<std::exception_ptr> make_error(type<ensured_read<std::exception_ptr>>, Exception e)
   {
     return make_ensured_read(std::make_exception_ptr(e));
   }
-  void rethrow(ensured_read<std::exception_ptr> e)
+  void rethrow(ensured_read<std::exception_ptr> const& e)
   {
     std::rethrow_exception(e.value());
+  }
+  template <class E>
+  void rethrow(ensured_read<E> const&e)
+  {
+    throw bad_expected_access<E>(e.value());
   }
 
 } // namespace boost
