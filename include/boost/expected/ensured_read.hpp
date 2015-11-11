@@ -6,8 +6,10 @@
 #ifndef BOOST_EXPECTED_ENSURED_READ_HPP
 #define BOOST_EXPECTED_ENSURED_READ_HPP
 
-#include <boost/expected/expected.hpp>
+//#include <boost/expected/expected.hpp>
 #include <boost/expected/unexpected.hpp>
+#include <boost/expected/error_traits.hpp>
+
 #include <exception>
 #include <utility>
 
@@ -63,25 +65,22 @@ namespace boost {
     return x.value() == y;
   }
 
-  ensured_read<std::exception_ptr> make_error_from_current_exception(type<ensured_read<std::exception_ptr>>)
-  {
-    return make_ensured_read(std::current_exception());
-  }
-
-  template <class Exception>
-  ensured_read<std::exception_ptr> make_error(type<ensured_read<std::exception_ptr>>, Exception e)
-  {
-    return make_ensured_read(std::make_exception_ptr(e));
-  }
-  void rethrow(ensured_read<std::exception_ptr> const& e)
-  {
-    std::rethrow_exception(e.value());
-  }
-  template <class E>
-  void rethrow(ensured_read<E> const&e)
-  {
-    throw bad_expected_access<E>(e.value());
-  }
+  template <class Error>
+  struct error_traits<ensured_read<Error>> {
+    template <class Exception>
+    static ensured_read<Error> make_error(Exception const&e)
+    {
+      return ensured_read<Error>{error_traits<Error>::make_error(e)};
+    }
+    static ensured_read<Error> make_error_from_current_exception()
+    {
+      return ensured_read<Error>{error_traits<Error>::make_error_from_current_exception()};
+    }
+    static void rethrow(ensured_read<Error> const& e)
+    {
+      error_traits<Error>::rethrow(e.value());
+    }
+  };
 
 } // namespace boost
 

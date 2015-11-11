@@ -12,6 +12,8 @@
 #include <boost/expected/detail/static_addressof.hpp>
 #include <boost/expected/detail/constexpr_utility.hpp>
 #include <boost/expected/detail/requires.hpp>
+#include <boost/expected/error_traits.hpp>
+#include <boost/expected/bad_expected_access.hpp>
 #include <boost/type.hpp>
 
 #ifdef BOOST_EXPECTED_USE_BOOST_HPP
@@ -34,26 +36,6 @@
 
 namespace boost {
 
-// bad_expected_access exception class.
-template <class Error>
-class bad_expected_access : public std::logic_error
-{
-  public:
-    typedef Error error_type;
-  private:
-    error_type error_value;
-  public:
-    bad_expected_access(const Error& e)
-    : std::logic_error("Found an error instead of the expected value.")
-    , error_value(e)
-    {}
-
-    error_type& error() { return error_value; }
-    const error_type& error() const { return error_value; }
-
-    // todo - Add implicit/explicit conversion to error_type ?
-};
-
 //class expected_default_constructed : public std::logic_error
 //{
 //  public:
@@ -72,89 +54,6 @@ namespace no_adl {
     };
     template <class T>
     wrapper<decay_t<T>> wrap(T&& v) { return wrapper<decay_t<T>>(std::forward<T>(v)); }
-}
-
-template <class E, class Error>
-E make_error(type<E>, Error e)
-{
-  return e;
-}
-template <class E>
-void rethrow(E const&e)
-{
-  throw bad_expected_access<E>(e);
-}
-template <class E>
-E make_error_from_current_exception(E)
-{
-  return E();
-}
-
-#ifdef BOOST_EXPECTED_USE_BOOST_HPP
-template <class Error>
-exception_ptr make_error(type<exception_ptr>, Error)
-{
-  return copy_exception(e);
-}
-inline void rethrow(exception_ptr const&e)
-{
-  return rethrow_exception(e);
-}
-inline exception_ptr make_error_from_current_exception(type<exception_ptr>)
-{
-  return current_exception();
-}
-#endif
-
-}
-
-namespace std {
-template <class Error>
-exception_ptr make_error(boost::type<exception_ptr>, Error e)
-{
-  return make_exception_ptr(e);
-}
-inline void rethrow(exception_ptr const&e)
-{
-  return rethrow_exception(e);
-}
-inline exception_ptr make_error_from_current_exception(boost::type<exception_ptr>)
-{
-  return current_exception();
-}
-
-}
-
-namespace boost {
-
-namespace error {
-  template <class E, class Error>
-  E make_error(Error e)
-  {
-//#ifdef BOOST_EXPECTED_USE_BOOST_HPP
-    using boost::make_error;
-//#endif
-    using std::make_error;
-    return make_error(type<E>{}, e);
-  }
-  template <class Error>
-  void rethrow(Error const&e)
-  {
-//#ifdef BOOST_EXPECTED_USE_BOOST_HPP
-    using boost::rethrow;
-//#endif
-    using std::rethrow;
-    return rethrow(e);
-  }
-  template <class E>
-  E make_error_from_current_exception()
-  {
-//#ifdef BOOST_EXPECTED_USE_BOOST_HPP
-    using boost::make_error_from_current_exception;
-//#endif
-    using std::make_error_from_current_exception;
-    return make_error_from_current_exception(E());
-  }
 }
 
 struct in_place_t {};
@@ -263,7 +162,7 @@ union trivial_expected_storage
 
   template <class Err>
   BOOST_CONSTEXPR trivial_expected_storage(unexpected_type<Err> const& e)
-  : _err(error::make_error<error_type>(e.value()))
+  : _err(error_traits<error_type>::make_error(e.value()))
   {}
 
   BOOST_CONSTEXPR trivial_expected_storage(in_place_t)
@@ -311,7 +210,7 @@ union trivial_expected_storage<void, E>
 
   template <class Err>
   BOOST_CONSTEXPR trivial_expected_storage(unexpected_type<Err> const& e)
-  : _err(error::make_error<error_type>(e.value()))
+  : _err(error_traits<error_type>::make_error(e.value()))
   {}
 
   BOOST_CONSTEXPR trivial_expected_storage(in_place_t)
@@ -358,7 +257,7 @@ union no_trivial_expected_storage
 
   template <class Err>
   BOOST_CONSTEXPR no_trivial_expected_storage(unexpected_type<Err> const& e)
-  : _err(error::make_error<error_type>(e.value()))
+  : _err(error_traits<error_type>::make_error(e.value()))
   {}
 
   BOOST_CONSTEXPR no_trivial_expected_storage(in_place_t) //BOOST_NOEXCEPT_IF()
@@ -406,7 +305,7 @@ union no_trivial_expected_storage<void, E>
 
   template <class Err>
   BOOST_CONSTEXPR no_trivial_expected_storage(unexpected_type<Err> const& e)
-  : _err(error::make_error<error_type>(e.value()))
+  : _err(error_traits<error_type>::make_error(e.value()))
   {}
 
   BOOST_CONSTEXPR no_trivial_expected_storage(in_place_t)
@@ -994,26 +893,26 @@ public:
     return valid()
       ? contained_val()
       : (
-          error::rethrow<error_type>(contained_err()),
+          error_traits<error_type>::rethrow(contained_err()),
           contained_val()
         )
       ;
   }
   BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS value_type& value() &
   {
-    if (!valid()) error::rethrow<error_type>(contained_err());
+    if (!valid()) error_traits<error_type>::rethrow(contained_err());
     return contained_val();
   }
   BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS value_type&& value() &&
   {
-    if (!valid()) error::rethrow<error_type>(contained_err());
+    if (!valid()) error_traits<error_type>::rethrow(contained_err());
     return std::move(contained_val());
   }
 
 #else
   value_type& value()
   {
-    if (!valid()) error::rethrow<error_type>(contained_err());
+    if (!valid()) error_traits<error_type>::rethrow(contained_err());
     return contained_val();
   }
 
@@ -1022,7 +921,7 @@ public:
     return valid()
       ? contained_val()
       : (
-          error::rethrow<error_type>(contained_err()),
+          error_traits<error_type>::rethrow(contained_err()),
           contained_val()
         )
       ;
@@ -1177,7 +1076,7 @@ public:
     try {
       f(std::move(**this));
     } catch (...) {
-      return make_unexpected(error::make_error_from_current_exception<error_type>());
+      return make_unexpected(error_traits<error_type>::make_error_from_current_exception());
     }
     return result_type(in_place_t{});
   }
@@ -1190,7 +1089,7 @@ public:
     try {
       return f(std::move(**this));
     } catch (...) {
-      return make_unexpected(error::make_error_from_current_exception<error_type>());
+      return make_unexpected(error_traits<error_type>::make_error_from_current_exception());
     }
   }
   template <typename F>
@@ -1201,7 +1100,7 @@ public:
     try {
       return f(std::move(**this));
     } catch (...) {
-      return make_unexpected(error::make_error_from_current_exception<error_type>());
+      return make_unexpected(error_traits<error_type>::make_error_from_current_exception());
     }
   }
   template <typename F>
@@ -1212,7 +1111,7 @@ public:
     try {
       f(std::move(*this));
     } catch (...) {
-      return make_unexpected(error::make_error_from_current_exception<error_type>());
+      return make_unexpected(error_traits<error_type>::make_error_from_current_exception());
     }
     return result_type(in_place_t{});
   }
@@ -1225,7 +1124,7 @@ public:
     try {
       return f(std::move(*this));
     } catch (...) {
-      return make_unexpected(error::make_error_from_current_exception<error_type>());
+      return make_unexpected(error_traits<error_type>::make_error_from_current_exception());
     }
   }
   template <typename F>
@@ -1236,7 +1135,7 @@ public:
     try {
       return f(std::move(*this));
     } catch (...) {
-      return make_unexpected(error::make_error_from_current_exception<error_type>());
+      return make_unexpected(error_traits<error_type>::make_error_from_current_exception());
     }
   }
 
@@ -1727,7 +1626,7 @@ public:
   {
     if(!valid())
     {
-      error::rethrow<error_type>(contained_err());
+      error_traits<error_type>::rethrow(contained_err());
     }
   }
 
@@ -1787,7 +1686,7 @@ public:
     try {
       f();
     } catch (...) {
-      return make_unexpected(error::make_error_from_current_exception<error_type>());
+      return make_unexpected(error_traits<error_type>::make_error_from_current_exception());
     }
     return result_type(in_place_t{});
   }
@@ -1799,7 +1698,7 @@ public:
     try {
       return f();
     } catch (...) {
-      return make_unexpected(error::make_error_from_current_exception<error_type>());
+      return make_unexpected(error_traits<error_type>::make_error_from_current_exception());
     }
   }
   template <typename F>
@@ -1810,7 +1709,7 @@ public:
     try {
       return f();
     } catch (...) {
-      return make_unexpected(error::make_error_from_current_exception<error_type>());
+      return make_unexpected(error_traits<error_type>::make_error_from_current_exception());
     }
   }
   template <typename F>
@@ -1821,7 +1720,7 @@ public:
     try {
       f(std::move(*this));
     } catch (...) {
-      return make_unexpected(error::make_error_from_current_exception<error_type>());
+      return make_unexpected(error_traits<error_type>::make_error_from_current_exception());
     }
     return result_type(in_place_t{});
   }
@@ -1833,7 +1732,7 @@ public:
     try {
       return f(std::move(*this));
     } catch (...) {
-      return make_unexpected(error::make_error_from_current_exception<error_type>());
+      return make_unexpected(error_traits<error_type>::make_error_from_current_exception());
     }
   }
   template <typename F>
@@ -1844,7 +1743,7 @@ public:
     try {
       return f(std::move(*this));
     } catch (...) {
-      return make_unexpected(error::make_error_from_current_exception<error_type>());
+      return make_unexpected(error_traits<error_type>::make_error_from_current_exception());
     }
   }
 

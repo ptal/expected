@@ -6,7 +6,7 @@
 #ifndef BOOST_EXPECTED_ERROR_EXCEPTION_HPP
 #define BOOST_EXPECTED_ERROR_EXCEPTION_HPP
 
-#include <boost/expected/expected.hpp>
+#include <boost/expected/error_traits.hpp>
 
 namespace boost {
 
@@ -59,22 +59,23 @@ BOOST_CONSTEXPR bool operator>=(const error_exception<E,X>& x, const error_excep
   return !(x < y);
 }
 
-template <class Error, class ErrorType, class Exception>
-error_exception<ErrorType, Exception> make_error(Error e, error_exception<ErrorType, Exception>)
-{
-  return error_exception<ErrorType, Exception>(e);
-}
-template <class ErrorType, class Exception>
-void rethrow(error_exception<ErrorType, Exception> e)
-{
-  throw Exception(e);
-}
-template <class ErrorType, class Exception>
-error_exception<ErrorType, Exception> make_error_from_current_exception(error_exception<ErrorType, Exception>)
-{
-  return error_exception<ErrorType, Exception>();
-}
 
+template <class ErrorType, class Exception>
+struct error_traits<error_exception<ErrorType, Exception>> {
+  template <class AnotherException>
+  static error_exception<ErrorType, Exception> make_error(AnotherException const&e)
+  {
+    return error_exception<ErrorType, Exception>{e};
+  }
+  static error_exception<ErrorType, Exception> make_error_from_current_exception()
+  {
+    return error_exception<ErrorType, Exception>();
+  }
+  static void rethrow(error_exception<ErrorType, Exception> const& e)
+  {
+    throw Exception(e);
+  }
+};
 
 } // namespace boost
 
