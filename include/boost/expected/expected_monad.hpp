@@ -31,7 +31,7 @@ namespace functional
   struct errored_traits<expected<T, E> > : errored_traits<category::forward> {
     template <class M>
     static BOOST_CONSTEXPR auto get_errored(M&& m) -> decltype(m.get_unexpected())
-    { return m.get_unexpected();};
+    { return m.get_unexpected();}
 
   };
 
