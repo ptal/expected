@@ -1302,7 +1302,7 @@ BOOST_AUTO_TEST_CASE(expected_expected)
   }
 
   {
-  expected<expected<int>> oi2 {expect, make_unexpected(-1)};
+  expected<expected<int,int>> oi2 {expect, make_unexpected(-1)};
   BOOST_CHECK (bool(oi2));
   BOOST_CHECK (!*oi2);
   }

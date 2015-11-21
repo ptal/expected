@@ -640,38 +640,45 @@ public:
 
   // Constructors/Destructors/Assignments
 
-  BOOST_CONSTEXPR expected(
-     //BOOST_EXPECTED_REQUIRES(std::is_default_constructible<error_type>::value)
-  ) BOOST_NOEXCEPT_IF(
-  std::is_nothrow_default_constructible<error_type>::value
+  BOOST_EXPECTED_0_REQUIRES(
+      std::is_default_constructible<error_type>::value
   )
+  BOOST_CONSTEXPR expected()
+    BOOST_NOEXCEPT_IF(
+        std::is_nothrow_default_constructible<error_type>::value
+    )
   : base_type()
   {}
 
-  BOOST_CONSTEXPR expected(const value_type& v
-    //, BOOST_EXPECTED_REQUIRES(std::is_copy_constructible<value_type>::value)
+  BOOST_EXPECTED_0_REQUIRES(
+      std::is_copy_constructible<value_type>::value
   )
-  BOOST_NOEXCEPT_IF(std::is_nothrow_copy_constructible<value_type>::value)
+  BOOST_CONSTEXPR expected(const value_type& v)
+      BOOST_NOEXCEPT_IF(
+          std::is_nothrow_copy_constructible<value_type>::value
+      )
   : base_type(v)
   {}
 
-  BOOST_CONSTEXPR expected(value_type&& v
-    //, BOOST_EXPECTED_REQUIRES(std::is_move_constructible<value_type>::value)
+  BOOST_EXPECTED_0_REQUIRES(
+    std::is_move_constructible<value_type>::value
   )
-  BOOST_NOEXCEPT_IF(
-        std::is_nothrow_move_constructible<value_type>::value
-  )
+  BOOST_CONSTEXPR expected(value_type&& v  )
+      BOOST_NOEXCEPT_IF(
+            std::is_nothrow_move_constructible<value_type>::value
+      )
   : base_type(constexpr_move(v))
   {}
 
-  expected(const expected& rhs
-    //, BOOST_EXPECTED_REQUIRES( std::is_copy_constructible<value_type>::value
-      //         && std::is_copy_constructible<error_type>::value)
-  )
-  BOOST_NOEXCEPT_IF(
-    std::is_nothrow_copy_constructible<value_type>::value &&
-    std::is_nothrow_copy_constructible<error_type>::value
-  )
+//  BOOST_EXPECTED_0_REQUIRES(
+//      std::is_copy_constructible<value_type>::value &&
+//      std::is_copy_constructible<error_type>::value
+//  )
+  expected(const expected& rhs)
+      BOOST_NOEXCEPT_IF(
+        std::is_nothrow_copy_constructible<value_type>::value &&
+        std::is_nothrow_copy_constructible<error_type>::value
+      )
   : base_type()
   {
     if (rhs.valid())
@@ -685,14 +692,16 @@ public:
     base_type::has_value = rhs.valid();
   }
 
+//  BOOST_EXPECTED_0_REQUIRES(
+//      std::is_move_constructible<value_type>::value &&
+//      std::is_move_constructible<error_type>::value
+//  )
   expected(expected&& rhs
-    //, BOOST_EXPECTED_REQUIRES( std::is_move_constructible<value_type>::value
-      //         && std::is_move_constructible<error_type>::value)
   )
-  BOOST_NOEXCEPT_IF(
-    std::is_nothrow_move_constructible<value_type>::value &&
-    std::is_nothrow_move_constructible<error_type>::value
-  )
+      BOOST_NOEXCEPT_IF(
+        std::is_nothrow_move_constructible<value_type>::value &&
+        std::is_nothrow_move_constructible<error_type>::value
+      )
   : base_type()
   {
     if (rhs.valid())
@@ -706,35 +715,36 @@ public:
     base_type::has_value = rhs.valid();
   }
 
-  expected(unexpected_type<error_type> const& e
-    //, BOOST_EXPECTED_REQUIRES(std::is_copy_constructible<error_type>::value)
+  BOOST_EXPECTED_0_REQUIRES(
+      std::is_copy_constructible<error_type>::value
   )
-  BOOST_NOEXCEPT_IF(
-    std::is_nothrow_copy_constructible<error_type>::value
-  )
+  expected(unexpected_type<error_type> const& e)
+      BOOST_NOEXCEPT_IF(
+        std::is_nothrow_copy_constructible<error_type>::value
+      )
   : base_type(e)
   {}
-  expected(unexpected_type<error_type> && e
-    //, BOOST_EXPECTED_REQUIRES(std::is_move_constructible<error_type>::value)
-  )
-  //BOOST_NOEXCEPT_IF(
-  //  has_nothrow_move_constructor<error_type>::value
-  //)
+  BOOST_EXPECTED_0_REQUIRES(std::is_move_constructible<error_type>::value)
+  expected(unexpected_type<error_type> && e)
+      BOOST_NOEXCEPT_IF(
+        std::is_nothrow_move_constructible<error_type>::value
+      )
   : base_type(std::forward<unexpected_type<error_type>>(e))
   {}
 
-  template <class Err>
-  expected(unexpected_type<Err> const& e
-//    , BOOST_EXPECTED_REQUIRES(std::is_copy_constructible<error_type>::value)
-  )
-  //BOOST_NOEXCEPT_IF(
-    //std::is_nothrow_copy_constructible<error_type>::value
-  //)
+  template <class Err
+    , BOOST_EXPECTED_T_REQUIRES(std::is_constructible<error_type, Err>::value)
+  >
+  expected(unexpected_type<Err> const& e)
+      BOOST_NOEXCEPT_IF((
+        std::is_nothrow_constructible<error_type, Err>::value
+      ))
   : base_type(e)
   {}
-  template <class Err>
+  template <class Err
+    //, BOOST_EXPECTED_T_REQUIRES(std::is_constructible<error_type, Err&&>::value)
+  >
   expected(unexpected_type<Err> && e
-//    , BOOST_EXPECTED_REQUIRES(std::is_constructible<error_type, Err&&>::value)
   )
   //BOOST_NOEXCEPT_IF(
     //std::is_nothrow_constructible<error_type, Err&&>::value
@@ -758,7 +768,7 @@ public:
 
   template <class... Args
 #if !defined BOOST_EXPECTED_NO_CXX11_FUNCTION_TEMPLATE_DEFAULT_ARGS
-    //, BOOST_EXPECTED_T_REQUIRES(std::is_constructible<value_type, decay_t<Args>...>::value)
+    , BOOST_EXPECTED_T_REQUIRES(std::is_constructible<value_type, decay_t<Args>...>::value)
 #endif
     >
   BOOST_CONSTEXPR explicit expected(in_place_t, Args&&... args)
@@ -833,7 +843,7 @@ public:
 
     template <class U, class... Args
 #if !defined BOOST_EXPECTED_NO_CXX11_FUNCTION_TEMPLATE_DEFAULT_ARGS
-      //, BOOST_EXPECTED_T_REQUIRES(std::is_constructible<value_type, Args&...>::value)
+      , BOOST_EXPECTED_T_REQUIRES(std::is_constructible<value_type, std::initializer_list<U>, Args&...>::value)
 #endif
       >
     void emplace(std::initializer_list<U> il, Args&&... args)
@@ -1504,8 +1514,8 @@ public:
   : base_type(in_place2)
   {}
 
+  BOOST_EXPECTED_0_REQUIRES(std::is_default_constructible<error_type>::value)
   BOOST_CONSTEXPR expected(
-     BOOST_EXPECTED_REQUIRES(std::is_default_constructible<error_type>::value)
   ) BOOST_NOEXCEPT_IF(
     std::is_nothrow_default_constructible<error_type>::value
   )
@@ -1513,38 +1523,41 @@ public:
   {}
 
 
+  BOOST_EXPECTED_0_REQUIRES(std::is_copy_constructible<error_type>::value)
   expected(unexpected_type<error_type> const& e
-    , BOOST_EXPECTED_REQUIRES(std::is_copy_constructible<error_type>::value)
   )
   BOOST_NOEXCEPT_IF(
     std::is_nothrow_copy_constructible<error_type>::value
   )
   : base_type(e)
   {}
+
+  BOOST_EXPECTED_0_REQUIRES(std::is_move_constructible<error_type>::value)
   expected(unexpected_type<error_type> && e
-    , BOOST_EXPECTED_REQUIRES(std::is_move_constructible<error_type>::value)
   )
-  //BOOST_NOEXCEPT_IF(
-  //  std::is_nothrow_copy_constructible<error_type>::value
-  //)
+  BOOST_NOEXCEPT_IF(
+    std::is_nothrow_move_constructible<error_type>::value
+  )
   : base_type(std::forward<unexpected_type<error_type>>(e))
   {}
 
-  template <class Err>
+  template <class Err
+  , BOOST_EXPECTED_T_REQUIRES(std::is_constructible<error_type, Err>::value)
+  >
   expected(unexpected_type<Err> const& e
-//    , BOOST_EXPECTED_REQUIRES(std::is_copy_constructible<error_type>::value)
   )
-//  BOOST_NOEXCEPT_IF(
-//    std::is_nothrow_copy_constructible<error_type>::value
-//  )
+  BOOST_NOEXCEPT_IF((
+    std::is_nothrow_constructible<error_type, Err>::value
+  ))
   : base_type(e)
   {}
+
   template <class Err>
   expected(unexpected_type<Err> && e
-//    , BOOST_EXPECTED_REQUIRES(std::is_copy_constructible<error_type>::value)
+//    , BOOST_EXPECTED_REQUIRES(std::is_copy_constructible<error_type, Err&&>::value)
   )
 //  BOOST_NOEXCEPT_IF(
-//    std::is_nothrow_copy_constructible<error_type>::value
+//    std::is_nothrow_constructible<error_type, Err&&>::value
 //  )
   : base_type(std::forward<unexpected_type<Err>>(e))
   {}
