@@ -1760,6 +1760,46 @@ public:
     }
   }
 
+  template <typename F>
+  typename rebind<void>::type
+  map(F&& f,
+    BOOST_EXPECTED_REQUIRES(std::is_same<typename std::result_of<F(value_type)>::type, void>::value))
+  {
+    typedef typename rebind<void>::type result_type;
+#if ! defined BOOST_NO_CXX14_CONSTEXPR
+    if(valid())
+    {
+        return catch_all_void_void(std::forward<F>(f));
+    }
+    return get_unexpected();
+#else
+    return (valid()
+        ? catch_all_void_void(std::forward<F>(f))
+        : result_type( get_unexpected() )
+        );
+#endif
+  }
+
+  template <typename F>
+  typename rebind<typename std::result_of<F(value_type)>::type>::type
+  map(F&& f,
+    BOOST_EXPECTED_REQUIRES(!std::is_same<typename std::result_of<F(value_type)>::type, void>::value))
+  {
+    typedef typename rebind<typename std::result_of<F(value_type)>::type>::type result_type;
+#if ! defined BOOST_NO_CXX14_CONSTEXPR
+    if(valid())
+    {
+        return catch_all_void_etype(std::forward<F>(f));
+    }
+    return get_unexpected();
+#else
+    return (valid()
+        ? catch_all_void_etype(std::forward<F>(f))
+        : result_type( get_unexpected() )
+        );
+#endif
+  }
+
   // bind factory
 
   template <typename F>

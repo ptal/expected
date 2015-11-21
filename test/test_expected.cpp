@@ -660,6 +660,73 @@ BOOST_AUTO_TEST_CASE(expected_swap_function_value)
 
 BOOST_AUTO_TEST_SUITE_END()
 ////////////////////////////////////
+BOOST_AUTO_TEST_SUITE(expected_map)
+
+BOOST_AUTO_TEST_CASE(expected_map)
+{
+  auto fun = [](bool b) -> expected<int>
+  {
+    if(b)
+      return make_expected(5);
+    else
+      return make_unexpected(test_exception());
+  };
+
+  auto add_five = [](int sum) -> int
+  {
+    return sum + 5;
+  };
+
+  auto launch_except = [](int sum) -> int
+  {
+    throw test_exception();
+  };
+
+  expected<int> e = fun(true).map(add_five);
+  BOOST_CHECK_NO_THROW(e.value());
+  BOOST_CHECK_EQUAL(*e, 10);
+
+  e = fun(true).map(add_five).map(add_five);
+  BOOST_CHECK_NO_THROW(e.value());
+  BOOST_CHECK_EQUAL(*e, 15);
+
+  e = fun(false).map(add_five).map(add_five);
+  BOOST_CHECK_THROW(e.value(), test_exception);
+
+  BOOST_CHECK_NO_THROW(fun(true).map(launch_except));
+
+}
+
+BOOST_AUTO_TEST_CASE(expected_void_map)
+{
+  auto fun = [](bool b)
+  {
+    if(b)
+      return make_expected();
+    else
+      return expected<void>(make_unexpected(test_exception()));
+  };
+
+  auto launch_except = []()
+  {
+    throw test_exception();
+  };
+
+  auto do_nothing = [](){};
+
+  expected<void> e = fun(true).map(do_nothing);
+  BOOST_CHECK_NO_THROW(e.value());
+
+  e = fun(false).map(do_nothing);
+  BOOST_CHECK_THROW(e.value(), test_exception);
+
+  BOOST_CHECK_NO_THROW(fun(true).map(launch_except));
+
+}
+
+BOOST_AUTO_TEST_SUITE_END()
+
+////////////////////////////////////
 BOOST_AUTO_TEST_SUITE(expected_bind)
 
 BOOST_AUTO_TEST_CASE(expected_bind)
