@@ -60,7 +60,7 @@ public:
     using namespace boost;
     using namespace std;
     typedef typename get_result_type<Num>::type result_type;
-    typedef std::pair<iter_type, std::ios_base::iostate> exceptional_type;
+    //typedef std::pair<iter_type, std::ios_base::iostate> exceptional_type;
 
     ios_base::iostate err = std::ios_base::goodbit;
     Num v;

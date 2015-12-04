@@ -1982,40 +1982,40 @@ public:
       return make_unexpected(error_traits<error_type>::make_error_from_current_exception());
     }
   }
-  template <typename F>
-  typename rebind<void>::type
-  catch_all_evoid_void(F&& f)
-  {
-    typedef typename rebind<void>::type result_type;
-    try {
-      f(std::move(*this));
-    } catch (...) {
-      return make_unexpected(error_traits<error_type>::make_error_from_current_exception());
-    }
-    return result_type(in_place_t{});
-  }
-  template <typename F>
-  typename std::result_of<F(expected)>::type
-  catch_all_evoid_type(F&& f)
-  {
-    //typedef typename std::result_of<F(expected)>::type result_type;
-    try {
-      return f(std::move(*this));
-    } catch (...) {
-      return make_unexpected(error_traits<error_type>::make_error_from_current_exception());
-    }
-  }
-  template <typename F>
-  typename rebind<typename std::result_of<F(expected)>::type>::type
-  catch_all_evoid_etype(F&& f)
-  {
-    //typedef typename rebind<typename std::result_of<F(expected)>::type>::type result_type;
-    try {
-      return f(std::move(*this));
-    } catch (...) {
-      return make_unexpected(error_traits<error_type>::make_error_from_current_exception());
-    }
-  }
+//  template <typename F>
+//  typename rebind<void>::type
+//  catch_all_evoid_void(F&& f)
+//  {
+//    typedef typename rebind<void>::type result_type;
+//    try {
+//      f(std::move(*this));
+//    } catch (...) {
+//      return make_unexpected(error_traits<error_type>::make_error_from_current_exception());
+//    }
+//    return result_type(in_place_t{});
+//  }
+//  template <typename F>
+//  typename std::result_of<F(expected)>::type
+//  catch_all_evoid_type(F&& f)
+//  {
+//    //typedef typename std::result_of<F(expected)>::type result_type;
+//    try {
+//      return f(std::move(*this));
+//    } catch (...) {
+//      return make_unexpected(error_traits<error_type>::make_error_from_current_exception());
+//    }
+//  }
+//  template <typename F>
+//  typename rebind<typename std::result_of<F(expected)>::type>::type
+//  catch_all_evoid_etype(F&& f)
+//  {
+//    //typedef typename rebind<typename std::result_of<F(expected)>::type>::type result_type;
+//    try {
+//      return f(std::move(*this));
+//    } catch (...) {
+//      return make_unexpected(error_traits<error_type>::make_error_from_current_exception());
+//    }
+//  }
 
   template <typename F>
   typename rebind<void>::type
@@ -2082,7 +2082,9 @@ public:
   template <typename F>
   typename rebind<typename std::result_of<F()>::type>::type
   bind(F&& f,
-    BOOST_EXPECTED_REQUIRES( ! std::is_same<typename std::result_of<F()>::type, void>::value) )
+    BOOST_EXPECTED_REQUIRES( ! std::is_same<typename std::result_of<F()>::type, void>::value
+        && ! boost::is_expected<typename std::result_of<F(value_type)>::type>::value
+        ) )
   {
     typedef typename rebind<typename std::result_of<F()>::type>::type result_type;
 #if ! defined BOOST_NO_CXX14_CONSTEXPR
@@ -2094,6 +2096,28 @@ public:
 #else
     return ( valid()
         ? result_type(f())
+        :  result_type(get_unexpected())
+        );
+#endif
+  }
+
+  template <typename F>
+  typename std::result_of<F()>::type
+  bind(F&& f,
+    BOOST_EXPECTED_REQUIRES( ! std::is_same<typename std::result_of<F()>::type, void>::value
+        && boost::is_expected<typename std::result_of<F(value_type)>::type>::value
+        ) )
+  {
+#if ! defined BOOST_NO_CXX14_CONSTEXPR
+    if(valid())
+    {
+        return f();
+    }
+    return get_unexpected();
+#else
+    typedef typename std::result_of<F()>::type result_type;
+    return ( valid()
+        ? f()
         :  result_type(get_unexpected())
         );
 #endif

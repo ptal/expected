@@ -100,7 +100,7 @@ namespace boost
         }
         return make_pair(m.first, expected_type(get_unexpected(m)));
 #else
-        typedef rebindable::rebind<monad_type, result_type> monad_result_type;
+        //typedef rebindable::rebind<monad_type, result_type> monad_result_type;
         return ( valid(m)
                ?  f(get(m))
                : make_pair(m.first, expected_type(get_unexpected(m)))
