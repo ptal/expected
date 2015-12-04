@@ -56,8 +56,8 @@ BOOST_AUTO_TEST_SUITE(except_expected_constructors)
 BOOST_AUTO_TEST_CASE(expected_default_constructor)
 {
   expected<int> e;
-  BOOST_CHECK_EQUAL(e.valid(), false);
-  BOOST_CHECK(e.error() == std::exception_ptr());
+  BOOST_CHECK_EQUAL(e.valid(), true);
+  //BOOST_CHECK(e.error() == std::exception_ptr());
 
   class DefaultConstructibleTest
   {
@@ -70,8 +70,8 @@ BOOST_AUTO_TEST_CASE(expected_default_constructor)
   };
 
   expected<DefaultConstructibleTest> e2;
-  BOOST_CHECK_EQUAL(e2.valid(), false);
-  BOOST_CHECK(e2.error() == std::exception_ptr());
+  BOOST_CHECK_EQUAL(e2.valid(), true);
+  //BOOST_CHECK(e2.error() == std::exception_ptr());
 }
 #endif
 

@@ -43,6 +43,10 @@ namespace boost {
 //    : std::logic_error("Found a default constructed expected.")
 //    {}
 //};
+  constexpr struct only_set_initialized_t{} only_set_initialized{};
+
+  //BOOST_CONSTEXPR struct only_set_valid_t{} only_set_valid{};
+  struct only_set_valid_t{};
 
 namespace no_adl {
     template <class T>
@@ -139,17 +143,20 @@ union trivial_expected_storage
   typedef unrestricted_union_emulation_err_tag<trivial_expected_storage<T, E>, T, E> _err;
   typedef unrestricted_union_emulation_val_tag<trivial_expected_storage<T, E>, T, E> _val;
 #else
-  error_type _err;
   value_type _val;
+  error_type _err;
   BOOST_CONSTEXPR const error_type &err() const { return _err; }
   error_type &err() { return _err; }
   BOOST_CONSTEXPR const value_type &val() const { return _val; }
   value_type &val() { return _val; }
 #endif
 
+  BOOST_EXPECTED_0_REQUIRES(
+        std::is_default_constructible<value_type>::value
+  )
   BOOST_CONSTEXPR trivial_expected_storage()
     BOOST_NOEXCEPT_IF(std::is_nothrow_default_constructible<value_type>::value)
-  : _err(boost_expected_unrestricted_union_emulation_default_tag())
+  : _val(boost_expected_unrestricted_union_emulation_default_tag())
   {}
 
   BOOST_CONSTEXPR trivial_expected_storage(unexpected_type<error_type> const& e)
@@ -188,6 +195,7 @@ union trivial_expected_storage<void, E>
 {
   typedef E error_type;
 
+  unsigned char dummy;
 #ifdef BOOST_EXPECTED_NO_CXX11_UNRESTRICTED_UNIONS
   typedef unrestricted_union_emulation_err_tag<trivial_expected_storage<void, E>, void, E> _err;
 #else
@@ -195,10 +203,10 @@ union trivial_expected_storage<void, E>
   BOOST_CONSTEXPR const error_type &err() const { return _err; }
   error_type &err() { return _err; }
 #endif
-  unsigned char dummy;
 
   BOOST_CONSTEXPR trivial_expected_storage()
-  : _err(boost_expected_unrestricted_union_emulation_default_tag())
+  : dummy(0)
+  //: _err(boost_expected_unrestricted_union_emulation_default_tag())
   {}
 
   BOOST_CONSTEXPR trivial_expected_storage(unexpected_type<error_type> const& e)
@@ -236,16 +244,30 @@ union no_trivial_expected_storage
   typedef unrestricted_union_emulation_err_tag<no_trivial_expected_storage<T, E>, T, E> _err;
   typedef unrestricted_union_emulation_val_tag<no_trivial_expected_storage<T, E>, T, E> _val;
 #else
-  error_type _err;
+  unsigned char dummy;
   value_type _val;
+  error_type _err;
   BOOST_CONSTEXPR const error_type &err() const { return _err; }
   error_type &err() { return _err; }
   BOOST_CONSTEXPR const value_type &val() const { return _val; }
   value_type &val() { return _val; }
 #endif
 
+  BOOST_CONSTEXPR no_trivial_expected_storage(only_set_initialized_t)
+  : dummy(0)
+  {}
+  BOOST_EXPECTED_0_REQUIRES(
+        std::is_default_constructible<value_type>::value
+  )
   BOOST_CONSTEXPR no_trivial_expected_storage()
-  : _err(boost_expected_unrestricted_union_emulation_default_tag())
+  : _val(boost_expected_unrestricted_union_emulation_default_tag())
+  {}
+
+  BOOST_CONSTEXPR no_trivial_expected_storage(value_type const& v)
+  : _val(v)
+  {}
+  BOOST_CONSTEXPR no_trivial_expected_storage(value_type && v)
+  : _val(std::move(v))
   {}
 
   BOOST_CONSTEXPR no_trivial_expected_storage(unexpected_type<error_type> const& e)
@@ -283,6 +305,7 @@ union no_trivial_expected_storage<void, E>
 {
   typedef E error_type;
 
+  unsigned char dummy;
 #ifdef BOOST_EXPECTED_NO_CXX11_UNRESTRICTED_UNIONS
   typedef unrestricted_union_emulation_err_tag<no_trivial_expected_storage<void, E>, void, E> _err;
 #else
@@ -290,10 +313,13 @@ union no_trivial_expected_storage<void, E>
   BOOST_CONSTEXPR const error_type &err() const { return _err; }
   error_type &err() { return _err; }
 #endif
-  unsigned char dummy;
 
+  BOOST_CONSTEXPR no_trivial_expected_storage(only_set_initialized_t)
+  : dummy(0)
+  {}
   BOOST_CONSTEXPR no_trivial_expected_storage()
-  : _err(boost_expected_unrestricted_union_emulation_default_tag())
+  : dummy(0)
+  //: _err(boost_expected_unrestricted_union_emulation_default_tag())
   {}
 
   BOOST_CONSTEXPR no_trivial_expected_storage(unexpected_type<error_type> const& e)
@@ -315,8 +341,6 @@ union no_trivial_expected_storage<void, E>
   ~no_trivial_expected_storage() {};
 };
 
-//BOOST_CONSTEXPR struct only_set_valid_t{} only_set_valid{};
-struct only_set_valid_t{};
 
 template <typename T, typename E >
 struct trivial_expected_base
@@ -327,9 +351,12 @@ struct trivial_expected_base
   bool has_value;
   trivial_expected_storage<T, E> storage;
 
+  BOOST_EXPECTED_0_REQUIRES(
+        std::is_default_constructible<value_type>::value
+  )
   BOOST_CONSTEXPR trivial_expected_base()
-    //BOOST_NOEXCEPT_IF(std::is_nothrow_default_constructible<value_type>::value)
-  : has_value(false), storage()
+    BOOST_NOEXCEPT_IF(std::is_nothrow_default_constructible<value_type>::value)
+  : has_value(true)
   {}
 
   BOOST_CONSTEXPR trivial_expected_base(only_set_valid_t, bool has_value)
@@ -361,8 +388,6 @@ struct trivial_expected_base
   : has_value(false), storage(constexpr_forward<unexpected_type<Err>>(e))
   {}
 
-
-
   template <class... Args>
   explicit BOOST_CONSTEXPR
   trivial_expected_base(in_place_t, Args&&... args)
@@ -374,6 +399,75 @@ struct trivial_expected_base
   trivial_expected_base(in_place_t, std::initializer_list<U> il, Args&&... args)
   : has_value(true), storage(in_place2, il, constexpr_forward<Args>(args)...)
   {}
+
+  // Access
+  value_type* dataptr() { return std::addressof(storage.val()); }
+  BOOST_CONSTEXPR const value_type* dataptr() const { return detail::static_addressof(storage.val()); }
+  error_type* errorptr() { return std::addressof(storage.err()); }
+  BOOST_CONSTEXPR const error_type* errorptr() const { return detail::static_addressof(storage.err()); }
+
+#if ! defined BOOST_EXPECTED_NO_CXX11_RVALUE_REFERENCE_FOR_THIS
+  BOOST_CONSTEXPR const value_type& contained_val() const& { return storage.val(); }
+  BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS
+  value_type& contained_val() & { return storage.val(); }
+  BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS
+  value_type&& contained_val() && { return std::move(storage.val()); }
+
+  BOOST_CONSTEXPR const error_type& contained_err() const& { return storage.err(); }
+  BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS
+  error_type& contained_err() & { return storage.err(); }
+  BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS
+  error_type&& contained_err() && { return std::move(storage.err()); }
+
+#else
+  BOOST_CONSTEXPR const value_type& contained_val() const { return storage.val(); }
+  value_type& contained_val() { return storage.val(); }
+  BOOST_CONSTEXPR const error_type& contained_err() const { return storage.err(); }
+  error_type& contained_err() { return storage.err(); }
+#endif
+
+//  BOOST_EXPECTED_0_REQUIRES(
+//        std::is_copy_constructible<value_type>::value &&
+//        std::is_copy_constructible<error_type>::value
+//  )
+  trivial_expected_base(const trivial_expected_base& rhs)
+        BOOST_NOEXCEPT_IF(
+          std::is_nothrow_copy_constructible<value_type>::value &&
+          std::is_nothrow_copy_constructible<error_type>::value
+        )
+    {
+      if (rhs.has_value)
+      {
+        ::new (dataptr()) value_type(rhs.contained_val());
+      }
+      else
+      {
+        ::new (errorptr()) error_type(rhs.contained_err());
+      }
+      has_value = rhs.has_value;
+    }
+
+//  BOOST_EXPECTED_0_REQUIRES(
+//      std::is_move_constructible<value_type>::value &&
+//      std::is_move_constructible<error_type>::value
+//  )
+  trivial_expected_base(trivial_expected_base&& rhs
+    )
+        BOOST_NOEXCEPT_IF(
+          std::is_nothrow_move_constructible<value_type>::value &&
+          std::is_nothrow_move_constructible<error_type>::value
+        )
+    {
+      if (rhs.has_value)
+      {
+        ::new (dataptr()) value_type(std::move(rhs.contained_val()));
+      }
+      else
+      {
+        ::new (errorptr()) error_type(std::move(rhs.contained_err()));
+      }
+      has_value = rhs.has_value;
+    }
 
    ~trivial_expected_base() = default;
 };
@@ -388,7 +482,7 @@ struct trivial_expected_base<void, E>
   trivial_expected_storage<void, E> storage;
 
   BOOST_CONSTEXPR trivial_expected_base()
-  : has_value(false), storage() {}
+  : has_value(true) {}
 
   BOOST_CONSTEXPR trivial_expected_base(only_set_valid_t, bool has_value)
   : has_value(has_value) {}
@@ -411,6 +505,60 @@ struct trivial_expected_base<void, E>
   : has_value(true), storage(in_place2)
   {}
 
+  // Access
+  error_type* errorptr() { return std::addressof(storage.err()); }
+  BOOST_CONSTEXPR const error_type* errorptr() const { return detail::static_addressof(storage.err()); }
+
+#if ! defined BOOST_EXPECTED_NO_CXX11_RVALUE_REFERENCE_FOR_THIS
+
+  BOOST_CONSTEXPR const error_type& contained_err() const& { return storage.err(); }
+  BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS
+  error_type& contained_err() & { return storage.err(); }
+  BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS
+  error_type&& contained_err() && { return std::move(storage.err()); }
+
+#else
+  BOOST_CONSTEXPR const error_type& contained_err() const { return storage.err(); }
+  error_type& contained_err() { return storage.err(); }
+#endif
+
+//  BOOST_EXPECTED_0_REQUIRES(
+//        std::is_copy_constructible<error_type>::value
+//  )
+  trivial_expected_base(const trivial_expected_base& rhs)
+        BOOST_NOEXCEPT_IF(
+          std::is_nothrow_copy_constructible<error_type>::value
+        )
+    {
+      if (rhs.has_value)
+      {
+      }
+      else
+      {
+        ::new (errorptr()) error_type(rhs.contained_err());
+      }
+      has_value = rhs.has_value;
+    }
+
+//  BOOST_EXPECTED_0_REQUIRES(
+//      std::is_move_constructible<error_type>::value
+//  )
+  trivial_expected_base(trivial_expected_base&& rhs
+    )
+        BOOST_NOEXCEPT_IF(
+          std::is_nothrow_move_constructible<error_type>::value
+        )
+    {
+      if (rhs.has_value)
+      {
+      }
+      else
+      {
+        ::new (errorptr()) error_type(std::move(rhs.contained_err()));
+      }
+      has_value = rhs.has_value;
+    }
+
    ~trivial_expected_base() = default;
 };
 
@@ -423,9 +571,12 @@ struct no_trivial_expected_base
   bool has_value;
   no_trivial_expected_storage<T, E> storage;
 
+  BOOST_EXPECTED_0_REQUIRES(
+        std::is_default_constructible<value_type>::value
+  )
   BOOST_CONSTEXPR no_trivial_expected_base()
     //BOOST_NOEXCEPT_IF(std::is_nothrow_default_constructible<value_type>::value)
-  : has_value(false), storage()
+  : has_value(true)
   {}
 
   BOOST_CONSTEXPR no_trivial_expected_base(only_set_valid_t, bool has_value)
@@ -469,6 +620,80 @@ struct no_trivial_expected_base
   : has_value(true), storage(in_place2, il, constexpr_forward<Args>(args)...)
   {}
 
+  // Access
+  value_type* dataptr() { return std::addressof(storage.val()); }
+  BOOST_CONSTEXPR const value_type* dataptr() const { return detail::static_addressof(storage.val()); }
+  error_type* errorptr() { return std::addressof(storage.err()); }
+  BOOST_CONSTEXPR const error_type* errorptr() const { return detail::static_addressof(storage.err()); }
+
+#if ! defined BOOST_EXPECTED_NO_CXX11_RVALUE_REFERENCE_FOR_THIS
+
+  BOOST_CONSTEXPR const value_type& contained_val() const& { return storage.val(); }
+  BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS
+  value_type& contained_val() & { return storage.val(); }
+  BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS
+  value_type&& contained_val() && { return std::move(storage.val()); }
+
+  BOOST_CONSTEXPR const error_type& contained_err() const& { return storage.err(); }
+  BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS
+  error_type& contained_err() & { return storage.err(); }
+  BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS
+  error_type&& contained_err() && { return std::move(storage.err()); }
+
+#else
+  BOOST_CONSTEXPR const value_type& contained_val() const { return storage.val(); }
+  value_type& contained_val() { return storage.val(); }
+  BOOST_CONSTEXPR const error_type& contained_err() const { return storage.err(); }
+  error_type& contained_err() { return storage.err(); }
+#endif
+
+//  BOOST_EXPECTED_0_REQUIRES(
+//        std::is_copy_constructible<value_type>::value &&
+//        std::is_copy_constructible<error_type>::value
+//  )
+  no_trivial_expected_base(const no_trivial_expected_base& rhs)
+        BOOST_NOEXCEPT_IF(
+          std::is_nothrow_copy_constructible<value_type>::value &&
+          std::is_nothrow_copy_constructible<error_type>::value
+        )
+        : has_value(rhs.has_value), storage(only_set_initialized)
+        //: has_value(rhs.has_value), storage(rhs.has_value, rhs.storage())
+    {
+      if (rhs.has_value)
+      {
+        ::new (dataptr()) value_type(rhs.contained_val());
+      }
+      else
+      {
+        ::new (errorptr()) error_type(rhs.contained_err());
+      }
+      //has_value = rhs.has_value;
+    }
+
+//  BOOST_EXPECTED_0_REQUIRES(
+//      std::is_move_constructible<value_type>::value &&
+//      std::is_move_constructible<error_type>::value
+//  )
+  no_trivial_expected_base(no_trivial_expected_base&& rhs
+    )
+        BOOST_NOEXCEPT_IF(
+          std::is_nothrow_move_constructible<value_type>::value &&
+          std::is_nothrow_move_constructible<error_type>::value
+        )
+        : has_value(rhs.has_value), storage(only_set_initialized)
+        //: has_value(rhs.has_value), storage(rhs.has_value, rhs.storage)
+    {
+      if (rhs.has_value)
+      {
+        ::new (dataptr()) value_type(std::move(rhs.contained_val()));
+      }
+      else
+      {
+        ::new (errorptr()) error_type(std::move(rhs.contained_err()));
+      }
+      //has_value = rhs.has_value;
+    }
+
   ~no_trivial_expected_base()
   {
     if (has_value) storage.val().~value_type();
@@ -485,7 +710,7 @@ struct no_trivial_expected_base<void, E> {
   no_trivial_expected_storage<void, E> storage;
 
   BOOST_CONSTEXPR no_trivial_expected_base()
-  : has_value(false), storage() {}
+  : has_value(true) {}
 
   BOOST_CONSTEXPR no_trivial_expected_base(only_set_valid_t, bool has_value)
   : has_value(has_value) {}
@@ -510,6 +735,60 @@ struct no_trivial_expected_base<void, E> {
   BOOST_CONSTEXPR no_trivial_expected_base(in_place_t)
   : has_value(true), storage(in_place2)
   {}
+
+  // Access
+  error_type* errorptr() { return std::addressof(storage.err()); }
+  BOOST_CONSTEXPR const error_type* errorptr() const { return detail::static_addressof(storage.err()); }
+
+#if ! defined BOOST_EXPECTED_NO_CXX11_RVALUE_REFERENCE_FOR_THIS
+
+  BOOST_CONSTEXPR const error_type& contained_err() const& { return storage.err(); }
+  BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS
+  error_type& contained_err() & { return storage.err(); }
+  BOOST_EXPECTED_CONSTEXPR_IF_MOVE_ACCESSORS
+  error_type&& contained_err() && { return std::move(storage.err()); }
+
+#else
+  BOOST_CONSTEXPR const error_type& contained_err() const { return storage.err(); }
+  error_type& contained_err() { return storage.err(); }
+#endif
+
+//  BOOST_EXPECTED_0_REQUIRES(
+//        std::is_copy_constructible<error_type>::value
+//  )
+  no_trivial_expected_base(const no_trivial_expected_base& rhs)
+        BOOST_NOEXCEPT_IF(
+          std::is_nothrow_copy_constructible<error_type>::value
+        )
+    {
+      if (rhs.has_value)
+      {
+      }
+      else
+      {
+        ::new (errorptr()) error_type(rhs.contained_err());
+      }
+      has_value = rhs.has_value;
+    }
+
+//  BOOST_EXPECTED_0_REQUIRES(
+//      std::is_move_constructible<error_type>::value
+//  )
+  no_trivial_expected_base(no_trivial_expected_base&& rhs
+    )
+        BOOST_NOEXCEPT_IF(
+          std::is_nothrow_move_constructible<error_type>::value
+        )
+    {
+      if (rhs.has_value)
+      {
+      }
+      else
+      {
+        ::new (errorptr()) error_type(std::move(rhs.contained_err()));
+      }
+      has_value = rhs.has_value;
+    }
 
   ~no_trivial_expected_base() {
     if (! has_value)
@@ -641,12 +920,12 @@ public:
   // Constructors/Destructors/Assignments
 
   BOOST_EXPECTED_0_REQUIRES(
-      std::is_default_constructible<error_type>::value
+      std::is_default_constructible<value_type>::value
   )
   BOOST_CONSTEXPR expected()
-    BOOST_NOEXCEPT_IF(
-        std::is_nothrow_default_constructible<error_type>::value
-    )
+      BOOST_NOEXCEPT_IF(
+          std::is_nothrow_default_constructible<value_type>::value
+      )
   : base_type()
   {}
 
@@ -679,17 +958,8 @@ public:
         std::is_nothrow_copy_constructible<value_type>::value &&
         std::is_nothrow_copy_constructible<error_type>::value
       )
-  : base_type()
+  : base_type(rhs)
   {
-    if (rhs.valid())
-    {
-      ::new (dataptr()) value_type(rhs.contained_val());
-    }
-    else
-    {
-      ::new (errorptr()) error_type(rhs.contained_err());
-    }
-    base_type::has_value = rhs.valid();
   }
 
 //  BOOST_EXPECTED_0_REQUIRES(
@@ -702,17 +972,8 @@ public:
         std::is_nothrow_move_constructible<value_type>::value &&
         std::is_nothrow_move_constructible<error_type>::value
       )
-  : base_type()
+  : base_type(std::forward<expected>(rhs))
   {
-    if (rhs.valid())
-    {
-      ::new (dataptr()) value_type(std::move(rhs.contained_val()));
-    }
-    else
-    {
-      ::new (errorptr()) error_type(std::move(rhs.contained_err()));
-    }
-    base_type::has_value = rhs.valid();
   }
 
   BOOST_EXPECTED_0_REQUIRES(
@@ -890,6 +1151,10 @@ public:
   }
 
 #if ! defined(BOOST_NO_CXX11_EXPLICIT_CONVERSION_OPERATORS)
+  BOOST_CONSTEXPR bool operator !() const BOOST_NOEXCEPT
+  {
+    return !valid();
+  }
   BOOST_CONSTEXPR explicit operator bool() const BOOST_NOEXCEPT
   {
     return valid();
@@ -1095,7 +1360,7 @@ public:
   typename std::result_of<F(value_type)>::type
   catch_all_type_type(F&& f)
   {
-    typedef typename std::result_of<F(value_type)>::type result_type;
+//    typedef typename std::result_of<F(value_type)>::type result_type;
     try {
       return f(std::move(**this));
     } catch (...) {
@@ -1106,7 +1371,7 @@ public:
   typename rebind<typename std::result_of<F(value_type)>::type>::type
   catch_all_type_etype(F&& f)
   {
-    typedef typename rebind<typename std::result_of<F(value_type)>::type>::type result_type;
+    //typedef typename rebind<typename std::result_of<F(value_type)>::type>::type result_type;
     try {
       return f(std::move(**this));
     } catch (...) {
@@ -1130,7 +1395,7 @@ public:
   typename std::result_of<F(expected)>::type
   catch_all_etype_type(F&& f)
   {
-    typedef typename std::result_of<F(expected)>::type result_type;
+    //typedef typename std::result_of<F(expected)>::type result_type;
     try {
       return f(std::move(*this));
     } catch (...) {
@@ -1141,7 +1406,7 @@ public:
   typename rebind<typename std::result_of<F(expected)>::type>::type
   catch_all_etype_etype(F&& f)
   {
-    typedef typename rebind<typename std::result_of<F(expected)>::type>::type result_type;
+    //typedef typename rebind<typename std::result_of<F(expected)>::type>::type result_type;
     try {
       return f(std::move(*this));
     } catch (...) {
@@ -1155,7 +1420,6 @@ public:
   map(F&& f,
     BOOST_EXPECTED_REQUIRES(std::is_same<typename std::result_of<F(value_type)>::type, void>::value))
   {
-    typedef typename rebind<void>::type result_type;
 #if ! defined BOOST_NO_CXX14_CONSTEXPR
     if(valid())
     {
@@ -1163,6 +1427,7 @@ public:
     }
     return get_unexpected();
 #else
+    typedef typename rebind<void>::type result_type;
     return (valid()
         ? catch_all_type_void(std::forward<F>(f))
         : result_type( get_unexpected() )
@@ -1175,7 +1440,6 @@ public:
   map(F&& f,
     BOOST_EXPECTED_REQUIRES(!std::is_same<typename std::result_of<F(value_type)>::type, void>::value))
   {
-    typedef typename rebind<typename std::result_of<F(value_type)>::type>::type result_type;
 #if ! defined BOOST_NO_CXX14_CONSTEXPR
     if(valid())
     {
@@ -1183,6 +1447,7 @@ public:
     }
     return get_unexpected();
 #else
+    typedef typename rebind<typename std::result_of<F(value_type)>::type>::type result_type;
     return (valid()
         ? catch_all_type_etype(std::forward<F>(f))
         : result_type( get_unexpected() )
@@ -1195,7 +1460,6 @@ public:
   bind(F&& f,
     BOOST_EXPECTED_REQUIRES(std::is_same<typename std::result_of<F(value_type)>::type, void>::value))
   {
-    typedef typename rebind<void>::type result_type;
 #if ! defined BOOST_NO_CXX14_CONSTEXPR
     if(valid())
     {
@@ -1203,6 +1467,7 @@ public:
     }
     return get_unexpected();
 #else
+    typedef typename rebind<void>::type result_type;
     return (valid()
         ? catch_all_type_void(std::forward<F>(f))
         : result_type( get_unexpected() )
@@ -1217,7 +1482,6 @@ public:
         && !boost::is_expected<typename std::result_of<F(value_type)>::type>::value
         ))
   {
-    typedef typename rebind<typename std::result_of<F(value_type)>::type>::type result_type;
 #if ! defined BOOST_NO_CXX14_CONSTEXPR
     if(valid())
     {
@@ -1225,6 +1489,7 @@ public:
     }
     return get_unexpected();
 #else
+    typedef typename rebind<typename std::result_of<F(value_type)>::type>::type result_type;
     return (valid()
         ? catch_all_type_etype(std::forward<F>(f))
         : result_type( get_unexpected() )
@@ -1258,7 +1523,7 @@ public:
   then(F&& f,
     BOOST_EXPECTED_REQUIRES(std::is_same<typename std::result_of<F(expected)>::type, void>::value))
   {
-    typedef typename rebind<void>::type result_type;
+    //typedef typename rebind<void>::type result_type;
     return catch_all_etype_void(std::forward<F>(f));
   }
 
@@ -1482,14 +1747,8 @@ public:
   BOOST_NOEXCEPT_IF(
     std::is_nothrow_copy_constructible<error_type>::value
   )
-  : base_type()
+  : base_type(rhs)
   {
-    if (! rhs.valid())
-    {
-      ::new (errorptr()) error_type(rhs.contained_err());
-    }
-    base_type::has_value = rhs.valid();
-
   }
 
   expected(expected&& rhs
@@ -1498,13 +1757,8 @@ public:
   BOOST_NOEXCEPT_IF(
     std::is_nothrow_move_constructible<error_type>::value
   )
-  : base_type()
+  : base_type(std::forward<expected>(rhs))
   {
-    if (! rhs.valid())
-    {
-      ::new (errorptr()) error_type(std::move(rhs.contained_err()));
-    }
-    base_type::has_value = rhs.valid();
   }
 
   BOOST_CONSTEXPR explicit expected(in_place_t) BOOST_NOEXCEPT
@@ -1515,17 +1769,16 @@ public:
   {}
 
   BOOST_EXPECTED_0_REQUIRES(std::is_default_constructible<error_type>::value)
-  BOOST_CONSTEXPR expected(
-  ) BOOST_NOEXCEPT_IF(
-    std::is_nothrow_default_constructible<error_type>::value
-  )
+  BOOST_CONSTEXPR expected()
+      BOOST_NOEXCEPT_IF(
+        std::is_nothrow_default_constructible<error_type>::value
+      )
   : base_type()
   {}
 
 
   BOOST_EXPECTED_0_REQUIRES(std::is_copy_constructible<error_type>::value)
-  expected(unexpected_type<error_type> const& e
-  )
+  expected(unexpected_type<error_type> const& e)
   BOOST_NOEXCEPT_IF(
     std::is_nothrow_copy_constructible<error_type>::value
   )
@@ -1629,6 +1882,10 @@ public:
   }
 
 #if ! defined(BOOST_NO_CXX11_EXPLICIT_CONVERSION_OPERATORS)
+  BOOST_CONSTEXPR bool operator !() const BOOST_NOEXCEPT
+  {
+    return !valid();
+  }
   BOOST_CONSTEXPR explicit operator bool() const BOOST_NOEXCEPT
   {
     return valid();
@@ -1707,7 +1964,7 @@ public:
   typename std::result_of<F()>::type
   catch_all_void_type(F&& f)
   {
-    typedef typename std::result_of<F()>::type result_type;
+    //typedef typename std::result_of<F()>::type result_type;
     try {
       return f();
     } catch (...) {
@@ -1718,7 +1975,7 @@ public:
   typename rebind<typename std::result_of<F()>::type>::type
   catch_all_void_etype(F&& f)
   {
-    typedef typename rebind<typename std::result_of<F()>::type>::type result_type;
+    //typedef typename rebind<typename std::result_of<F()>::type>::type result_type;
     try {
       return f();
     } catch (...) {
@@ -1741,7 +1998,7 @@ public:
   typename std::result_of<F(expected)>::type
   catch_all_evoid_type(F&& f)
   {
-    typedef typename std::result_of<F(expected)>::type result_type;
+    //typedef typename std::result_of<F(expected)>::type result_type;
     try {
       return f(std::move(*this));
     } catch (...) {
@@ -1752,7 +2009,7 @@ public:
   typename rebind<typename std::result_of<F(expected)>::type>::type
   catch_all_evoid_etype(F&& f)
   {
-    typedef typename rebind<typename std::result_of<F(expected)>::type>::type result_type;
+    //typedef typename rebind<typename std::result_of<F(expected)>::type>::type result_type;
     try {
       return f(std::move(*this));
     } catch (...) {
@@ -1765,7 +2022,6 @@ public:
   map(F&& f,
     BOOST_EXPECTED_REQUIRES(std::is_same<typename std::result_of<F(value_type)>::type, void>::value))
   {
-    typedef typename rebind<void>::type result_type;
 #if ! defined BOOST_NO_CXX14_CONSTEXPR
     if(valid())
     {
@@ -1773,6 +2029,7 @@ public:
     }
     return get_unexpected();
 #else
+    typedef typename rebind<void>::type result_type;
     return (valid()
         ? catch_all_void_void(std::forward<F>(f))
         : result_type( get_unexpected() )
@@ -1785,7 +2042,6 @@ public:
   map(F&& f,
     BOOST_EXPECTED_REQUIRES(!std::is_same<typename std::result_of<F(value_type)>::type, void>::value))
   {
-    typedef typename rebind<typename std::result_of<F(value_type)>::type>::type result_type;
 #if ! defined BOOST_NO_CXX14_CONSTEXPR
     if(valid())
     {
@@ -1793,6 +2049,7 @@ public:
     }
     return get_unexpected();
 #else
+    typedef typename rebind<typename std::result_of<F(value_type)>::type>::type result_type;
     return (valid()
         ? catch_all_void_etype(std::forward<F>(f))
         : result_type( get_unexpected() )

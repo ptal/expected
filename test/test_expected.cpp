@@ -154,9 +154,9 @@ BOOST_AUTO_TEST_CASE(except_default_constructor2)
 //  } catch(...) {
 //    BOOST_CHECK(false);
 //  };
-  BOOST_CHECK(!e.valid());
-  BOOST_CHECK(! e);
-  BOOST_CHECK(! static_cast<bool>(e));
+  BOOST_CHECK(e.valid());
+  BOOST_CHECK( e);
+  BOOST_CHECK( static_cast<bool>(e));
 }
 
 BOOST_AUTO_TEST_CASE(except_default_constructor)
@@ -169,16 +169,16 @@ BOOST_AUTO_TEST_CASE(except_default_constructor)
 //  } catch(...) {
 //    BOOST_CHECK(false);
 //  };
-  BOOST_CHECK(!e.valid());
-  BOOST_CHECK(! e);
-  BOOST_CHECK(! static_cast<bool>(e));
+  BOOST_CHECK(e.valid());
+  BOOST_CHECK( e);
+  BOOST_CHECK( static_cast<bool>(e));
 }
 
 BOOST_AUTO_TEST_CASE(except_default_constructor_constexpr)
 {
   // From value constructor.
   BOOST_CONSTEXPR expected<int,int> e;
-  BOOST_CHECK(!e.valid());
+  BOOST_CHECK(e.valid());
 }
 
 
@@ -207,7 +207,8 @@ BOOST_AUTO_TEST_CASE(expected_from_value2)
 //  } catch(...) {
 //    BOOST_CHECK(false);
 //  };
-  BOOST_CHECK(! e.valid());
+  BOOST_CHECK( e.valid());
+  BOOST_CHECK_EQUAL(e.value(), 0);
 }
 BOOST_AUTO_TEST_CASE(expected_from_cnv_value)
 {
@@ -360,6 +361,7 @@ BOOST_AUTO_TEST_CASE(expected_from_error)
 }
 
 BOOST_AUTO_TEST_SUITE_END()
+
 BOOST_AUTO_TEST_SUITE(except_valid)
 
 BOOST_AUTO_TEST_CASE(except_valid_constexpr)
@@ -367,7 +369,7 @@ BOOST_AUTO_TEST_CASE(except_valid_constexpr)
   // From value constructor.
   BOOST_CONSTEXPR expected<int,int> e;
   BOOST_CONSTEXPR bool b = e.valid();
-  BOOST_CHECK(!b);
+  BOOST_CHECK(b);
 }
 BOOST_AUTO_TEST_CASE(except_value_constexpr)
 {
@@ -378,6 +380,7 @@ BOOST_AUTO_TEST_CASE(except_value_constexpr)
 }
 
 BOOST_AUTO_TEST_SUITE_END()
+
 BOOST_AUTO_TEST_SUITE(except_expected_assignment)
 
 BOOST_AUTO_TEST_CASE(expected_from_value)
@@ -659,6 +662,7 @@ BOOST_AUTO_TEST_CASE(expected_swap_function_value)
 }
 
 BOOST_AUTO_TEST_SUITE_END()
+
 ////////////////////////////////////
 BOOST_AUTO_TEST_SUITE(expected_map)
 
@@ -1291,7 +1295,9 @@ BOOST_AUTO_TEST_CASE(moved_from_state)
   BOOST_CHECK (oj);
   BOOST_CHECK (!oj->moved);
 
-  expected<MoveAware<int>> ok = std::move(oi);
+#if 1
+// fixme needs default constructor for MoveAware<int>
+  expected<MoveAware<int>> ok{std::move(oi)};
   BOOST_CHECK (ok);
   BOOST_CHECK (!ok->moved);
   BOOST_CHECK (oi);
@@ -1302,6 +1308,8 @@ BOOST_AUTO_TEST_CASE(moved_from_state)
   BOOST_CHECK (!ok->moved);
   BOOST_CHECK (oj);
   BOOST_CHECK (oj->moved);
+
+#endif
 }
 BOOST_AUTO_TEST_CASE(move_only_value)
 {
@@ -1337,9 +1345,9 @@ BOOST_AUTO_TEST_CASE(copy_move_ctor_optional_int)
   expected<int> oi;
   expected<int> oj = oi;
 
-  BOOST_CHECK (!oj);
+  BOOST_CHECK (oj);
   BOOST_CHECK (oj == oi);
-  BOOST_CHECK (!bool(oj));
+  BOOST_CHECK (bool(oj));
 
   oi = 1;
   expected<int> ok = oi;
@@ -1358,13 +1366,13 @@ BOOST_AUTO_TEST_CASE(copy_move_ctor_optional_int)
 }
 BOOST_AUTO_TEST_CASE(expected_expected)
 {
-  expected<expected<int>> oi1 = make_unexpected(-1);
+  expected<expected<int, int>> oi1 = make_unexpected(-1);
   BOOST_CHECK (!oi1);
 
   {
   expected<expected<int>> oi2 {expect};
   BOOST_CHECK (bool(oi2));
-  BOOST_CHECK (!(*oi2));
+  BOOST_CHECK ((*oi2));
   //std::cout << typeid(**oi2).name() << std::endl;
   }
 
@@ -1377,7 +1385,7 @@ BOOST_AUTO_TEST_CASE(expected_expected)
   {
   expected<expected<int>> oi2 {expected<int>{}};
   BOOST_CHECK (bool(oi2));
-  BOOST_CHECK (!*oi2);
+  BOOST_CHECK (*oi2);
   }
 
   expected<int> oi;
@@ -1468,7 +1476,10 @@ BOOST_AUTO_TEST_CASE(ValueOr)
   expected<std::string> os{"AAA"};
   BOOST_CHECK (os.value_or("BBB") == "AAA");
   os = {};
-  BOOST_CHECK (os.value_or("BBB") == "BBB");
+  BOOST_CHECK (os);
+  BOOST_CHECK (os.value()=="");
+
+  BOOST_CHECK (os.value_or(std::string("BBB")) == "");
 }
 
 //////////////////////////////////////////////////

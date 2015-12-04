@@ -44,21 +44,21 @@ BOOST_AUTO_TEST_CASE(ErrorOr_Valued2)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 BOOST_AUTO_TEST_CASE(ErrorOr_Unexpected)
 {
-  expected<int, std::string> ei;
+  expected<int, std::string> ei = make_unexpected(std::string("s"));
   std::string err = error_or(std::move(ei), "0");
-  BOOST_CHECK (err == "");
+  BOOST_CHECK (err == "s");
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 BOOST_AUTO_TEST_CASE(ErrorOr_Unexpected2)
 {
-  expected<int, std::string> ei;
+  expected<int, std::string> ei = make_unexpected(std::string("s"));
   std::string err = error_or(ei, "0");
-  BOOST_CHECK (err == "");
+  BOOST_CHECK (err == "s");
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 BOOST_AUTO_TEST_CASE(ErrorOr_Unexpected3)
 {
-  expected<int, std::string> ei;
+  expected<int, std::string> ei = make_unexpected(std::string("s"));
   std::string err = error_or(std::move(ei), "0");
   BOOST_CHECK (err != "0");
 }

@@ -36,13 +36,13 @@ BOOST_AUTO_TEST_CASE(HasError_Valued)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 BOOST_AUTO_TEST_CASE(HasError_Unexpected)
 {
-  expected<int, std::string> ei;
-  BOOST_CHECK (( has_error(ei, "") ));
+  expected<int, std::string> ei = make_unexpected(std::string("s"));
+  BOOST_CHECK (( has_error(ei, "s") ));
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 BOOST_AUTO_TEST_CASE(HasError_Unexpected2)
 {
-  expected<int, std::string> ei;
+  expected<int, std::string> ei = make_unexpected(std::string("s"));
   BOOST_CHECK (( ! has_error(ei, "a") ));
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
