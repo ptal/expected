@@ -36,18 +36,6 @@
 
 namespace boost {
 
-//class expected_default_constructed : public std::logic_error
-//{
-//  public:
-//    expected_default_constructed()
-//    : std::logic_error("Found a default constructed expected.")
-//    {}
-//};
-  constexpr struct only_set_initialized_t{} only_set_initialized{};
-
-  //BOOST_CONSTEXPR struct only_set_valid_t{} only_set_valid{};
-  struct only_set_valid_t{};
-
 namespace no_adl {
     template <class T>
     struct wrapper {
@@ -70,6 +58,8 @@ struct unexpect_t {};
 BOOST_CONSTEXPR_OR_CONST unexpect_t unexpect = {};
 
 namespace detail {
+
+struct only_set_initialized_t{};
 
 #ifdef BOOST_EXPECTED_NO_CXX11_UNRESTRICTED_UNIONS
 template<class T, class E>
@@ -359,10 +349,6 @@ struct trivial_expected_base
   : has_value(true)
   {}
 
-  BOOST_CONSTEXPR trivial_expected_base(only_set_valid_t, bool has_value)
-  : has_value(has_value)
-  {}
-
   BOOST_CONSTEXPR trivial_expected_base(const value_type& v)
   : has_value(true), storage(in_place2, v)
   {}
@@ -484,9 +470,6 @@ struct trivial_expected_base<void, E>
   BOOST_CONSTEXPR trivial_expected_base()
   : has_value(true) {}
 
-  BOOST_CONSTEXPR trivial_expected_base(only_set_valid_t, bool has_value)
-  : has_value(has_value) {}
-
   BOOST_CONSTEXPR trivial_expected_base(unexpected_type<error_type> const& e)
   : has_value(false), storage(e)
   {}
@@ -579,10 +562,6 @@ struct no_trivial_expected_base
   : has_value(true)
   {}
 
-  BOOST_CONSTEXPR no_trivial_expected_base(only_set_valid_t, bool has_value)
-  : has_value(has_value)
-  {}
-
   BOOST_CONSTEXPR no_trivial_expected_base(const value_type& v)
   : has_value(true), storage(in_place2, v)
   {}
@@ -656,8 +635,7 @@ struct no_trivial_expected_base
           std::is_nothrow_copy_constructible<value_type>::value &&
           std::is_nothrow_copy_constructible<error_type>::value
         )
-        : has_value(rhs.has_value), storage(only_set_initialized)
-        //: has_value(rhs.has_value), storage(rhs.has_value, rhs.storage())
+        : has_value(rhs.has_value), storage(only_set_initialized_t{})
     {
       if (rhs.has_value)
       {
@@ -680,8 +658,7 @@ struct no_trivial_expected_base
           std::is_nothrow_move_constructible<value_type>::value &&
           std::is_nothrow_move_constructible<error_type>::value
         )
-        : has_value(rhs.has_value), storage(only_set_initialized)
-        //: has_value(rhs.has_value), storage(rhs.has_value, rhs.storage)
+        : has_value(rhs.has_value), storage(only_set_initialized_t{})
     {
       if (rhs.has_value)
       {
@@ -711,10 +688,6 @@ struct no_trivial_expected_base<void, E> {
 
   BOOST_CONSTEXPR no_trivial_expected_base()
   : has_value(true) {}
-
-  BOOST_CONSTEXPR no_trivial_expected_base(only_set_valid_t, bool has_value)
-  : has_value(has_value) {}
-
 
   BOOST_CONSTEXPR no_trivial_expected_base(unexpected_type<error_type> const& e)
   : has_value(false), storage(e)
