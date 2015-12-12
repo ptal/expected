@@ -171,11 +171,11 @@ namespace boost
 
   inline BOOST_CONSTEXPR bool operator<(const unexpected_type<std::exception_ptr>& x, const unexpected_type<std::exception_ptr>& y)
   {
-    return false;
+    return static_cast<void>(x), static_cast<void>(y), false;
   }
   inline BOOST_CONSTEXPR bool operator>(const unexpected_type<std::exception_ptr>& x, const unexpected_type<std::exception_ptr>& y)
   {
-    return false;
+    return static_cast<void>(x), static_cast<void>(y), false;
   }
   inline BOOST_CONSTEXPR bool operator<=(const unexpected_type<std::exception_ptr>& x, const unexpected_type<std::exception_ptr>& y)
   {
