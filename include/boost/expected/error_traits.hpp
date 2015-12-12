@@ -18,7 +18,7 @@ namespace boost {
     template <class Exception>
     static Error make_error(Exception const&e)
     {
-      return Error{};
+      return static_cast<void>(e), Error{};
     }
     static Error make_error_from_current_exception()
     {
