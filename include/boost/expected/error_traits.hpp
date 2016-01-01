@@ -16,7 +16,7 @@ namespace boost {
   struct error_traits
   {
     template <class Exception>
-    static Error make_error(Exception const&)
+    static Error make_error(Exception const& e)
     {
       return Error{e};
     }
