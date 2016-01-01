@@ -256,10 +256,8 @@ namespace detail
         using namespace ::boost::functional::valued;
 
         try {
-          std::cout << __FILE__ << __LINE__ << std::endl;
           return fct_(value(e));
         } catch (...) {
-          std::cout << __FILE__ << __LINE__ << std::endl;
           return make_exception<type_constructor<E>>(std::current_exception());
         }
       }

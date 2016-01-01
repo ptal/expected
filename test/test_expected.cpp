@@ -141,7 +141,6 @@ int nothrowing_fun(){ return 4; }
 void void_throwing_fun(){ throw test_exception(); }
 void do_nothing_fun(){}
 
-
 BOOST_AUTO_TEST_SUITE(except_default_constructor)
 
 BOOST_AUTO_TEST_CASE(except_default_constructor2)
@@ -697,7 +696,7 @@ BOOST_AUTO_TEST_CASE(expected_map)
   e = fun(false).map(add_five).map(add_five);
   BOOST_CHECK_THROW(e.value(), test_exception);
 
-  BOOST_CHECK_NO_THROW(fun(true).map(launch_except));
+  BOOST_CHECK_THROW(fun(true).map(launch_except), test_exception);
 
 }
 
@@ -711,7 +710,7 @@ BOOST_AUTO_TEST_CASE(expected_void_map)
       return expected<void>(make_unexpected(test_exception()));
   };
 
-  auto launch_except = []()
+  auto launch_except = []() -> void
   {
     throw test_exception();
   };
@@ -724,7 +723,7 @@ BOOST_AUTO_TEST_CASE(expected_void_map)
   e = fun(false).map(do_nothing);
   BOOST_CHECK_THROW(e.value(), test_exception);
 
-  BOOST_CHECK_NO_THROW(fun(true).map(launch_except));
+  BOOST_CHECK_THROW(fun(true).map(launch_except), test_exception);
 
 }
 
@@ -764,7 +763,7 @@ BOOST_AUTO_TEST_CASE(expected_bind)
   e = fun(false).bind(add_five).bind(add_five);
   BOOST_CHECK_THROW(e.value(), test_exception);
 
-  BOOST_CHECK_NO_THROW(fun(true).bind(launch_except));
+  BOOST_CHECK_THROW(fun(true).bind(launch_except), test_exception);
 
 }
 
@@ -861,7 +860,7 @@ BOOST_AUTO_TEST_CASE(expected_non_void_then)
   e = fun(false).then(if_valued(add_five)).then(if_valued(add_five));
   BOOST_CHECK_THROW(e.value(), test_exception);
 
-  BOOST_CHECK_NO_THROW(fun(true).then(if_valued(launch_except)));
+  BOOST_CHECK_THROW(fun(true).then(if_valued(launch_except)), test_exception);
 
   e = fun(false).then(catch_all(then_launch_except));
   BOOST_CHECK_THROW(e.value(), test_exception);

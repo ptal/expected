@@ -22,7 +22,13 @@ namespace boost {
     }
     static Error make_error_from_current_exception()
     {
-      return Error{};
+      try {
+        throw;
+      } catch (std::exception & e) {
+        return make_error(e);
+      } catch (...) {
+        return Error{};
+      }
     }
     static void rethrow(Error const& e)
     {

@@ -36,17 +36,17 @@
 
 namespace boost {
 
-namespace no_adl {
-    template <class T>
-    struct wrapper {
-        wrapper(T&& v) : value(move(v)) {}
-        T unwrap() { return move(value); }
-    private:
-        T value;
-    };
-    template <class T>
-    wrapper<decay_t<T>> wrap(T&& v) { return wrapper<decay_t<T>>(std::forward<T>(v)); }
-}
+//namespace no_adl {
+//    template <class T>
+//    struct wrapper {
+//        wrapper(T&& v) : value(move(v)) {}
+//        T unwrap() { return move(value); }
+//    private:
+//        T value;
+//    };
+//    template <class T>
+//    wrapper<decay_t<T>> wrap(T&& v) { return wrapper<decay_t<T>>(std::forward<T>(v)); }
+//}
 
 struct in_place_t {};
 BOOST_CONSTEXPR_OR_CONST in_place_t in_place2 = {};
@@ -60,6 +60,7 @@ BOOST_CONSTEXPR_OR_CONST unexpect_t unexpect = {};
 namespace detail {
 
 struct only_set_initialized_t{};
+BOOST_CONSTEXPR_OR_CONST only_set_initialized_t only_set_initialized = {};
 
 #ifdef BOOST_EXPECTED_NO_CXX11_UNRESTRICTED_UNIONS
 template<class T, class E>
@@ -635,7 +636,7 @@ struct no_trivial_expected_base
           std::is_nothrow_copy_constructible<value_type>::value &&
           std::is_nothrow_copy_constructible<error_type>::value
         )
-        : has_value(rhs.has_value), storage(only_set_initialized_t{})
+        : has_value(rhs.has_value), storage(only_set_initialized)
     {
       if (rhs.has_value)
       {
@@ -658,7 +659,7 @@ struct no_trivial_expected_base
           std::is_nothrow_move_constructible<value_type>::value &&
           std::is_nothrow_move_constructible<error_type>::value
         )
-        : has_value(rhs.has_value), storage(only_set_initialized_t{})
+        : has_value(rhs.has_value), storage(only_set_initialized)
     {
       if (rhs.has_value)
       {
@@ -1321,70 +1322,93 @@ public:
   catch_all_type_void(F&& f)
   {
     typedef typename rebind<void>::type result_type;
+#if defined BOOST_EXPECTED_CATCH_EXCEPTIONS
     try {
+#endif
       f(std::move(**this));
+      return result_type(in_place_t{});
+#if defined BOOST_EXPECTED_CATCH_EXCEPTIONS
     } catch (...) {
       return make_unexpected(error_traits<error_type>::make_error_from_current_exception());
     }
-    return result_type(in_place_t{});
+#endif
   }
 
   template <typename F>
   typename std::result_of<F(value_type)>::type
   catch_all_type_type(F&& f)
   {
-//    typedef typename std::result_of<F(value_type)>::type result_type;
+#if defined BOOST_EXPECTED_CATCH_EXCEPTIONS
     try {
+#endif
       return f(std::move(**this));
+#if defined BOOST_EXPECTED_CATCH_EXCEPTIONS
     } catch (...) {
       return make_unexpected(error_traits<error_type>::make_error_from_current_exception());
     }
+#endif
   }
   template <typename F>
   typename rebind<typename std::result_of<F(value_type)>::type>::type
   catch_all_type_etype(F&& f)
   {
+#if defined BOOST_EXPECTED_CATCH_EXCEPTIONS
     //typedef typename rebind<typename std::result_of<F(value_type)>::type>::type result_type;
     try {
+#endif
       return f(std::move(**this));
+#if defined BOOST_EXPECTED_CATCH_EXCEPTIONS
     } catch (...) {
       return make_unexpected(error_traits<error_type>::make_error_from_current_exception());
     }
+#endif
   }
   template <typename F>
   typename rebind<void>::type
   catch_all_etype_void(F&& f)
   {
     typedef typename rebind<void>::type result_type;
+#if defined BOOST_EXPECTED_CATCH_EXCEPTIONS
     try {
+#endif
       f(std::move(*this));
+      return result_type(in_place_t{});
+#if defined BOOST_EXPECTED_CATCH_EXCEPTIONS
     } catch (...) {
       return make_unexpected(error_traits<error_type>::make_error_from_current_exception());
     }
-    return result_type(in_place_t{});
+#endif
   }
 
   template <typename F>
   typename std::result_of<F(expected)>::type
   catch_all_etype_type(F&& f)
   {
+#if defined BOOST_EXPECTED_CATCH_EXCEPTIONS
     //typedef typename std::result_of<F(expected)>::type result_type;
     try {
+#endif
       return f(std::move(*this));
+#if defined BOOST_EXPECTED_CATCH_EXCEPTIONS
     } catch (...) {
       return make_unexpected(error_traits<error_type>::make_error_from_current_exception());
     }
+#endif
   }
   template <typename F>
   typename rebind<typename std::result_of<F(expected)>::type>::type
   catch_all_etype_etype(F&& f)
   {
+#if defined BOOST_EXPECTED_CATCH_EXCEPTIONS
     //typedef typename rebind<typename std::result_of<F(expected)>::type>::type result_type;
     try {
+#endif
       return f(std::move(*this));
+#if defined BOOST_EXPECTED_CATCH_EXCEPTIONS
     } catch (...) {
       return make_unexpected(error_traits<error_type>::make_error_from_current_exception());
     }
+#endif
   }
 
 
@@ -1416,7 +1440,7 @@ public:
 #if ! defined BOOST_NO_CXX14_CONSTEXPR
     if(valid())
     {
-        return catch_all_type_etype(std::forward<F>(f));
+      return catch_all_type_etype(std::forward<F>(f));
     }
     return get_unexpected();
 #else
@@ -1481,7 +1505,8 @@ public:
 #if ! defined BOOST_NO_CXX14_CONSTEXPR
     if(valid())
     {
-        return catch_all_type_type(std::forward<F>(f));
+      return catch_all_type_type(std::forward<F>(f));
+
     }
     return get_unexpected();
 #else
@@ -1926,34 +1951,46 @@ public:
   catch_all_void_void(F&& f)
   {
     typedef typename rebind<void>::type result_type;
+#if defined BOOST_EXPECTED_CATCH_EXCEPTIONS
     try {
+#endif
       f();
+      return result_type(in_place_t{});
+#if defined BOOST_EXPECTED_CATCH_EXCEPTIONS
     } catch (...) {
       return make_unexpected(error_traits<error_type>::make_error_from_current_exception());
     }
-    return result_type(in_place_t{});
+#endif
   }
   template <typename F>
   typename std::result_of<F()>::type
   catch_all_void_type(F&& f)
   {
+#if defined BOOST_EXPECTED_CATCH_EXCEPTIONS
     //typedef typename std::result_of<F()>::type result_type;
     try {
+#endif
       return f();
+#if defined BOOST_EXPECTED_CATCH_EXCEPTIONS
     } catch (...) {
       return make_unexpected(error_traits<error_type>::make_error_from_current_exception());
     }
+#endif
   }
   template <typename F>
   typename rebind<typename std::result_of<F()>::type>::type
   catch_all_void_etype(F&& f)
   {
+#if defined BOOST_EXPECTED_CATCH_EXCEPTIONS
     //typedef typename rebind<typename std::result_of<F()>::type>::type result_type;
     try {
+#endif
       return f();
+#if defined BOOST_EXPECTED_CATCH_EXCEPTIONS
     } catch (...) {
       return make_unexpected(error_traits<error_type>::make_error_from_current_exception());
     }
+#endif
   }
 //  template <typename F>
 //  typename rebind<void>::type
