@@ -742,12 +742,12 @@ BOOST_AUTO_TEST_CASE(expected_bind)
       return make_unexpected(test_exception());
   };
 
-  auto add_five = [](int sum) -> int
+  auto add_five = [](int sum) -> expected<int>
   {
-    return sum + 5;
+    return make_expected(sum + 5);
   };
 
-  auto launch_except = [](int sum) -> int
+  auto launch_except = [](int sum) -> expected<int>
   {
     throw test_exception();
   };
@@ -777,12 +777,14 @@ BOOST_AUTO_TEST_CASE(expected_void_bind)
       return expected<void>(make_unexpected(test_exception()));
   };
 
-  auto launch_except = []()
+  auto launch_except = []() -> expected<void>
   {
     throw test_exception();
   };
 
-  auto do_nothing = [](){};
+  auto do_nothing = [](){
+    return make_expected();
+  };
 
   expected<void> e = fun(true).bind(do_nothing);
   BOOST_CHECK_NO_THROW(e.value());
@@ -909,9 +911,9 @@ BOOST_AUTO_TEST_CASE(expected_recover)
       return expected<int>(make_unexpected(test_exception()));
   };
 
-  auto add_five = [](int sum) -> int
+  auto add_five = [](int sum) -> expected<int>
   {
-    return sum + 5;
+    return make_expected(sum + 5);
   };
 
   auto recover_error = [](std::exception_ptr p)
@@ -965,7 +967,9 @@ BOOST_AUTO_TEST_CASE(expected_void_recover)
       return expected<void>(boost::make_unexpected(test_exception()));
   };
 
-  auto do_nothing = [](){};
+  auto do_nothing = [](){
+    return make_expected();
+  };
 
   auto recover_error = [](std::exception_ptr p)
   {
@@ -1335,9 +1339,26 @@ BOOST_AUTO_TEST_CASE(move_only_value)
   BOOST_CHECK(expected<std::unique_ptr<int>>{make_int()}.map(return_void));
   BOOST_CHECK(expected<std::unique_ptr<int>>{make_int()}.map(return_expected));
   BOOST_CHECK(expected<std::unique_ptr<int>>{make_int()}.map(return_int));
-  BOOST_CHECK(expected<std::unique_ptr<int>>{make_int()}.bind(return_void));
+}
+BOOST_AUTO_TEST_CASE(move_only_value2)
+{
+  const auto make_int = []() {
+    std::unique_ptr<int> value{new int};
+    *value = 100;
+    return value;
+  };
+  const auto return_expected_void = [](std::unique_ptr<int> value) {
+    BOOST_CHECK(value != nullptr);
+    BOOST_CHECK(*value == 100);
+    return make_expected();
+  };
+  const auto return_expected = [](std::unique_ptr<int> value) {
+    BOOST_CHECK(value != nullptr);
+    BOOST_CHECK(*value == 100);
+    return expected<void>{boost::expect};
+  };
+  BOOST_CHECK(expected<std::unique_ptr<int>>{make_int()}.bind(return_expected_void));
   BOOST_CHECK(expected<std::unique_ptr<int>>{make_int()}.bind(return_expected));
-  BOOST_CHECK(expected<std::unique_ptr<int>>{make_int()}.bind(return_int));
 }
 BOOST_AUTO_TEST_CASE(copy_move_ctor_optional_int)
 {

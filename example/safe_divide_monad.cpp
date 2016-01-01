@@ -231,10 +231,10 @@ namespace expected_based
     return bind(safe_divide(i, k),
       [=](int q1)
       {
-        return bind(safe_divide(j,k), [=](int q2)
+        return map([=](int q2)
             {
               return q1+q2;
-            });
+            }, safe_divide(j,k));
       });
   }
 
@@ -251,10 +251,10 @@ namespace expected_based
     using namespace ::boost::functional::monad_error;
     return safe_divide(i, k) & [=](int q1)
     {
-      return safe_divide(j,k) & [=](int q2)
+      return [=](int q2)
           {
             return q1+q2;
-          };
+          } ^ safe_divide(j,k);
     };
   }
   expected<int> then_f4(int i, int j, int k)
@@ -273,10 +273,10 @@ namespace optional_based
       [=](int q1)
       {
         using namespace boost::functional::monad_error;
-        return bind(safe_divide(j,k), [=](int q2)
+        return map([=](int q2)
             {
               return q1+q2;
-            });
+            }, safe_divide(j,k));
       });
   }
 
@@ -311,10 +311,10 @@ namespace generic_based
     return  bind(safe_divide<M>(i, k),
       [=](int q1)
       {
-        return bind(safe_divide<M>(j,k), [=](int q2)
+        return map([=](int q2)
             {
               return q1+q2;
-            });
+            }, safe_divide<M>(j,k));
       });
   }
 
@@ -333,10 +333,10 @@ namespace generic_based
     using namespace boost::functional::monad_error;
     return safe_divide<M>(i, k) & [=](int q1)
     {
-      return safe_divide<M>(j,k) & [=](int q2)
+      return [=](int q2)
           {
             return q1+q2;
-          };
+          } ^ safe_divide<M>(j,k);
     };
   }
 }
@@ -384,10 +384,10 @@ namespace optional_based
   {
     return  bind(i, [j](T i)
       {
-        return bind(j, [i](T j)
+        return map([i](T j)
             {
               return i-j;
-            });
+            }, j);
       });
   }
 

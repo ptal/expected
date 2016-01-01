@@ -116,7 +116,7 @@ boost::expected<int> then_f2(int i, int j, int k)
   return q1.bind([j,k](int q1)
     {
       auto q2 = safe_divide(j,k);
-      return q2.bind([q1](int q2)
+      return q2.map([q1](int q2)
           { return q1+q2;});
     });
 }

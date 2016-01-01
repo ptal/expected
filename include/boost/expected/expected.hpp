@@ -1452,53 +1452,52 @@ public:
 #endif
   }
 
-  template <typename F>
-  typename rebind<void>::type
-  bind(F&& f,
-    BOOST_EXPECTED_REQUIRES(std::is_same<typename std::result_of<F(value_type)>::type, void>::value))
-  {
-#if ! defined BOOST_NO_CXX14_CONSTEXPR
-    if(valid())
-    {
-        return catch_all_type_void(std::forward<F>(f));
-    }
-    return get_unexpected();
-#else
-    typedef typename rebind<void>::type result_type;
-    return (valid()
-        ? catch_all_type_void(std::forward<F>(f))
-        : result_type( get_unexpected() )
-        );
-#endif
-  }
-
-  template <typename F>
-  typename rebind<typename std::result_of<F(value_type)>::type>::type
-  bind(F&& f,
-    BOOST_EXPECTED_REQUIRES(!std::is_same<typename std::result_of<F(value_type)>::type, void>::value
-        && !boost::is_expected<typename std::result_of<F(value_type)>::type>::value
-        ))
-  {
-#if ! defined BOOST_NO_CXX14_CONSTEXPR
-    if(valid())
-    {
-        return catch_all_type_etype(std::forward<F>(f));
-    }
-    return get_unexpected();
-#else
-    typedef typename rebind<typename std::result_of<F(value_type)>::type>::type result_type;
-    return (valid()
-        ? catch_all_type_etype(std::forward<F>(f))
-        : result_type( get_unexpected() )
-        );
-#endif
-  }
+//  template <typename F>
+//  typename rebind<void>::type
+//  bind(F&& f,
+//    BOOST_EXPECTED_REQUIRES(std::is_same<typename std::result_of<F(value_type)>::type, void>::value))
+//  {
+//#if ! defined BOOST_NO_CXX14_CONSTEXPR
+//    if(valid())
+//    {
+//        return catch_all_type_void(std::forward<F>(f));
+//    }
+//    return get_unexpected();
+//#else
+//    typedef typename rebind<void>::type result_type;
+//    return (valid()
+//        ? catch_all_type_void(std::forward<F>(f))
+//        : result_type( get_unexpected() )
+//        );
+//#endif
+//  }
+//
+//  template <typename F>
+//  typename rebind<typename std::result_of<F(value_type)>::type>::type
+//  bind(F&& f,
+//    BOOST_EXPECTED_REQUIRES(!std::is_same<typename std::result_of<F(value_type)>::type, void>::value
+//        && !boost::is_expected<typename std::result_of<F(value_type)>::type>::value
+//        ))
+//  {
+//#if ! defined BOOST_NO_CXX14_CONSTEXPR
+//    if(valid())
+//    {
+//        return catch_all_type_etype(std::forward<F>(f));
+//    }
+//    return get_unexpected();
+//#else
+//    typedef typename rebind<typename std::result_of<F(value_type)>::type>::type result_type;
+//    return (valid()
+//        ? catch_all_type_etype(std::forward<F>(f))
+//        : result_type( get_unexpected() )
+//        );
+//#endif
+//  }
 
   template <typename F>
   typename std::result_of<F(value_type)>::type
   bind(F&& f,
-    BOOST_EXPECTED_REQUIRES(!std::is_same<typename std::result_of<F(value_type)>::type, void>::value
-        && boost::is_expected<typename std::result_of<F(value_type)>::type>::value
+    BOOST_EXPECTED_REQUIRES(boost::is_expected<typename std::result_of<F(value_type)>::type>::value
         )
     )
   {
@@ -2069,53 +2068,52 @@ public:
 
   // bind factory
 
-  template <typename F>
-  BOOST_CONSTEXPR typename rebind<void>::type bind(F&& f,
-    BOOST_EXPECTED_REQUIRES(std::is_same<typename std::result_of<F()>::type, void>::value)) const
-  {
-    typedef typename rebind<void>::type result_type;
-#if ! defined BOOST_NO_CXX14_CONSTEXPR
-    if(valid())
-    {
-        f();
-        return result_type(in_place_t{});
-    }
-    return get_unexpected();
-#else
-    return ( valid()
-        ? ( f(), result_type(in_place_t{}) )
-        :  result_type(get_unexpected())
-        );
-#endif
-  }
-
-  template <typename F>
-  typename rebind<typename std::result_of<F()>::type>::type
-  bind(F&& f,
-    BOOST_EXPECTED_REQUIRES( ! std::is_same<typename std::result_of<F()>::type, void>::value
-        && ! boost::is_expected<typename std::result_of<F(value_type)>::type>::value
-        ) )
-  {
-    typedef typename rebind<typename std::result_of<F()>::type>::type result_type;
-#if ! defined BOOST_NO_CXX14_CONSTEXPR
-    if(valid())
-    {
-        return result_type(f());
-    }
-    return get_unexpected();
-#else
-    return ( valid()
-        ? result_type(f())
-        :  result_type(get_unexpected())
-        );
-#endif
-  }
+//  template <typename F>
+//  BOOST_CONSTEXPR typename rebind<void>::type bind(F&& f,
+//    BOOST_EXPECTED_REQUIRES(std::is_same<typename std::result_of<F()>::type, void>::value)) const
+//  {
+//    typedef typename rebind<void>::type result_type;
+//#if ! defined BOOST_NO_CXX14_CONSTEXPR
+//    if(valid())
+//    {
+//        f();
+//        return result_type(in_place_t{});
+//    }
+//    return get_unexpected();
+//#else
+//    return ( valid()
+//        ? ( f(), result_type(in_place_t{}) )
+//        :  result_type(get_unexpected())
+//        );
+//#endif
+//  }
+//
+//  template <typename F>
+//  typename rebind<typename std::result_of<F()>::type>::type
+//  bind(F&& f,
+//    BOOST_EXPECTED_REQUIRES( ! std::is_same<typename std::result_of<F()>::type, void>::value
+//        && ! boost::is_expected<typename std::result_of<F(value_type)>::type>::value
+//        ) )
+//  {
+//    typedef typename rebind<typename std::result_of<F()>::type>::type result_type;
+//#if ! defined BOOST_NO_CXX14_CONSTEXPR
+//    if(valid())
+//    {
+//        return result_type(f());
+//    }
+//    return get_unexpected();
+//#else
+//    return ( valid()
+//        ? result_type(f())
+//        :  result_type(get_unexpected())
+//        );
+//#endif
+//  }
 
   template <typename F>
   typename std::result_of<F()>::type
   bind(F&& f,
-    BOOST_EXPECTED_REQUIRES( ! std::is_same<typename std::result_of<F()>::type, void>::value
-        && boost::is_expected<typename std::result_of<F(value_type)>::type>::value
+    BOOST_EXPECTED_REQUIRES( boost::is_expected<typename std::result_of<F(value_type)>::type>::value
         ) )
   {
 #if ! defined BOOST_NO_CXX14_CONSTEXPR

@@ -116,11 +116,11 @@ boost::expected<std::pair<Num,Num>, std::ios_base::iostate> get_interval3(ios_ra
   return get_num<Num>(r)
    .bind( [&r](Num f)
     {
-      return matchedString("..", r).bind([f]() { return f; });
+      return matchedString("..", r).map([f]() { return f; });
     }
   ).bind( [&r](Num f)
     {
-      return get_num<Num>(r).bind([f](Num l) { return std::make_pair(f,l); });
+      return get_num<Num>(r).map([f](Num l) { return std::make_pair(f,l); });
     }
   );
 }
@@ -168,8 +168,8 @@ boost::expected<std::pair<Num,Num>, std::ios_base::iostate> get_interval4(ios_ra
           std::cout << __FILE__ << "[" << __LINE__ << "] " << st << std::endl;
           return boost::make_unexpected(st);
         }
-    ).bind( [&r](Num f) { return matchedString("..", r).bind( identity(f) ); }
-    ).bind( [&r](Num f) { return get_num<Num>(r).bind( lpair(f) ); }
+    ).bind( [&r](Num f) { return matchedString("..", r).map( identity(f) ); }
+    ).bind( [&r](Num f) { return get_num<Num>(r).map( lpair(f) ); }
     );
 }
 
@@ -184,8 +184,8 @@ boost::expected<std::pair<Num,Num>, std::ios_base::iostate> get_interval5(ios_ra
           return boost::make_unexpected(st);
         }
     )
-    & [&r](Num f) { return matchedString("..", r).bind( identity(f) ); }
-    & [&r](Num f) { return get_num<Num>(r).bind( lpair(f) ); }
+    & [&r](Num f) { return matchedString("..", r).map( identity(f) ); }
+    & [&r](Num f) { return get_num<Num>(r).map( lpair(f) ); }
     ;
 }
 

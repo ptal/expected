@@ -506,7 +506,7 @@ BOOST_AUTO_TEST_CASE(expected_bind)
 
   auto add_five = [](int sum)
   {
-    return sum + 5;
+    return make_expected(sum + 5);
   };
 
   expected<int> e = fun(true).bind(add_five);
@@ -531,12 +531,14 @@ BOOST_AUTO_TEST_CASE(expected_void_bind)
       return expected<void>(boost::make_unexpected(test_exception()));
   };
 
-  auto launch_except = []()
+  auto launch_except = []() -> expected<void>
   {
     throw test_exception();
   };
 
-  auto do_nothing = [](){};
+  auto do_nothing = [](){
+    return make_expected();
+  };
 
   expected<void> e = fun(true).bind(do_nothing);
   BOOST_CHECK_NO_THROW(e.value());
@@ -566,19 +568,19 @@ BOOST_AUTO_TEST_CASE(expected_recover)
       return expected<int>(boost::make_unexpected(test_exception()));
   };
 
-  auto then_launch = [](int) -> int
+  auto then_launch = [](int) -> expected<int>
   {
     throw test_exception();
   };
 
   auto add_five = [](int sum)
   {
-    return sum + 5;
+    return make_expected(sum + 5);
   };
 
   auto recover_error = [](exception_ptr_type p)
   {
-    return 0;
+    return make_expected(0);
   };
 
   auto recover_error_silent_failure = [](exception_ptr_type p)
@@ -621,12 +623,14 @@ BOOST_AUTO_TEST_CASE(expected_void_recover)
       return expected<void>(boost::make_unexpected(test_exception()));
   };
 
-  auto then_launch = []() -> void
+  auto then_launch = []() -> expected<void>
   {
     throw test_exception();
   };
 
-  auto do_nothing = [](){};
+  auto do_nothing = [](){
+    return make_expected();
+  };
 
   auto recover_error = [](exception_ptr_type p)
   {
