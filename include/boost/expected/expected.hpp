@@ -2471,22 +2471,10 @@ BOOST_CONSTEXPR expected<decay_t<T>, std::exception_ptr> make_expected(T&& v)
   return expected<decay_t<T>, std::exception_ptr>(constexpr_forward<T>(v));
 }
 
-//template <typename E, typename T>
-//BOOST_CONSTEXPR expected<decay_t<T>, E> make_expected(T&& v)
-//{
-//  return expected<decay_t<T>, E>(constexpr_forward<T>(v));
-//}
-
 BOOST_FORCEINLINE expected<void, std::exception_ptr> make_expected()
 {
   return expected<void, std::exception_ptr>(in_place2);
 }
-
-//template<typename E>
-//BOOST_FORCEINLINE expected<void, E> make_expected()
-//{
-//  return expected<void, E>(in_place2);
-//}
 
 template <typename T>
 BOOST_FORCEINLINE expected<T, std::exception_ptr> make_expected_from_current_exception() BOOST_NOEXCEPT
@@ -2501,16 +2489,23 @@ BOOST_FORCEINLINE expected<T, std::exception_ptr> make_expected_from_exception(s
 }
 
 template <class T, class E>
-BOOST_FORCEINLINE expected<T, std::exception_ptr> make_expected_from_exception(E e) BOOST_NOEXCEPT
+BOOST_FORCEINLINE expected<T, std::exception_ptr> make_expected_from_exception(E&& e) BOOST_NOEXCEPT
 {
-  return expected<T, std::exception_ptr>(unexpected_type<>(e));
+  return expected<T, std::exception_ptr>(unexpected_type<>(constexpr_forward<E>(e)));
 }
 
 template <class T, class E>
 BOOST_FORCEINLINE BOOST_CONSTEXPR
-expected<T, decay_t<E>> make_expected_from_error(E e) BOOST_NOEXCEPT
+expected<T, decay_t<E>> make_expected_from_error(E&& e) BOOST_NOEXCEPT
 {
-  return expected<T, decay_t<E>>(make_unexpected(e));
+  return expected<T, decay_t<E>>(make_unexpected(constexpr_forward<E>(e)));
+}
+
+template <class T, class E, class U>
+BOOST_FORCEINLINE BOOST_CONSTEXPR
+expected<T, E> make_expected_from_error(U&& u) BOOST_NOEXCEPT
+{
+  return expected<T, E>(make_unexpected(E(constexpr_forward<U>(u))));
 }
 
 template <typename F>

@@ -554,6 +554,18 @@ BOOST_AUTO_TEST_CASE(expected_from_error)
   BOOST_CHECK_EQUAL(static_cast<bool>(e), false);
 }
 
+BOOST_AUTO_TEST_CASE(expected_from_error_U)
+{
+  // From unexpected_type constructor.
+  auto e = make_expected_from_error<int, short>(42);
+  static_assert(std::is_same<decltype(e), expected<int, short>>{}, "");
+  BOOST_CHECK_EQUAL(e.valid(), false);
+  BOOST_CHECK_EQUAL(static_cast<bool>(e), false);
+}
+
+
+
+
 BOOST_AUTO_TEST_CASE(expected_from_exception)
 {
   // From unexpected_type constructor.
