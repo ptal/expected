@@ -335,6 +335,28 @@ BOOST_AUTO_TEST_SUITE_END()
 
 BOOST_AUTO_TEST_SUITE(error_expected_constructors)
 
+BOOST_AUTO_TEST_CASE(make_expected_E_from_value)
+{
+  //auto e = make_expected<std::string>( 5 );
+  //BOOST_CHECK_EQUAL(e.valid(), false);
+}
+BOOST_AUTO_TEST_CASE(make_expected_from_U_value)
+{
+  expected<short> e = make_expected<short>( 5 );
+  static_assert(std::is_same<decltype(e), expected<short>>{}, "");
+  BOOST_CHECK_EQUAL(e.valid(), true);
+}
+BOOST_AUTO_TEST_CASE(make_expected_from_U_value2)
+{
+  expected<std::string> e = make_expected<std::string>( "aa" );
+  static_assert(std::is_same<decltype(e), expected<std::string>>{}, "");
+  BOOST_CHECK_EQUAL(e.valid(), true);
+}
+
+BOOST_AUTO_TEST_SUITE_END()
+
+BOOST_AUTO_TEST_SUITE(error_expected_constructors)
+
 BOOST_AUTO_TEST_CASE(expected_from_value)
 {
   // From value constructor.

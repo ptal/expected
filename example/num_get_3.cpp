@@ -113,7 +113,7 @@ matchedString(std::string str, ios_range<CharT, InputIterator>& r) {
       return boost::make_unexpected(std::ios_base::goodbit);
   }
   ++r.begin;
-  return boost::make_expected<std::ios_base::iostate>();
+  return boost::expected<void,std::ios_base::iostate>();
 }
 
 /**

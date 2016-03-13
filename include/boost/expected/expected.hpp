@@ -2465,22 +2465,28 @@ void swap(expected<T,E>& x, expected<T,E>& y) BOOST_NOEXCEPT_IF(BOOST_NOEXCEPT_E
 
 // Factories
 
-template<typename T>
-BOOST_CONSTEXPR expected<decay_t<T>, std::exception_ptr> make_expected(T&& v )
+template <typename T>
+BOOST_CONSTEXPR expected<decay_t<T>, std::exception_ptr> make_expected(T&& v)
 {
   return expected<decay_t<T>, std::exception_ptr>(constexpr_forward<T>(v));
 }
+
+//template <typename E, typename T>
+//BOOST_CONSTEXPR expected<decay_t<T>, E> make_expected(T&& v)
+//{
+//  return expected<decay_t<T>, E>(constexpr_forward<T>(v));
+//}
 
 BOOST_FORCEINLINE expected<void, std::exception_ptr> make_expected()
 {
   return expected<void, std::exception_ptr>(in_place2);
 }
 
-template<typename E>
-BOOST_FORCEINLINE expected<void, E> make_expected()
-{
-  return expected<void, E>(in_place2);
-}
+//template<typename E>
+//BOOST_FORCEINLINE expected<void, E> make_expected()
+//{
+//  return expected<void, E>(in_place2);
+//}
 
 template <typename T>
 BOOST_FORCEINLINE expected<T, std::exception_ptr> make_expected_from_current_exception() BOOST_NOEXCEPT
