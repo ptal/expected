@@ -1,3 +1,13 @@
+!!! WARINING !!!
+
+This repository is abandoned.
+
+This proposal has moved to this repository https://github.com/viboes/std-make/blob/master/doc/proposal/expected/ and https://github.com/viboes/std-make/tree/master/doc/proposal/expected.
+
+Please, add any issues in the new repository.
+
+!!! WARINING !!!
+
 Expected
 ========
 
